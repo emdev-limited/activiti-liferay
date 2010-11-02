@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<project name="activiti-web" basedir="." default="deploy">
+	<import file="../build-common-web.xml" />
+	
+	<target name="merge">
+		<copy todir="tmp">
+			<fileset dir="docroot" />
+		</copy>
+	</target>
+	
+</project>
