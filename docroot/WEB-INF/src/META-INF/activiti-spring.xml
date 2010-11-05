@@ -18,7 +18,7 @@
 		This is JTA transaction manager - be used later then we work under
 		JBoss
 	-->
-	<!--  bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+	<!-- bean id="transactionManager" class="org.springframework.transaction.jta.JtaTransactionManager">
 		<property name="autodetectTransactionManager" value="true" />
 		<property name="allowCustomIsolationLevels" value="true" />
 	</bean -->
@@ -31,15 +31,56 @@
 		</property>
 	</bean>
 
-	<!-- tx:annotation-driven transaction-manager="transactionManager" />
+    <!-- bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean -->
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
 
 	<bean id="sharedTransactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
 		<property name="transactionManager" ref="transactionManager" />
-	</bean -->
+	</bean>
+
+	<!-- Hbernate configuration - used for objects defined in activiti-web -->
+	<!-- TODO Find a way to use mybatis instead of hibernate to increase integration with activiti and reduce dependencies -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>net.emforge.activiti.entity</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>	
 
 	<!--  TODO - Think - probably we can use Liferay Executor -->
 	<!-- task:annotation-driven executor="executor" scheduler="scheduler"/>
 		
 	<task:scheduler id="scheduler" pool-size="10"/>
-	<task:executor id="executor" pool-size="5"/ -->		
+	<task:executor id="executor" pool-size="5"/ -->	
+	
+	
+	
+	<!-- Activiti Configuration -->
+	<bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<!-- TODO Find a way to autodetect DB -->
+		<property name="databaseType" value="mysql" />
+		<property name="transactionManager" ref="transactionManager" />
+		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
+		<!-- property name="dbSchemaStrategy" value="create-if-necessary" / -->
+	</bean>	
+	
+	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" />
+	<bean id="runtimeService" factory-bean="processEngine" factory-method="getRuntimeService" />
+	<bean id="taskService" factory-bean="processEngine" factory-method="getTaskService" />
+	<bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService" />
+	<bean id="managementService" factory-bean="processEngine" factory-method="getManagementService" />	
 </beans>

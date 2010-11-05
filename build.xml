@@ -9,4 +9,22 @@
 		</copy>
 	</target>
 	
+	<target name="build-samples">
+		<delete dir="samples" />
+		<mkdir dir="samples" />
+
+		<copy 
+			file="docroot/WEB-INF/src/META-INF/definitions/todo.bpmn20.xml" 
+			overwrite="true"
+			tofile="samples/todo.bpmn20.xml"
+		/>
+
+		<jar
+			basedir="samples"
+			excludes="*.bar"
+			jarfile="samples/ToDo.bar"
+		/>
+
+		<delete file="samples/todo.bpmn20.xml" />
+	</target>	
 </project>
