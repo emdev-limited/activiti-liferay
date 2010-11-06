@@ -89,7 +89,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		// update vars
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
-		runtimeService.setVariables(task.getProcessInstanceId(), vars);
+		runtimeService.setVariables(task.getExecutionId(), vars);
 		
 		// update dueDate
 		/* TODO Looks like not supported in Acitiviti

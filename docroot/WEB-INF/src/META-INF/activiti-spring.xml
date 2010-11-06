@@ -73,7 +73,7 @@
 	</bean>
 	
 	<!-- Activiti Configuration -->
-	<bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
 		<!-- TODO Find a way to autodetect DB -->
 		<property name="databaseType" value="mysql" />

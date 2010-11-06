@@ -12,7 +12,8 @@
 	<target name="build-samples">
 		<delete dir="samples" />
 		<mkdir dir="samples" />
-
+		
+		<!-- todo -->
 		<copy 
 			file="docroot/WEB-INF/src/META-INF/definitions/todo.bpmn20.xml" 
 			overwrite="true"
@@ -26,5 +27,36 @@
 		/>
 
 		<delete file="samples/todo.bpmn20.xml" />
+		
+		<!-- Administrator Task -->
+		<copy 
+			file="docroot/WEB-INF/src/META-INF/definitions/AdministratorTask.bpmn20.xml" 
+			overwrite="true"
+			tofile="samples/AdministratorTask.bpmn20.xml"
+		/>
+
+		<jar
+			basedir="samples"
+			excludes="*.bar"
+			jarfile="samples/AdministratorTask.bar"
+		/>
+
+		<delete file="samples/AdministratorTask.bpmn20.xml" />
+		
+		<!-- Single Approver -->
+		<copy 
+			file="docroot/WEB-INF/src/META-INF/definitions/SingleApprover.bpmn20.xml" 
+			overwrite="true"
+			tofile="samples/SingleApprover.bpmn20.xml"
+		/>
+
+		<jar
+			basedir="samples"
+			excludes="*.bar"
+			jarfile="samples/SingleApprover.bar"
+		/>
+
+		<delete file="samples/SingleApprover.bpmn20.xml" />
+		
 	</target>	
 </project>

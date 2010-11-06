@@ -9,6 +9,7 @@ import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.cfg.IdentitySession;
 import org.activiti.engine.impl.identity.GroupEntity;
 import org.activiti.engine.impl.identity.UserEntity;
+import org.activiti.engine.impl.interceptor.Session;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 @Service("liferayIdentitySession")
-public class LiferayIdentitySessionImpl implements IdentitySession {
+public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 	private static Log _log = LogFactoryUtil.getLog(LiferayIdentitySessionImpl.class);
 
 	@Override
@@ -106,8 +107,13 @@ public class LiferayIdentitySessionImpl implements IdentitySession {
 
 	@Override
 	public UserEntity findUserById(String userId) {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		try {
+			com.liferay.portal.model.User liferayUser = UserLocalServiceUtil.getUser(Long.valueOf(userId));
+			return new UserImpl(liferayUser);
+		} catch (Exception ex) {
+			_log.error("Cannot find user " + userId + " : " + ex.getMessage());
+			return null;
+		}
 	}
 
 
@@ -184,6 +190,18 @@ public class LiferayIdentitySessionImpl implements IdentitySession {
 	@Override
 	public void deleteMembership(String userId, String groupId) {
 		_log.error("Method is not implemented"); // TODO
+		
+	}
+
+	@Override
+	public void flush() {
+		// nothing to do
+		
+	}
+
+	@Override
+	public void close() {
+		// nothing to do
 		
 	}
 
