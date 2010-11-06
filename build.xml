@@ -58,5 +58,19 @@
 
 		<delete file="samples/SingleApprover.bpmn20.xml" />
 		
+		<!-- Single Approver By Script -->
+		<copy 
+			file="docroot/WEB-INF/src/META-INF/definitions/SingleApproverByScript.bpmn20.xml" 
+			overwrite="true"
+			tofile="samples/SingleApproverByScript.bpmn20.xml"
+		/>
+
+		<jar
+			basedir="samples"
+			excludes="*.bar"
+			jarfile="samples/SingleApproverByScript.bar"
+		/>
+
+		<delete file="samples/SingleApproverByScript.bpmn20.xml" />
 	</target>	
 </project>

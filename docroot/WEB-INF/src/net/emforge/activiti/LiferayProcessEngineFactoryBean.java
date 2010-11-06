@@ -22,6 +22,8 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		Map<Class< ? >, SessionFactory> sessionFactories = processEngineConfiguration.getSessionFactories();
 		sessionFactories.put(IdentitySession.class, new LiferayIdentitySessionFactory());
 		
+		// Add Liferay Script Engine Factory
+		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory());
 		return super.getObject();
 	}
 }
