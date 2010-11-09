@@ -76,10 +76,10 @@
 	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
 		<!-- TODO Find a way to autodetect DB -->
-		<property name="databaseType" value="mysql" />
+		<!-- property name="databaseType" value="mysql" / -->
 		<property name="transactionManager" ref="transactionManager" />
 		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
-		<!-- property name="dbSchemaStrategy" value="create-if-necessary" / -->
+		<property name="dbSchemaStrategy" value="create-if-necessary" />
 	</bean>	
 	
 	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" />
