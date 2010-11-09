@@ -1,16 +1,20 @@
 package net.emforge.activiti.dao;
 
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.util.List;
 
 import net.emforge.activiti.entity.ProcessInstanceExtensionImpl;
 
+import org.hibernate.HibernateException;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.HibernateTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -43,95 +47,123 @@ public class ProcessInstanceExtensionDao extends HibernateTemplate {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	public int count(long companyId, Long userId, String assetClassName, Long assetClassPK, Boolean completed) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(ProcessInstanceExtensionImpl.class);
-		if (companyId != 0l) {
-			criteria.add(Restrictions.eq("companyId", companyId));
-		}
-		
-		if (userId != null) {
-			criteria.add(Restrictions.eq("userId", userId));
-		}
-
-		if (Validator.isNotNull(assetClassName)) {
-			criteria.add(Restrictions.like("className", assetClassName));
-		}
-
-		if (Validator.isNotNull(assetClassPK)) {
-			criteria.add(Restrictions.eq("classPK", assetClassPK));
-		}
-
-		if (completed != null) {
-			_log.error("This functionality is not implemented yet");
-			/*
-			DetachedCriteria completionCriteria =
-				criteria.createCriteria("processInstance");
-
-			if (completed) {
-				completionCriteria.add(Restrictions.eq("state", "end"));
-			}
-			else {
-				completionCriteria.add(Restrictions.eq("state", "active"));
-			}
-			*/
-		}
+	public int count(final long companyId, final Long userId, final String assetClassName, final Long assetClassPK, final Boolean completed) {
+		return execute(new HibernateCallback<Integer>() {
+			@Override
+	        public Integer doInHibernate(Session session) throws HibernateException, SQLException {
 	
-		criteria.setProjection(Projections.rowCount());
-		
-		List<Object> result = findByCriteria(criteria);
-		return GetterUtil.getInteger((Serializable)result.get(0));
+	        	String queryStr = "SELECT count(*) FROM ACT_PROCESSINSTANCEEXTENSION_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
+	        	if (companyId != 0l) {
+	    			queryStr += " and PI.company_id = :companyId";
+	    		}
+	    		
+	    		if (userId != null) {
+	    			queryStr += " and PI.user_id = :userId";
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassName)) {
+	    			queryStr += " and PI.class_name like :assetClassName";
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassPK)) {
+	    			queryStr += " and PI.class_pk like :assetClassPK";
+	    		}
+	
+	    		if (completed != null) {
+	    			if (completed) {
+	    				queryStr += " and HI.end_time_ is not null";
+	    			} else {
+	    				queryStr += " and HI.end_time_ is null";
+	    			}
+	    		}
+	        	
+	        	final SQLQuery query = session.createSQLQuery(queryStr);
+	            
+	        	if (companyId != 0l) {
+	    			query.setLong("companyId", companyId);
+	    		}
+	    		
+	    		if (userId != null) {
+	    			query.setLong("userId", userId);
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassName)) {
+	    			query.setString("assetClassName", assetClassName);
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassPK)) {
+	    			query.setLong("assetClassPK", assetClassPK);
+	    		}
+	        	
+	            return GetterUtil.getInteger((Serializable)query.uniqueResult());
+	        }
+	    });
 	}
 	
-	public List<ProcessInstanceExtensionImpl> find(long companyId, Long userId, 
-			   									   String assetClassName, Long assetClassPK,
-			   									   Boolean completed, int start, int end, OrderByComparator orderByComparator) {
-		DetachedCriteria criteria = DetachedCriteria.forClass(ProcessInstanceExtensionImpl.class);
-		if (companyId != 0l) {
-			criteria.add(Restrictions.eq("companyId", companyId));
-		}
-		
-		if (userId != null) {
-			criteria.add(Restrictions.eq("userId", userId));
-		}
-
-		if (Validator.isNotNull(assetClassName)) {
-			criteria.add(Restrictions.like("className", assetClassName));
-		}
-
-		if (Validator.isNotNull(assetClassPK)) {
-			criteria.add(Restrictions.eq("classPK", assetClassPK));
-		}
-
-		if (completed != null) {
-			_log.error("This functionality is not implemented yet");
-			/*
-			DetachedCriteria completionCriteria =
-				criteria.createCriteria("processInstance");
-
-			if (completed) {
-				completionCriteria.add(Restrictions.not((Restrictions.eq("state", "active"))));
-			}
-			else {
-				completionCriteria.add(Restrictions.eq("state", "active"));
-			}
-			*/
-		}
-		
-		// TODO Add support for pagination - probably like described here:
-		// http://labs.jodd.org/d/paginate-with-hibernate.html
-		// add pagination
-		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-			_log.warn("Method is partially implemented");
-			//criteria.setFirstResult(start);
-			//criteria.setMaxResults(end - start);
-		}
-		
-		
-		
-		List<ProcessInstanceExtensionImpl> result = findByCriteria(criteria);
-		
-		return result;
+	public List<ProcessInstanceExtensionImpl> find(final long companyId, final Long userId, 
+			   									   final String assetClassName, final Long assetClassPK,
+			   									   final Boolean completed, final int start, final int end, final OrderByComparator orderByComparator) {
+		return execute(new HibernateCallback<List<ProcessInstanceExtensionImpl>>() {
+			@SuppressWarnings("unchecked")
+			@Override
+	        public List<ProcessInstanceExtensionImpl> doInHibernate(Session session) throws HibernateException, SQLException {
+	
+	        	String queryStr = "SELECT PI.* FROM ACT_PROCESSINSTANCEEXTENSION_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
+	        	if (companyId != 0l) {
+	    			queryStr += " and PI.company_id = :companyId";
+	    		}
+	    		
+	    		if (userId != null) {
+	    			queryStr += " and PI.user_id = :userId";
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassName)) {
+	    			queryStr += " and PI.class_name like :assetClassName";
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassPK)) {
+	    			queryStr += " and PI.class_pk like :assetClassPK";
+	    		}
+	
+	    		if (completed != null) {
+	    			if (completed) {
+	    				queryStr += " and HI.end_time_ is not null";
+	    			} else {
+	    				queryStr += " and HI.end_time_ is null";
+	    			}
+	    		}
+	        	
+	        	final SQLQuery query = session.createSQLQuery(queryStr);
+	            
+	        	if (companyId != 0l) {
+	    			query.setLong("companyId", companyId);
+	    		}
+	    		
+	    		if (userId != null) {
+	    			query.setLong("userId", userId);
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassName)) {
+	    			query.setString("assetClassName", assetClassName);
+	    		}
+	
+	    		if (Validator.isNotNull(assetClassPK)) {
+	    			query.setLong("assetClassPK", assetClassPK);
+	    		}
+	        	
+	            if (QueryUtil.ALL_POS != start && QueryUtil.ALL_POS != end) {
+	            	query.setFirstResult(start);
+	            	query.setMaxResults(end - start);
+	            }
+	            if (orderByComparator != null) {
+	            	// TODO Support order By
+	            }
+	            
+	            query.addEntity(ProcessInstanceExtensionImpl.class);
+	            
+	            return (List<ProcessInstanceExtensionImpl>)query.list();
+	        }
+	    });
 	}
 	
 	protected void addOrder(DetachedCriteria criteria, OrderByComparator orderByComparator) {

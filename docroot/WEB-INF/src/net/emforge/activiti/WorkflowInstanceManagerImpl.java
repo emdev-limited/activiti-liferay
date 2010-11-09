@@ -15,6 +15,7 @@ import org.activiti.engine.HistoryService;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -300,13 +301,11 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
         inst.setState("");
 
         // get basic variables from ext object
-        /* TODO
-        ProcessInstanceExtensionImpl procInstExt = processInstanceExtensionDao.findByProcessInstanceId(historyPI.get);
+        ProcessInstanceExtensionImpl procInstExt = processInstanceExtensionDao.findByProcessInstanceId(historyPI.getId());
         Map<String, Serializable> workflowContext = getWorkflowContext(procInstExt);
 		inst.setWorkflowContext(workflowContext);
 		
 		inst.setWorkflowInstanceId(procInstExt.getId());
-		*/
 		
 		inst.setWorkflowDefinitionName(procDef.getName());
 		inst.setWorkflowDefinitionVersion(procDef.getVersion());
@@ -331,9 +330,18 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		workflowInstance.setStartDate(historyPI.getStartTime());
 		workflowInstance.setEndDate(historyPI.getEndTime());
 		
-		if (historyPI.getEndTime() != null) {
+		if (historyPI.getEndTime() == null) {
 			List<String> activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
-			workflowInstance.setState(StringUtils.join(activities, ","));
+			// activities contains internal ids - need to be converted into names
+			List<String> activityNames = new ArrayList<String>(activities.size());
+			
+			for (String activiti: activities) {
+				List<HistoricActivityInstance> histActs = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstance.getProcessInstanceId()).activityId(activiti).list();
+				if (histActs.size() > 0) {
+					activityNames.add(histActs.get(0).getActivityName());
+				}
+			}
+			workflowInstance.setState(StringUtils.join(activityNames, ","));
 		
 			Map<String, Object> vars = 	runtimeService.getVariables(processInstance.getProcessInstanceId());
 	        Map<String, Serializable> workflowContext = convertFromVars(vars);

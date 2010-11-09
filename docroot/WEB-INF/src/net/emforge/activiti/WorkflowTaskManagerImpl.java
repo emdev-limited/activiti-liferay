@@ -23,6 +23,7 @@ import org.activiti.engine.form.FormProperty;
 import org.activiti.engine.form.TaskFormData;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricActivityInstanceQuery;
+import org.activiti.engine.impl.history.HistoricActivityInstanceEntity;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -156,23 +157,25 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 
 	@Override
 	public List<String> getNextTransitionNames(long companyId, long userId, long workflowTaskId) throws WorkflowException {
-		String taskId = String.valueOf(workflowTaskId);
-		TaskFormData formData = processEngine.getFormService().getTaskFormData(taskId);
-		
-		List<FormProperty> properties = formData.getFormProperties();
-		for (FormProperty property : properties) {
-			if (property.getId().equals("outputTransition")) {
-				// get values
-				Map<String, String> outputTransitions = (Map<String, String>)property.getType().getInformation("values");
-				
-				// create list from them
-				List<String> result = new ArrayList<String>();
-				result.addAll(outputTransitions.keySet());
-				
-				return result;
+		if (workflowTaskId != 0) {
+			String taskId = String.valueOf(workflowTaskId);
+			TaskFormData formData = processEngine.getFormService().getTaskFormData(taskId);
+			
+			List<FormProperty> properties = formData.getFormProperties();
+			for (FormProperty property : properties) {
+				if (property.getId().equals("outputTransition")) {
+					// get values
+					Map<String, String> outputTransitions = (Map<String, String>)property.getType().getInformation("values");
+					
+					// create list from them
+					List<String> result = new ArrayList<String>();
+					result.addAll(outputTransitions.keySet());
+					
+					return result;
+				}
 			}
 		}
-
+		
 		// not found - task has only one output
 		List<String> result = new ArrayList<String>(1);
 		result.add("Done");
@@ -184,7 +187,15 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public long[] getPooledActorsIds(long companyId, long workflowTaskId) throws WorkflowException {
 		String taskId = String.valueOf(workflowTaskId);
 		
-		List<IdentityLink> participations = taskService.getIdentityLinksForTask(taskId);
+		List<IdentityLink> participations = new ArrayList<IdentityLink>();
+		
+		try {
+			if (workflowTaskId != 0) {
+				participations = taskService.getIdentityLinksForTask(taskId);
+			}
+		} catch (Exception ex) {
+			// for completed tasks it will simple produce exception - ignore it
+		}
 		
 		Set<Long> userIds = new HashSet<Long>();
 		
@@ -216,7 +227,19 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			return getWorkflowTask(task);
 		} else {
 			_log.debug("Cannot find active task " + workflowTaskId + " , try to find in history");
-			HistoricActivityInstance historyTask = historyService.createHistoricActivityInstanceQuery().activityId(taskId).singleResult();
+			
+			// TODO Until http://jira.codehaus.org/browse/ACT-328 is ot implemented we have no way to find it by query
+			// so, should make search by java
+			List<HistoricActivityInstance> historyActivities = historyService.createHistoricActivityInstanceQuery().list();
+			HistoricActivityInstance historyTask = null;
+			
+			for (HistoricActivityInstance historyActivity : historyActivities) {
+				HistoricActivityInstanceEntity entity = (HistoricActivityInstanceEntity)historyActivity;
+				if (Long.valueOf(entity.getId()) == workflowTaskId) {
+					historyTask = historyActivity;
+					break;
+				}
+			}
 			
 			if (historyTask != null) {
 				return getHistoryWorkflowTask(historyTask);
@@ -379,7 +402,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         		
         		List<HistoricActivityInstance> list = query.list();
         		
-        		return getHistoryWorkflowTasks(list);
+        		return getHistoryWorkflowTasks(list, true);
         	}
         }
 	}
@@ -595,11 +618,15 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return workflowTask;
 	}
 
-	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricActivityInstance> list) {
+	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricActivityInstance> list, boolean onlyCompleted) {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
 		
 		for (HistoricActivityInstance task : list) {
-			result.add(getHistoryWorkflowTask(task));
+			WorkflowTask workflowTask = getHistoryWorkflowTask(task);
+			// TODO it is workaround until notOpen is not supported in HistoricActiviti query
+			if (workflowTask.getCompletionDate() != null || !onlyCompleted) {
+				result.add(workflowTask);
+			}
 		}
 		
 		return result;
@@ -648,7 +675,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
 		}
 		
-		workflowTask.setWorkflowTaskId(Long.valueOf(task.getActivityId()));
+		// by some reasons, HistoricActivitiInstance has no ID - so, to access it we should use entity implementation
+		HistoricActivityInstanceEntity entity = (HistoricActivityInstanceEntity)task;
+		workflowTask.setWorkflowTaskId(Long.valueOf(entity.getId())); // TODO
 		
 		
 		return workflowTask;
