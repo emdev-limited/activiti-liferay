@@ -48,29 +48,35 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 													   String title, 
 													   InputStream inputStream) throws WorkflowException {
 		String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
-		
 		_log.info("Try to deploy process " + strTitle);
 
-		ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-		Deployment deployment = repositoryService.createDeployment().name(strTitle + ".bar").addZipInputStream(zipInputStream).deploy();
-        
+		// deploy
+		Deployment deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", inputStream).deploy();
+
+		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+        processDefinitionQuery.deploymentId(deployment.getId());
+        List<ProcessDefinition> processDefs = processDefinitionQuery.list();
+
 		_log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
 		
-        // get process definition
-        ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.deploymentId(deployment.getId());
-        ProcessDefinition processDef = processDefinitionQuery.singleResult();
+        _log.info(processDefs.size() + " process definitions deployed");
         
-        _log.info("Process Definition Id for process " + strTitle + " : " + processDef.getId());
+        for (ProcessDefinition processDef : processDefs) {
+	        _log.info("Process Definition Id for process " + strTitle + " : " + processDef.getId());
+	        
+	        // save our extension
+	        WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
+				new WorkflowDefinitionExtensionImpl(processDef, companyId, title, processDef.getName(), true, processDef.getVersion());
+	
+			workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
+        }
         
-        // save our extension
-		WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
-			new WorkflowDefinitionExtensionImpl(processDef, companyId, title, processDef.getName(), true, processDef.getVersion());
-
-		workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
-		
-        // create result
-		return new WorkflowDefinitionImpl(processDef, title, true);
+        // create result (return first process def in case many was deployed
+        if (processDefs.size() > 0) {
+        	return new WorkflowDefinitionImpl(processDefs.get(0), title, true);
+        } else {
+        	return null;
+        }
 	}
 
 	/** Return count of active workflow definitions

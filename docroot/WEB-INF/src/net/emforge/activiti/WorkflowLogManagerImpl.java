@@ -3,14 +3,14 @@ package net.emforge.activiti;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
+import net.emforge.activiti.entity.ProcessInstanceHistory;
+
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.history.HistoricDetail;
-import org.activiti.engine.history.HistoricDetailQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -30,6 +30,8 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 	@Autowired
 	HistoryService historyService;
 	
+	@Autowired
+	ProcessInstanceHistoryDao processInstanceHistoryDao;
 	
 	@Override
 	public int getWorkflowLogCountByWorkflowInstance(long companyId, long workflowInstanceId, 
@@ -50,35 +52,9 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 	public List<WorkflowLog> getWorkflowLogsByWorkflowInstance(long companyId, long workflowInstanceId, 
 															   List<Integer> logTypes, 
 															   int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
-		if (logTypes != null) {
-			_log.warn("Method is partially implemented");
-		}
 		
-		String processInstanceId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
-		
-		//HistoryProcessInstanceImpl historyPI = ()historyService.createHistoryProcessInstanceQuery().processInstanceId(processInstanceId).uniqueResult();
-		HistoricDetailQuery query = historyService.createHistoricDetailQuery().processInstanceId(processInstanceId);
-		
-		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-			query.listPage(start, end - start);
-		}
-		
-		// TODO actually only one order is supported
-		if (orderByComparator != null) {
-			if (orderByComparator.getOrderByFields().length > 1) {
-				_log.warn("Method is partially implemented");
-			} else {
-				if (orderByComparator.isAscending()) {
-					query.orderByTime().asc();
-				} else {
-					query.orderByTime().desc();
-				}
-			}
-		}
-			
-		List<HistoricDetail> historyDetails = query.list();
-		
-		
+		List<ProcessInstanceHistory> historyDetails = processInstanceHistoryDao.searchByWorkflowInstance(workflowInstanceId, logTypes, start, end, orderByComparator);
+
 		return getWorkflowLogs(historyDetails);
 	}
 
@@ -90,58 +66,34 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 		return null;
 	}
 
-	/** Converts jBPM4 history details into Liferay's WorkflowLog
-	 * 
-	 * @param historyDetails
-	 * @return
-	 */
-	private List<WorkflowLog> getWorkflowLogs(List<HistoricDetail> historyDetails) {
+	private List<WorkflowLog> getWorkflowLogs(List<ProcessInstanceHistory> historyDetails) {
 		List<WorkflowLog> logs = new ArrayList<WorkflowLog>(historyDetails.size());
 		
-		for (HistoricDetail historyDetail : historyDetails) {
-			logs.add(getWorkflowLog(historyDetail));
+		for (ProcessInstanceHistory historyDetail : historyDetails) {
+			WorkflowLog log = getWorkflowLog(historyDetail);
+			if (log != null) {
+				logs.add(log);
+			}
 		}
 		
 		return logs;
 	}
 
-	/** Convert History Detail to WorkflowLog
-	 * 
-	 * @param historyDetail
-	 * @return
-	 */
-	private WorkflowLog getWorkflowLog(HistoricDetail historyDetail) {
+	private WorkflowLog getWorkflowLog(ProcessInstanceHistory historyDetail) {
 		DefaultWorkflowLog log = new DefaultWorkflowLog();
 		
-		log.setCreateDate(historyDetail.getTime());
-		// TODO log.setPreviousUserId(GetterUtil.getLong(oldActorId));
-		//log.setWorkflowTaskId();
-		
-		// TODO
-		log.setType(WorkflowLog.TASK_UPDATE);
-		log.setComment("");
-
-		/*
-		if (historyDetail instanceof HistoryComment) {
-			HistoryComment historyComment = (HistoryComment) historyDetail;
-			log.setComment(historyComment.getMessage());
-			log.setState("");
-			log.setType(WorkflowLog.TASK_COMPLETION);
-			
-		} else if (historyDetail instanceof HistoryTaskAssignmentImpl) {
-			HistoryTaskAssignmentImpl taskAssignment = (HistoryTaskAssignmentImpl)historyDetail;
-			log.setType(WorkflowLog.TASK_ASSIGN);
-			
-		} else if (historyDetail instanceof HistoryTaskDuedateUpdateImpl) {
-			HistoryTaskDuedateUpdateImpl historyDetailImpl = (HistoryTaskDuedateUpdateImpl)historyDetail;
-			log.setState("");
-			
-		}
-		*/
+		log.setComment(historyDetail.getComment());
+		log.setCreateDate(historyDetail.getCreateDate());
+		log.setPreviousState(historyDetail.getPreviousState());
+		log.setPreviousUserId(historyDetail.getPreviousUserId());
+		log.setPreviousRoleId(historyDetail.getPreviousRoleId());
+		log.setState(historyDetail.getState());
+		log.setType(historyDetail.getType());
+		log.setRoleId(historyDetail.getRoleId());
+		log.setUserId(historyDetail.getUserId());
+		log.setWorkflowLogId(historyDetail.getProcessInstanceHistoryId());
 		
 		return log;
 	}
-	
-
 
 }

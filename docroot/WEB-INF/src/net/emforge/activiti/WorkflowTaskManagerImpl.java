@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
+import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
+import net.emforge.activiti.entity.ProcessInstanceHistory;
 import net.emforge.activiti.identity.LiferayIdentitySessionImpl;
 
 import org.activiti.engine.HistoryService;
@@ -17,6 +19,8 @@ import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.form.FormProperty;
+import org.activiti.engine.form.TaskFormData;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricActivityInstanceQuery;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -36,6 +40,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
+import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
@@ -64,6 +69,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	LiferayIdentitySessionImpl liferayIdentitySession;
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
+	@Autowired
+	ProcessInstanceHistoryDao processInstanceHistoryDao;
 	
 	@Override
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
@@ -83,25 +90,35 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+		String currentAssignee = task.getAssignee();
 		
 		// assign task
 		taskService.setAssignee(taskId, String.valueOf(userId));
 		
 		// update vars
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
+		vars.put("dueDate", dueDate);
+		
 		runtimeService.setVariables(task.getExecutionId(), vars);
 		
-		// update dueDate
-		/* TODO Looks like not supported in Acitiviti
-		task.setDueDate();
+		// save log
+		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
+		processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setUserId(userId);
 		
+		Long prevUserId = null;
+		try {
+			prevUserId = Long.valueOf(currentAssignee);
+		} catch (Exception ex) {}
 		
-		taskService.saveTask(task);
-		*/
-		
-		addTaskComment(userId, taskId, comment);
-		
-		
+		if (prevUserId != null) {
+			processInstanceHistory.setPreviousUserId(prevUserId);
+		}
+		processInstanceHistory.setComment(comment);
+		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+
+		// get new state of task
 		task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		return getWorkflowTask(task);
 	}
@@ -113,11 +130,24 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		identityService.setAuthenticatedUserId(String.valueOf(userId));
 		
 		String taskId = String.valueOf(workflowTaskId);
+		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		
 		// complete task
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
-		taskService.complete(taskId, /* transitionName, */ vars);
+		vars.put("outputTransition", transitionName); // Put transition name into outputTransition variable for later use in gateway
+		taskService.complete(taskId, vars);
 
+		// save log
+		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
+		processInstanceHistory.setType(WorkflowLog.TASK_COMPLETION);
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setUserId(userId);
+		processInstanceHistory.setComment(comment);
+		processInstanceHistory.setState(task.getName());
+		
+		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+
+		
 		addTaskComment(userId, taskId, comment);
 		
 		// TODO - find the next task
@@ -126,18 +156,24 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 
 	@Override
 	public List<String> getNextTransitionNames(long companyId, long userId, long workflowTaskId) throws WorkflowException {
-		/* TODO Outcomes looks like is not supported in Acitiviti - will need implement by own
-		 
-		 
-		TaskService taskService = processEngine.getTaskService();
-		Set<String> outcomes = taskService.getOutcomes(String.valueOf(workflowTaskId));
-		_log.debug(outcomes.size() + " found for task " + workflowTaskId);
-		List<String> result = new ArrayList<String>(outcomes.size());
-		result.addAll(outcomes);
+		String taskId = String.valueOf(workflowTaskId);
+		TaskFormData formData = processEngine.getFormService().getTaskFormData(taskId);
 		
-		return result;
-		*/
-		
+		List<FormProperty> properties = formData.getFormProperties();
+		for (FormProperty property : properties) {
+			if (property.getId().equals("outputTransition")) {
+				// get values
+				Map<String, String> outputTransitions = (Map<String, String>)property.getType().getInformation("values");
+				
+				// create list from them
+				List<String> result = new ArrayList<String>();
+				result.addAll(outputTransitions.keySet());
+				
+				return result;
+			}
+		}
+
+		// not found - task has only one output
 		List<String> result = new ArrayList<String>(1);
 		result.add("Done");
 		
@@ -388,19 +424,21 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			throws WorkflowException {
 		identityService.setAuthenticatedUserId(String.valueOf(userId));
 		
-		TaskService taskService = processEngine.getTaskService();
 		String taskId = String.valueOf(workflowTaskId);
-		
-		// update dueDate
-		/* TODO DueDate looks like is not supported by Activiti
-		Task task = taskService.getTask(taskId);
-		task.setDuedate(dueDate);
-		taskService.saveTask(task);
-		
-		addTaskComment(userId, taskId, comment);
-		*/
-		
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+		
+		runtimeService.setVariable(task.getExecutionId(), "dueDate", dueDate);		
+		
+		// save log
+		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
+		processInstanceHistory.setType(WorkflowLog.TASK_UPDATE);
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setUserId(userId);
+		processInstanceHistory.setComment(comment);
+		
+		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+		
+		task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		return getWorkflowTask(task);
 	}
 
@@ -523,10 +561,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		// TODO setCompletionDate(taskInstance.getEnd());
 		workflowTask.setCreateDate(task.getCreateTime());
 		workflowTask.setDescription(task.getDescription());
-		// TODO workflowTask.setDueDate(task.getDuedate());
 		workflowTask.setName(task.getName());
 		
 		Map<String, Object> vars = runtimeService.getVariables(processInstanceId);
+		workflowTask.setDueDate((Date)vars.get("dueDate"));
+		
 		workflowTask.setOptionalAttributes(WorkflowInstanceManagerImpl.convertFromVars(vars));
 		
 		

@@ -1,1 +1,41 @@
-<?xml version="1.0" encoding="UTF-8"?><definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test"><process id="SingleApprover" name="SingleApprover"><startEvent id="startevent2" name="Start"></startEvent><userTask id="usertask2" name="Review Asset" activiti:candidateGroups="Administrator"></userTask><serviceTask id="servicetask1" name="Change Status" activiti:expression='#{updateStatusHandler.updateStatus(execution, "approved")}'></serviceTask><sequenceFlow id="flow3" name="" sourceRef="startevent2" targetRef="usertask2"></sequenceFlow><sequenceFlow id="flow4" name="" sourceRef="usertask2" targetRef="servicetask1"></sequenceFlow><sequenceFlow id="flow5" name="" sourceRef="servicetask1" targetRef="endevent2"></sequenceFlow><endEvent id="endevent2" name="End"></endEvent></process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn"
+	typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+	targetNamespace="http://www.activiti.org/test">
+	<process id="SingleApprover" name="SingleApprover">
+		<startEvent id="startevent2" name="Start"></startEvent>
+		<userTask id="usertask2" name="Review Asset"
+			activiti:candidateGroups="Administrator">
+			<extensionElements>
+				<activiti:formProperty id="outputTransition" type="enum" required="true">
+					<activiti:value id="Accept" label="Accept"/>
+					<activiti:value id="Reject" label="Reject"/>
+				</activiti:formProperty>
+			</extensionElements>
+		</userTask>
+		<serviceTask id="servicetask1" name="Change Status"
+			activiti:expression="#{updateStatusHandler.updateStatus(execution, &quot;approved&quot;)}"></serviceTask>
+		<sequenceFlow id="flow3" name="" sourceRef="startevent2"
+			targetRef="usertask2"></sequenceFlow>
+		<sequenceFlow id="flow5" name="" sourceRef="servicetask1"
+			targetRef="endevent2"></sequenceFlow>
+		<exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+		<sequenceFlow id="flow6" name="" sourceRef="usertask2"
+			targetRef="exclusivegateway1"></sequenceFlow>
+		<sequenceFlow id="flow7" name="Accept" sourceRef="exclusivegateway1"
+			targetRef="servicetask1">
+			<conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Accept"}]]></conditionExpression>
+		</sequenceFlow>
+		<userTask id="usertask3" name="Rework Asset"
+			activiti:candidateGroups="User"></userTask>
+		<sequenceFlow id="flow8" name="Reject" sourceRef="exclusivegateway1"
+			targetRef="usertask3">
+			<conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Reject"}
+]]></conditionExpression>
+		</sequenceFlow>
+		<sequenceFlow id="flow9" name="" sourceRef="usertask3"
+			targetRef="usertask2"></sequenceFlow>
+		<endEvent id="endevent2" name="Approved"></endEvent>
+	</process>
+</definitions>
