@@ -24,7 +24,7 @@
 		
 		<!-- In case Asset chnages is rejects Rework Task assigned for all users -->
 		<userTask id="usertask2" name="Rework Asset"
-			activiti:assignee="User"></userTask>
+			activiti:candidateGroups="User"></userTask>
 		
 		<sequenceFlow id="flow1" name="" sourceRef="startevent1"
 			targetRef="usertask1"></sequenceFlow>

@@ -414,10 +414,11 @@
   <bpmn2:SequenceFlow id="flow5" name="Approve" sourceRef="exclusivegateway1" targetRef="scripttask1">
     <conditionExpression id="flow5_condition" body="${outputTransition = &quot;Approve&quot;}"/>
   </bpmn2:SequenceFlow>
-  <bpmn2:UserTask id="usertask2" name="Rework Asset" incoming="flow6" outgoing="flow7" assignee="User"/>
+  <bpmn2:UserTask id="usertask2" name="Rework Asset" incoming="flow6" outgoing="flow7" candidateGroups="/16"/>
   <bpmn2:SequenceFlow id="flow6" name="Reject" sourceRef="exclusivegateway1" targetRef="usertask2">
     <conditionExpression id="flow6_condition" body="${outputTransition = &quot;Reject&quot;}"/>
   </bpmn2:SequenceFlow>
   <bpmn2:SequenceFlow id="flow7" name="" sourceRef="usertask2" targetRef="usertask1"/>
   <bpmn2:CandidateGroup group="Administrator"/>
+  <bpmn2:CandidateGroup group="User"/>
 </xmi:XMI>
