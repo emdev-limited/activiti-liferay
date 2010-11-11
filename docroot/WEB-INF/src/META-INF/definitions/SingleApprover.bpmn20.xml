@@ -9,7 +9,7 @@
 			activiti:candidateGroups="Administrator">
 			<extensionElements>
 				<activiti:formProperty id="outputTransition" type="enum" required="true">
-					<activiti:value id="Accept" label="Accept"/>
+					<activiti:value id="Approve" label="Approve"/>
 					<activiti:value id="Reject" label="Reject"/>
 				</activiti:formProperty>
 			</extensionElements>
@@ -23,9 +23,9 @@
 		<exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
 		<sequenceFlow id="flow6" name="" sourceRef="usertask2"
 			targetRef="exclusivegateway1"></sequenceFlow>
-		<sequenceFlow id="flow7" name="Accept" sourceRef="exclusivegateway1"
+		<sequenceFlow id="flow7" name="Approve" sourceRef="exclusivegateway1"
 			targetRef="servicetask1">
-			<conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Accept"}]]></conditionExpression>
+			<conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Approve"}]]></conditionExpression>
 		</sequenceFlow>
 		<userTask id="usertask3" name="Rework Asset"
 			activiti:candidateGroups="User"></userTask>
