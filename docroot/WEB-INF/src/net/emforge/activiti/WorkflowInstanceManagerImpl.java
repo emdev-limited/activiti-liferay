@@ -168,9 +168,16 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	public WorkflowInstance startWorkflowInstance(long companyId, long groupId, long userId, 
 												  String workflowDefinitionName, Integer workflowDefinitionVersion, String transitionName,
 												  Map<String, Serializable> workflowContext) throws WorkflowException {
+		_log.info("Start workflow instance " + workflowDefinitionName + " : " + workflowDefinitionVersion);
+		
 		processEngine.getIdentityService().setAuthenticatedUserId(String.valueOf(userId));
 		
 		WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+		
+		if (def == null) {
+			_log.error("Cannot find workflow definition " + workflowDefinitionName + " : " + workflowDefinitionVersion);
+			throw new WorkflowException("Cannot find workflow definition " + workflowDefinitionName + " : " + workflowDefinitionVersion);
+		}
 		
 		Map<String, Object> vars = convertFromContext(workflowContext);
 		
