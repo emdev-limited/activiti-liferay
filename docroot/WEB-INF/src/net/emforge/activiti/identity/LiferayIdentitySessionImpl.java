@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.activiti.engine.identity.Group;
+import org.activiti.engine.identity.GroupQuery;
 import org.activiti.engine.identity.User;
+import org.activiti.engine.identity.UserQuery;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.cfg.IdentitySession;
 import org.activiti.engine.impl.identity.GroupEntity;
 import org.activiti.engine.impl.identity.UserEntity;
+import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.impl.interceptor.Session;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -27,13 +30,13 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 	private static Log _log = LogFactoryUtil.getLog(LiferayIdentitySessionImpl.class);
 
 	@Override
-	public List<GroupEntity> findGroupsByUser(String userId) {
+	public List<Group> findGroupsByUser(String userId) {
 		try {
 			// get regular roles
 			List<Role> roles = RoleLocalServiceUtil.getUserRoles(Long.valueOf(userId));
 
 			// conert from site roles to the groups
-			List<GroupEntity> groups = new ArrayList<GroupEntity>();
+			List<Group> groups = new ArrayList<Group>();
 			for (Role role : roles) {
 				GroupImpl groupImpl = new GroupImpl(role);
 				groups.add(groupImpl);
@@ -49,7 +52,7 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 			return groups;
 		} catch (Exception e) {
 			_log.error("Cannot get list of user roles", e);
-			return new ArrayList<GroupEntity>();
+			return new ArrayList<Group>();
 		}
 	}
 
@@ -92,13 +95,6 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 
 
 	@Override
-	public void insertUser(UserEntity user) {
-		_log.error("Method is not implemented"); // TODO
-		
-	}
-
-
-	@Override
 	public void deleteUser(String userId) {
 		_log.error("Method is not implemented"); // TODO
 		
@@ -118,7 +114,7 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 
 
 	@Override
-	public List<UserEntity> findUsersByGroupId(String groupId) {
+	public List<User> findUsersByGroupId(String groupId) {
 		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
@@ -146,7 +142,7 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 
 
 	@Override
-	public void insertGroup(GroupEntity group) {
+	public void insertGroup(Group group) {
 		_log.error("Method is not implemented"); // TODO
 		
 	}
@@ -203,6 +199,48 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 	public void close() {
 		// nothing to do
 		
+	}
+
+	@Override
+	public User createNewUser(String userId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void insertUser(User user) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateUser(User updatedUser) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public UserQuery createNewUserQuery(CommandExecutor commandExecutor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Group createNewGroup(String groupId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void updateGroup(Group updatedGroup) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public GroupQuery createNewGroupQuery(CommandExecutor commandExecutor) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

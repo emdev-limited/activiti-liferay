@@ -73,15 +73,21 @@
 	</bean>
 	
 	<!-- Activiti Configuration -->
-	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">
+	<!-- bean id="identityService" class="net.emforge.activiti.identity.LiferayIdentityServiceImpl"/ -->
+	
+	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
 		<property name="dataSource" ref="dataSource"/>
 		<!-- TODO Find a way to autodetect DB -->
 		<!-- property name="databaseType" value="mysql" / -->
 		<property name="transactionManager" ref="transactionManager" />
 		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
-		<property name="dbSchemaStrategy" value="create-if-necessary" />
+		<property name="databaseSchemaUpdate" value="true" />
 	</bean>	
 	
+	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">
+		<property name="processEngineConfiguration" ref="processEngineConfiguration" />
+	</bean>
+		
 	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" />
 	<bean id="runtimeService" factory-bean="processEngine" factory-method="getRuntimeService" />
 	<bean id="taskService" factory-bean="processEngine" factory-method="getTaskService" />

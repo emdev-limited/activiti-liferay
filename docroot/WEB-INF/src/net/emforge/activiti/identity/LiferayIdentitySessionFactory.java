@@ -10,4 +10,9 @@ public class LiferayIdentitySessionFactory implements SessionFactory {
 		return new LiferayIdentitySessionImpl();
 	}
 
+	@Override
+	public Class<?> getSessionType() {
+		return LiferayIdentitySessionImpl.class;
+	}
+
 }

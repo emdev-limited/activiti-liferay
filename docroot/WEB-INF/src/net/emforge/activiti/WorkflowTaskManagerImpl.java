@@ -100,12 +100,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
 		vars.put("dueDate", dueDate);
 		
-		runtimeService.setVariables(task.getExecutionId(), vars);
+		runtimeService.setVariables(task.getProcessInstanceId(), vars);
 		
 		// save log
 		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
 		processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
 		processInstanceHistory.setUserId(userId);
 		
 		Long prevUserId = null;
@@ -141,7 +141,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		// save log
 		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
 		processInstanceHistory.setType(WorkflowLog.TASK_COMPLETION);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
 		processInstanceHistory.setUserId(userId);
 		processInstanceHistory.setComment(comment);
 		processInstanceHistory.setState(task.getName());
@@ -228,19 +228,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			_log.debug("Cannot find active task " + workflowTaskId + " , try to find in history");
 			
-			// TODO Until http://jira.codehaus.org/browse/ACT-328 is ot implemented we have no way to find it by query
-			// so, should make search by java
-			List<HistoricActivityInstance> historyActivities = historyService.createHistoricActivityInstanceQuery().list();
-			HistoricActivityInstance historyTask = null;
-			
-			for (HistoricActivityInstance historyActivity : historyActivities) {
-				HistoricActivityInstanceEntity entity = (HistoricActivityInstanceEntity)historyActivity;
-				if (Long.valueOf(entity.getId()) == workflowTaskId) {
-					historyTask = historyActivity;
-					break;
-				}
-			}
-			
+			HistoricActivityInstance historyTask = historyService.createHistoricActivityInstanceQuery().activityInstanceId(String.valueOf(workflowTaskId)).singleResult();
 			if (historyTask != null) {
 				return getHistoryWorkflowTask(historyTask);
 			} else {
@@ -379,8 +367,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		// TODO filter to return only completed tasks
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
 
         		/* TODO ordering is not supported yet
         		if (orderByComparator != null) {
@@ -433,8 +420,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
-        		// TODO filter to return only completed tasks
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
         		
         		Long count = query.count();
 	    		return count.intValue();
@@ -450,12 +436,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		
-		runtimeService.setVariable(task.getExecutionId(), "dueDate", dueDate);		
+		runtimeService.setVariable(task.getProcessInstanceId(), "dueDate", dueDate);		
 		
 		// save log
 		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
 		processInstanceHistory.setType(WorkflowLog.TASK_UPDATE);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
 		processInstanceHistory.setUserId(userId);
 		processInstanceHistory.setComment(comment);
 		
@@ -572,8 +558,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	private WorkflowTask getWorkflowTask(Task task) {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
-		// TODO replace getExecutionId with getProcessInstanceId then it will work
-		String processInstanceId = task.getExecutionId();
+		String processInstanceId = task.getProcessInstanceId();
 		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 		
 		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
@@ -658,7 +643,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		Map<String, Object> vars = taskService.getVariables(task.getId(), variableNames);
 		workflowTask.setOptionalAttributes(WorkflowInstanceManagerImpl.convertFromVars(vars));
 		*/
-		workflowTask.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getExecutionId()));
+		workflowTask.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
 
 		/*
 		long companyId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "companyId"));
