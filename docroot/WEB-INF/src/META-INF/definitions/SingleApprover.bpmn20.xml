@@ -6,7 +6,7 @@
 	<process id="SingleApprover" name="SingleApprover">
 		<startEvent id="startevent2" name="Start"></startEvent>
 		<userTask id="usertask2" name="Review Asset"
-			activiti:candidateGroups="Administrator">
+			activiti:candidateGroups="#{liferayGroups.getGroups(execution, &quot;Community Administrator, Community Member&quot;)}">
 			<extensionElements>
 				<activiti:formProperty id="outputTransition" type="enum" required="true">
 					<activiti:value id="Approve" label="Approve"/>

@@ -4,8 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.activiti.engine.impl.pvm.runtime.ExecutionImpl;
-import org.apache.commons.collections.ListUtils;
+import org.activiti.engine.impl.runtime.ExecutionEntity;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,7 @@ import com.liferay.portal.service.RoleLocalServiceUtil;
 public class LiferayGroups {
 	private static Log _log = LogFactoryUtil.getLog(LiferayGroups.class);
 	
-	public String getGroups(ExecutionImpl execution, String groups) {
+	public String getGroups(ExecutionEntity execution, String groups) {
 		_log.info("Convet groups : " + groups);
 		
 		long companyId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));

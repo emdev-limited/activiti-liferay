@@ -11,7 +11,6 @@ import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.cfg.IdentitySession;
 import org.activiti.engine.impl.identity.GroupEntity;
 import org.activiti.engine.impl.identity.UserEntity;
-import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.impl.interceptor.Session;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -220,12 +219,6 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 	}
 
 	@Override
-	public UserQuery createNewUserQuery(CommandExecutor commandExecutor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Group createNewGroup(String groupId) {
 		// TODO Auto-generated method stub
 		return null;
@@ -238,10 +231,15 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 	}
 
 	@Override
-	public GroupQuery createNewGroupQuery(CommandExecutor commandExecutor) {
+	public GroupQuery createNewGroupQuery() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Override
+	public UserQuery createNewUserQuery() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
