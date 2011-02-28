@@ -2,6 +2,7 @@ package net.emforge.activiti;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,8 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -94,19 +97,21 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		String currentAssignee = task.getAssignee();
 		
 		// assign task
-		taskService.setAssignee(taskId, String.valueOf(userId));
+		taskService.setAssignee(taskId, String.valueOf(assigneeUserId));
 		
 		// update vars
-		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
-		vars.put("dueDate", dueDate);
-		
-		runtimeService.setVariables(task.getProcessInstanceId(), vars);
+		if (dueDate != null) {
+			Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
+			vars.put("dueDate", dueDate);
+			
+			runtimeService.setVariables(task.getProcessInstanceId(), vars);
+		}
 		
 		// save log
 		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
 		processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
 		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
-		processInstanceHistory.setUserId(userId);
+		processInstanceHistory.setUserId(assigneeUserId);
 		
 		Long prevUserId = null;
 		try {
@@ -217,7 +222,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return result;
 	}
 
-	@Transactional(readOnly=true)
+	@Transactional
 	@Override
 	public WorkflowTask getWorkflowTask(long companyId, long workflowTaskId) throws WorkflowException {
 		String taskId = String.valueOf(workflowTaskId);
@@ -300,7 +305,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
-	@Transactional(readOnly=true)
+	@SuppressWarnings("unchecked")
+	@Transactional
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
 			String keywords, Boolean completed, Boolean searchByUserRoles,
@@ -314,27 +320,31 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
         		TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateUser(String.valueOf(userId));
-        		
-        		/* TODO Ordering is not implemented yet
-        		if (orderByComparator != null) {
-	    			if (orderByComparator.getOrderByFields().length > 1) {
-	    				_log.warn("Method is partially implemented");
-	    			} else {
-	    				if (orderByComparator.isAscending()) {
-	    					taskQuery.orderAsc(orderByComparator.getOrderByFields()[0]);
-	    				} else {
-	    					taskQuery.orderDesc(orderByComparator.getOrderByFields()[0]);
-	    				}
-	    			}
-	    		}
-	            */
-        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			taskQuery.listPage(start, end - start);
-        		}
-        		
-	            List<Task> list = taskQuery.list();
+
+        		// is comparator specified
+        		if (orderByComparator == null) {
+	        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+	        			taskQuery.listPage(start, end - start);
+	        		}
+	        		
+		            List<Task> list = taskQuery.list();
 	            
-	        	return getWorkflowTasks(list);
+		            return getWorkflowTasks(list);
+        		} else {
+        			// get all tasks
+        			List<Task> list = taskQuery.list();
+    	            // convert them
+		            List<WorkflowTask> tasks = getWorkflowTasks(list);
+		            
+		            // sort by java
+		            Collections.sort(tasks, orderByComparator);
+		            
+		            if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+	        			return tasks.subList(start, end > tasks.size() ? tasks.size() : end);
+	        		} else {
+	        			return tasks;
+	        		}
+        		}
         	} else {
         		_log.warn("Method is partially implemented"); // TODO
         		return new ArrayList<WorkflowTask>();

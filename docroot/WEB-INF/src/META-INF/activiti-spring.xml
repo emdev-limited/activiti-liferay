@@ -73,8 +73,6 @@
 	</bean>
 	
 	<!-- Activiti Configuration -->
-	<!-- bean id="identityService" class="net.emforge.activiti.identity.LiferayIdentityServiceImpl"/ -->
-	
 	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
 		<property name="dataSource" ref="dataSource"/>
 		<!-- TODO Find a way to autodetect DB -->

@@ -2,6 +2,7 @@ package net.emforge.activiti.identity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.activiti.engine.impl.runtime.ExecutionEntity;
@@ -25,7 +26,7 @@ import com.liferay.portal.service.RoleLocalServiceUtil;
 public class LiferayGroups {
 	private static Log _log = LogFactoryUtil.getLog(LiferayGroups.class);
 	
-	public String getGroups(ExecutionEntity execution, String groups) {
+	public Collection<String> getGroups(ExecutionEntity execution, String groups) {
 		_log.info("Convet groups : " + groups);
 		
 		long companyId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
@@ -55,6 +56,6 @@ public class LiferayGroups {
 		
 		String result = StringUtils.join(resultGroups, ",");
 		_log.info("Converted to " + result);
-		return result;
+		return resultGroups;
 	}
 }
