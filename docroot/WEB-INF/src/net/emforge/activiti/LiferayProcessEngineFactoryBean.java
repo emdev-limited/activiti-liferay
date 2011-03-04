@@ -13,6 +13,7 @@ import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.interceptor.SessionFactory;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ibatis.mapping.MappedStatement;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;

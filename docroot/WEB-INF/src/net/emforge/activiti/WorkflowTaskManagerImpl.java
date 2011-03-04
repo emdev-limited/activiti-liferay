@@ -9,10 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.emforge.activiti.comparator.WorkflowTaskDueDateDateComparator;
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
 import net.emforge.activiti.entity.ProcessInstanceHistory;
 import net.emforge.activiti.identity.LiferayIdentitySessionImpl;
+import net.emforge.activiti.query.CustomTaskQuery;
+import net.emforge.activiti.query.CustomTaskQueryImpl;
 
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
@@ -24,15 +27,16 @@ import org.activiti.engine.form.FormProperty;
 import org.activiti.engine.form.TaskFormData;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricActivityInstanceQuery;
+import org.activiti.engine.impl.TaskServiceImpl;
 import org.activiti.engine.impl.history.HistoricActivityInstanceEntity;
+import org.activiti.engine.impl.interceptor.CommandExecutor;
+import org.activiti.engine.impl.task.TaskDefinition;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,13 +45,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
+import com.liferay.portal.kernel.workflow.WorkflowHandler;
+import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
+import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.User;
 
 @Service("workflowTaskManager")
@@ -484,80 +492,66 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			Boolean completed, Boolean searchByUserRoles, boolean andOperator,
 			int start, int end, OrderByComparator orderByComparator)
 			throws WorkflowException {
-		if (StringUtils.isNotEmpty(assetType)
-			|| dueDateGT != null || dueDateLT != null) {
+		if (dueDateGT != null || dueDateLT != null) {
 			_log.warn("Method is partially implemented"); // TODO
 		}
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));;
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
-        		
-        		// is comparator specified
-        		if (orderByComparator == null) {
-	        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			taskQuery.listPage(start, end - start);
-	        		}
-	        		
-		            List<Task> list = taskQuery.list();
-	            
-		            return getWorkflowTasks(list);
-        		} else {
-        			// get all tasks
-        			List<Task> list = taskQuery.list();
-    	            // convert them
-		            List<WorkflowTask> tasks = getWorkflowTasks(list);
-		            
-		            // sort by java
-		            Collections.sort(tasks, orderByComparator);
-		            
-		            if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			return tasks.subList(start, end > tasks.size() ? tasks.size() : end);
-	        		} else {
-	        			return tasks;
-	        		}
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			taskQuery.taskEntryClassName(getAssetClassName(assetType));
         		}
+
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
+        		}
+        		
+        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			taskQuery.listPage(start, end - start);
+        		}
+        		
+	            List<Task> list = taskQuery.list();
+            
+	            return getWorkflowTasks(list);
         	} else {
         		_log.warn("Method is partially implemented"); // TODO
         		return new ArrayList<WorkflowTask>();
         	}
         } else {
         	if (completed == null || !completed) {
-	        	TaskQuery taskQuery = taskService.createTaskQuery();
-	        	taskQuery = taskQuery.taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
-	        	
-        		// is comparator specified
-        		if (orderByComparator == null) {
-	        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			taskQuery.listPage(start, end - start);
-	        		}
-	        		
-		            List<Task> list = taskQuery.list();
-	            
-		            return getWorkflowTasks(list);
-        		} else {
-        			// get all tasks
-        			List<Task> list = taskQuery.list();
-    	            // convert them
-		            List<WorkflowTask> tasks = getWorkflowTasks(list);
-		            
-		            // sort by java
-		            Collections.sort(tasks, orderByComparator);
-		            
-		            if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			return tasks.subList(start, end > tasks.size() ? tasks.size() : end);
-	        		} else {
-	        			return tasks;
-	        		}
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			taskQuery.taskEntryClassName(getAssetClassName(assetType));
         		}
+
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
+        		}
+
+        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			taskQuery.listPage(start, end - start);
+        		}
+        		
+	            List<Task> list = taskQuery.list();
+            
+	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
         		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
@@ -592,18 +586,21 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			String assetType, Date dueDateGT, Date dueDateLT,
 			Boolean completed, Boolean searchByUserRoles, boolean andOperator)
 			throws WorkflowException {
-		if (StringUtils.isNotEmpty(assetType) || dueDateGT != null || dueDateLT != null) {
+		if (dueDateGT != null || dueDateLT != null) {
 			_log.warn("Method is partially implemented"); // TODO
 		}
 		
 		if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));;
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
-        		
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			taskQuery.taskEntryClassName(getAssetClassName(assetType));
+        		}
+
         		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
@@ -612,11 +609,13 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-	        	TaskQuery taskQuery = taskService.createTaskQuery();
-	        	taskQuery = taskQuery.taskAssignee(String.valueOf(userId));
-	     		// add conditions
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));;
+        		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
+        		}
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			taskQuery.taskEntryClassName(getAssetClassName(assetType));
         		}
         			        	
 	    		Long count = taskQuery.count();
@@ -823,4 +822,27 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return;
 	}
 
+	
+	private String getAssetClassName(String assetType) {
+		String type = assetType.substring(1, assetType.length() - 1);
+		
+		// find it in workflow handlers
+		List<WorkflowHandler> workflowHhandlers = WorkflowHandlerRegistryUtil.getWorkflowHandlers();
+
+		for (WorkflowHandler workflowHandler : workflowHhandlers) {
+			String workflowHandlerType = workflowHandler.getType(LocaleUtil.getDefault());
+			
+			// compare by handler type
+			if (workflowHandlerType.equalsIgnoreCase(type)) {
+				return workflowHandler.getClassName();
+			}
+		}
+		
+		return assetType;
+	}
+
+	public CustomTaskQuery createCustomTaskQuery() {
+		TaskServiceImpl serviceImpl = (TaskServiceImpl)taskService;
+	    return new CustomTaskQueryImpl(serviceImpl.getCommandExecutor());
+	}
 }

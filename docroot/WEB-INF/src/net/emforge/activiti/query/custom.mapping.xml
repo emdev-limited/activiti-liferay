@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+<mapper namespace="org.activiti.persistence">
+  <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="taskResultMap">
+    select distinct T.*
+    <include refid="customSearchTasksSql"/>
+    <if test="orderBy != null">
+      order by ${orderBy}
+    </if>
+  </select>
+
+  <select id="customSearchTasksCount" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultType="long">
+    select count(distinct T.ID_)
+    <include refid="customSearchTasksSql"/>
+  </select>
+
+	<sql id="customSearchTasksSql">
+		from ACT_RU_TASK T
+	    <if test="candidateUser != null || candidateGroups != null">
+	      inner join ACT_RU_IDENTITYLINK I on I.TASK_ID_ = T.ID_
+	    </if>
+    	<if test="entryClassName != null">
+    	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName'
+	    </if>
+    	<if test="orderByDueDate">
+    	  left join ACT_RU_VARIABLE DUE_DATE on (T.ID_ = DUE_DATE.TASK_ID_ or DUE_DATE.PROC_INST_ID_ = T.PROC_INST_ID_) and DUE_DATE.NAME_= 'dueDate'
+	    </if>
+	    
+    	<where>
+	      <if test="nameLike != null">
+	        and T.NAME_ like #{nameLike}
+	      </if>
+	      <if test="assignee != null">
+	        and T.ASSIGNEE_ = #{assignee}
+	      </if>
+
+	      <if test="candidateUser != null || candidateGroups != null">
+	        and T.ASSIGNEE_ is null
+	        and I.TYPE_ = 'candidate'
+	        and 
+	        ( 
+	          <if test="candidateUser != null">
+	            I.USER_ID_ = #{candidateUser}          
+	          </if>
+
+	          <if test="candidateUser != null &amp;&amp; candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
+	            or
+	          </if>
+	          <if test="candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
+	            I.GROUP_ID_ IN
+	            <foreach item="group" index="index" collection="candidateGroups" 
+	                     open="(" separator="," close=")">
+	              #{group}
+	            </foreach>
+	          </if>
+	        )
+	      </if>
+    	
+	    	<if test="entryClassName != null">
+	    	  and V1.TEXT_ =  #{entryClassName}
+		    </if>
+	    </where>
+	</sql>
+</mapper>

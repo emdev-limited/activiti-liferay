@@ -31,6 +31,6 @@
 	<classpathentry kind="lib" path="/portal/lib/portal/hibernate3.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-orm.jar"/>
 	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.3.jar" sourcepath="/activiti-engine/src/main/java"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.3.jar"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.3.jar" sourcepath="/activiti-spring/src/main/java"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
