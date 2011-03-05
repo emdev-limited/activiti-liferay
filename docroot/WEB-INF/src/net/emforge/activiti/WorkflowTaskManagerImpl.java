@@ -2,18 +2,18 @@ package net.emforge.activiti;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.emforge.activiti.comparator.WorkflowTaskDueDateDateComparator;
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
 import net.emforge.activiti.entity.ProcessInstanceHistory;
 import net.emforge.activiti.identity.LiferayIdentitySessionImpl;
+import net.emforge.activiti.query.CustomHistoricActivityInstanceQuery;
+import net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
 import net.emforge.activiti.query.CustomTaskQueryImpl;
 
@@ -29,8 +29,6 @@ import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricActivityInstanceQuery;
 import org.activiti.engine.impl.TaskServiceImpl;
 import org.activiti.engine.impl.history.HistoricActivityInstanceEntity;
-import org.activiti.engine.impl.interceptor.CommandExecutor;
-import org.activiti.engine.impl.task.TaskDefinition;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -326,82 +324,56 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));
 
         		// is comparator specified
-        		if (orderByComparator == null) {
-	        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			taskQuery.listPage(start, end - start);
-	        		}
-	        		
-		            List<Task> list = taskQuery.list();
-	            
-		            return getWorkflowTasks(list);
-        		} else {
-        			// get all tasks
-        			List<Task> list = taskQuery.list();
-    	            // convert them
-		            List<WorkflowTask> tasks = getWorkflowTasks(list);
-		            
-		            // sort by java
-		            Collections.sort(tasks, orderByComparator);
-		            
-		            if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			return tasks.subList(start, end > tasks.size() ? tasks.size() : end);
-	        		} else {
-	        			return tasks;
-	        		}
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
         		}
+        		
+    			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			taskQuery.listPage(start, end - start);
+        		}
+        		
+	            List<Task> list = taskQuery.list();
+            
+	            return getWorkflowTasks(list);
         	} else {
         		_log.warn("Method is partially implemented"); // TODO
         		return new ArrayList<WorkflowTask>();
         	}
         } else {
         	if (completed == null || !completed) {
-	        	TaskQuery taskQuery = taskService.createTaskQuery();
-	        	taskQuery = taskQuery.taskAssignee(String.valueOf(userId));
-	        	
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
+
         		// is comparator specified
-        		if (orderByComparator == null) {
-	        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			taskQuery.listPage(start, end - start);
-	        		}
-	        		
-		            List<Task> list = taskQuery.list();
-	            
-		            return getWorkflowTasks(list);
-        		} else {
-        			// get all tasks
-        			List<Task> list = taskQuery.list();
-    	            // convert them
-		            List<WorkflowTask> tasks = getWorkflowTasks(list);
-		            
-		            // sort by java
-		            Collections.sort(tasks, orderByComparator);
-		            
-		            if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-	        			return tasks.subList(start, end > tasks.size() ? tasks.size() : end);
-	        		} else {
-	        			return tasks;
-	        		}
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
         		}
+        		
+    			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			taskQuery.listPage(start, end - start);
+        		}
+        		
+	            List<Task> list = taskQuery.list();
+            
+	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
         		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
 
-        		/* TODO ordering is not supported yet
         		if (orderByComparator != null) {
-	    			if (orderByComparator.getOrderByFields().length > 1) {
-	    				_log.warn("Method is partially implemented");
-	    			} else {
-	    				if (orderByComparator.isAscending()) {
-	    					query.orderAsc(orderByComparator.getOrderByFields()[0]);
-	    				} else {
-	    					query.orderDesc(orderByComparator.getOrderByFields()[0]);
-	    				}
-	    			}
+        			// TODO need to be implemented
+        			_log.warn("Method is partially implemented");
 	    		}
-	    		*/
         		
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
         			query.listPage(start, end - start);
@@ -423,7 +395,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));
 	        	
         		Long count = taskQuery.count();
 	    		return count.intValue();
@@ -433,8 +405,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-	        	TaskQuery taskQuery = taskService.createTaskQuery();
-	        	taskQuery = taskQuery.taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
 	        	
 	    		Long count = taskQuery.count();
 	    		return count.intValue();
@@ -554,21 +525,18 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
-
-        		/* TODO ordering is not supported yet
+        		CustomHistoricActivityInstanceQuery query = createCustomHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		// add conditions
+        		if (StringUtils.isNotEmpty(taskName)) {
+        			query.taskNameLike(taskName);
+        		}
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			query.taskEntryClassName(getAssetClassName(assetType));
+        		}
+        		
         		if (orderByComparator != null) {
-	    			if (orderByComparator.getOrderByFields().length > 1) {
-	    				_log.warn("Method is partially implemented");
-	    			} else {
-	    				if (orderByComparator.isAscending()) {
-	    					query.orderAsc(orderByComparator.getOrderByFields()[0]);
-	    				} else {
-	    					query.orderDesc(orderByComparator.getOrderByFields()[0]);
-	    				}
-	    			}
+        			_log.warn("Method is partially implemented"); // TODO
 	    		}
-	    		*/
         		
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
         			query.listPage(start, end - start);
@@ -609,7 +577,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));;
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -621,7 +589,15 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
+        		// search for completed tasks in history service
+        		CustomHistoricActivityInstanceQuery query = createCustomHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		// add conditions
+        		if (StringUtils.isNotEmpty(taskName)) {
+        			query.taskNameLike(taskName);
+        		}
+        		if (StringUtils.isNotEmpty(assetType)) {
+        			query.taskEntryClassName(getAssetClassName(assetType));
+        		}
         		
         		Long count = query.count();
 	    		return count.intValue();
@@ -841,8 +817,13 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return assetType;
 	}
 
-	public CustomTaskQuery createCustomTaskQuery() {
+	protected CustomTaskQuery createCustomTaskQuery() {
 		TaskServiceImpl serviceImpl = (TaskServiceImpl)taskService;
 	    return new CustomTaskQueryImpl(serviceImpl.getCommandExecutor());
+	}
+
+	protected CustomHistoricActivityInstanceQuery createCustomHistoricActivityInstanceQuery() {
+		TaskServiceImpl serviceImpl = (TaskServiceImpl)taskService;
+	    return new CustomHistoricActivityInstanceQueryImpl(serviceImpl.getCommandExecutor());
 	}
 }

@@ -3,6 +3,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
   
 <mapper namespace="org.activiti.persistence">
+  <!--  Task Search -->
   <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="taskResultMap">
     select distinct T.*
     <include refid="customSearchTasksSql"/>
@@ -63,4 +64,40 @@
 		    </if>
 	    </where>
 	</sql>
+
+  <!--  Historic Activities Search -->
+  <select id="customSearchHistoricActivityInstance" parameterType="net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl" resultMap="historicActivityInstanceResultMap">
+    select *
+    <include refid="customSearchHistoricActivityInstanceSql"/>
+    <if test="orderBy != null">
+      order by ${orderBy}
+    </if>
+  </select>
+  
+  <select id="customSearchHistoricActivityInstanceCount" parameterType="net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl" resultType="long">
+    select count(*)
+    <include refid="customSearchHistoricActivityInstanceSql"/>
+  </select>
+  
+  <sql id="customSearchHistoricActivityInstanceSql">
+    from ACT_HI_ACTINST HAI
+ 	<if test="entryClassName != null">
+   	  inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on HAI.PROC_INST_ID_ = APL.process_instance_id
+    </if>	
+    <where>
+      HAI.END_TIME_ is not null
+      <if test="nameLike != null">
+        and HAI.ACT_NAME_ like #{nameLike}
+      </if>
+      <if test="assignee != null">
+        and HAI.ASSIGNEE_ = #{assignee}
+      </if>
+   	  <if test="entryClassName != null">
+   	    and APL.class_name = #{entryClassName}
+      </if>	
+    </where>
+  </sql>
+
+
+
 </mapper>
