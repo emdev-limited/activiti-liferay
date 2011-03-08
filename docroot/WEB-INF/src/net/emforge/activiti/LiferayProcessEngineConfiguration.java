@@ -23,6 +23,13 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineConfiguration.class);
 	
 	@Override
+	public void initDatabaseType() {
+		// add mapping for HSQL Database - map it into H2 (should work)
+		databaseTypeMappings.setProperty("HSQL Database Engine","h2");
+		super.initDatabaseType();
+	}
+	
+	@Override
 	protected void initSqlSessionFactory() {
 		if (sqlSessionFactory == null) {
 			InputStream inputStream = null;

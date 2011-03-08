@@ -32,12 +32,6 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		// set history level
 		processEngineConfiguration.setHistoryLevel(ProcessEngineConfigurationImpl.HISTORYLEVEL_FULL);
 		
-		// autodetect db type
-		if (StringUtils.isEmpty(processEngineConfiguration.getDatabaseType()) ||
-				processEngineConfiguration.getDatabaseType().equals("h2")) { // unfortunatelly Activiti always set it to h2 by default
-			autodetectDbType();
-		}
-		
 		ProcessEngine processEngine = super.getObject();
 		
 		// preconfigure process engine to use our identity session
@@ -48,42 +42,5 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory());
 		
 		return processEngine;
-	}
-
-	private void autodetectDbType() {
-		_log.info("database type is not specified - try to autodetect it");
-		
-		DataSource dataSource = processEngineConfiguration.getDataSource();
-		
-		try {
-			Connection con = dataSource.getConnection();
-			try {
-				String dbName = con.getMetaData().getDatabaseProductName();
-				String databaseType = null;
-				
-				_log.info("DBName: " + dbName);
-				
-				if ("MySQL".equalsIgnoreCase(dbName)) {
-					databaseType = "mysql";
-				} else if ("Oracle".equalsIgnoreCase(dbName)) {
-					databaseType = "mysql";
-				} else if ("HSQL Database Engine".equalsIgnoreCase(dbName)) { // need to clarify about names for hsql and h2 as well as same type may be used for them
-					databaseType = "h2";
-				} else if ("PostgreSQL".equalsIgnoreCase(dbName)) {
-					databaseType = "postgres";
-				} else {
-					_log.warn("Unknown DB Type: " + dbName);
-				}
-				
-				if (databaseType != null) {
-					_log.info("Set Database Type to " + databaseType);
-					processEngineConfiguration.setDatabaseType(databaseType);
-				}
-			} finally {
-				con.close();
-			}
-		} catch (Exception ex) {
-			_log.error("Cannot autodetect connection", ex);
-		}
 	}
 }

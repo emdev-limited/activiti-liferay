@@ -11,8 +11,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
-import org.activiti.engine.runtime.Execution;
-
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.scripting.ScriptingUtil;
@@ -63,10 +61,15 @@ public class LiferayScriptEngine implements ScriptEngine {
 	private Map<String, Serializable> toWorkflowContext(Bindings bindings) {
 		Map<String, Serializable> workflowContext = new HashMap<String, Serializable>();
 		
-		for (String varName : bindings.keySet()) {
-			workflowContext.put(varName, (Serializable)bindings.get(varName));
-		}
-		
+		workflowContext.put(WorkflowConstants.CONTEXT_COMPANY_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_COMPANY_ID));
+		workflowContext.put(WorkflowConstants.CONTEXT_GROUP_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_GROUP_ID));
+		workflowContext.put(WorkflowConstants.CONTEXT_USER_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_USER_ID));
+		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
+		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
+		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_TYPE, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_TYPE));
+		workflowContext.put(WorkflowConstants.CONTEXT_SERVICE_CONTEXT, (Serializable)bindings.get(WorkflowConstants.CONTEXT_SERVICE_CONTEXT));
+
+			
 		return workflowContext;
 	}
 
