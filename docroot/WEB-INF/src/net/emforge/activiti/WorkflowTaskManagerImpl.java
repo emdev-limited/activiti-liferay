@@ -12,8 +12,8 @@ import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
 import net.emforge.activiti.entity.ProcessInstanceHistory;
 import net.emforge.activiti.identity.LiferayIdentitySessionImpl;
-import net.emforge.activiti.query.CustomHistoricActivityInstanceQuery;
-import net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl;
+import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
+import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
 import net.emforge.activiti.query.CustomTaskQueryImpl;
 
@@ -25,10 +25,9 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.form.FormProperty;
 import org.activiti.engine.form.TaskFormData;
-import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricActivityInstanceQuery;
+import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.TaskServiceImpl;
-import org.activiti.engine.impl.history.HistoricActivityInstanceEntity;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -239,7 +238,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			_log.debug("Cannot find active task " + workflowTaskId + " , try to find in history");
 			
-			HistoricActivityInstance historyTask = historyService.createHistoricActivityInstanceQuery().activityInstanceId(String.valueOf(workflowTaskId)).singleResult();
+			HistoricTaskInstance historyTask = historyService.createHistoricTaskInstanceQuery().taskId(String.valueOf(workflowTaskId)).singleResult();
 			if (historyTask != null) {
 				return getHistoryWorkflowTask(historyTask);
 			} else {
@@ -311,7 +310,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Transactional
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
@@ -368,7 +366,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
 
         		if (orderByComparator != null) {
         			// TODO need to be implemented
@@ -379,9 +377,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			query.listPage(start, end - start);
         		}
         		
-        		List<HistoricActivityInstance> list = query.list();
+        		List<HistoricTaskInstance> list = query.list();
         		
-        		return getHistoryWorkflowTasks(list, true);
+        		return getHistoryWorkflowTasks(list);
         	}
         }
 	}
@@ -456,7 +454,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
 			String taskName, String assetType, Date dueDateGT, Date dueDateLT,
@@ -525,7 +522,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		CustomHistoricActivityInstanceQuery query = createCustomHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			query.taskNameLike(taskName);
@@ -542,9 +539,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			query.listPage(start, end - start);
         		}
         		
-        		List<HistoricActivityInstance> list = query.list();
+        		List<HistoricTaskInstance> list = query.list();
         		
-        		return getHistoryWorkflowTasks(list, true);
+        		return getHistoryWorkflowTasks(list);
         	}
         }
 	}
@@ -590,7 +587,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		return count.intValue();
         	} else {
         		// search for completed tasks in history service
-        		CustomHistoricActivityInstanceQuery query = createCustomHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId));
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			query.taskNameLike(taskName);
@@ -723,21 +720,18 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return workflowTask;
 	}
 
-	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricActivityInstance> list, boolean onlyCompleted) {
+	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricTaskInstance> list) {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
 		
-		for (HistoricActivityInstance task : list) {
+		for (HistoricTaskInstance task : list) {
 			WorkflowTask workflowTask = getHistoryWorkflowTask(task);
-			// TODO it is workaround until notOpen is not supported in HistoricActiviti query
-			if (workflowTask.getCompletionDate() != null || !onlyCompleted) {
-				result.add(workflowTask);
-			}
+			result.add(workflowTask);
 		}
 		
 		return result;
 	}
-
-	private WorkflowTask getHistoryWorkflowTask(HistoricActivityInstance task) {
+	
+	private WorkflowTask getHistoryWorkflowTask(HistoricTaskInstance task) {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
 		// TODO setAsynchronous(!task.isBlocking());
@@ -747,7 +741,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		// TODO workflowTask.setDescription(task.getDescription());
 		// TODO workflowTask.setDueDate(task.getDuedate());
 		
-		workflowTask.setName(task.getActivityName());
+		workflowTask.setName(task.getName());
 					
 		// get process def from activity
 		String processDefId = task.getProcessDefinitionId();
@@ -780,14 +774,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
 		}
 		
-		// by some reasons, HistoricActivitiInstance has no ID - so, to access it we should use entity implementation
-		HistoricActivityInstanceEntity entity = (HistoricActivityInstanceEntity)task;
-		workflowTask.setWorkflowTaskId(Long.valueOf(entity.getId())); // TODO
+		workflowTask.setWorkflowTaskId(Long.valueOf(task.getId())); // TODO
 		
 		
 		return workflowTask;
 	}
-
+	
 	/** Add comment for the task and whole process
 	 * 
 	 * @param taskId
@@ -822,8 +814,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    return new CustomTaskQueryImpl(serviceImpl.getCommandExecutor());
 	}
 
-	protected CustomHistoricActivityInstanceQuery createCustomHistoricActivityInstanceQuery() {
+	protected CustomHistoricTaskInstanceQuery createCustomHistoricTaskInstanceQuery() {
 		TaskServiceImpl serviceImpl = (TaskServiceImpl)taskService;
-	    return new CustomHistoricActivityInstanceQueryImpl(serviceImpl.getCommandExecutor());
+	    return new CustomHistoricTaskInstanceQueryImpl(serviceImpl.getCommandExecutor());
 	}
 }

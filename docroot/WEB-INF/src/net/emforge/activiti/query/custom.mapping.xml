@@ -65,39 +65,38 @@
 	    </where>
 	</sql>
 
-  <!--  Historic Activities Search -->
-  <select id="customSearchHistoricActivityInstance" parameterType="net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl" resultMap="historicActivityInstanceResultMap">
+  <!--  Historic Task Search -->
+  <select id="customSearchHistoricTaskInstance" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultMap="historicTaskInstanceResultMap">
     select *
-    <include refid="customSearchHistoricActivityInstanceSql"/>
+    <include refid="customSearchHistoricTaskInstanceSql"/>
     <if test="orderBy != null">
       order by ${orderBy}
     </if>
   </select>
   
-  <select id="customSearchHistoricActivityInstanceCount" parameterType="net.emforge.activiti.query.CustomHistoricActivityInstanceQueryImpl" resultType="long">
+  <select id="customSearchHistoricTaskInstanceCount" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultType="long">
     select count(*)
-    <include refid="customSearchHistoricActivityInstanceSql"/>
+    <include refid="customSearchHistoricTaskInstanceSql"/>
   </select>
   
-  <sql id="customSearchHistoricActivityInstanceSql">
-    from ACT_HI_ACTINST HAI
+  <sql id="customSearchHistoricTaskInstanceSql">
+    from ACT_HI_TASKINST HTI
  	<if test="entryClassName != null">
-   	  inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on HAI.PROC_INST_ID_ = APL.process_instance_id
+   	  inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on HTI.PROC_INST_ID_ = APL.process_instance_id
     </if>	
     <where>
-      HAI.END_TIME_ is not null
+      HTI.END_TIME_ is not null
       <if test="nameLike != null">
-        and HAI.ACT_NAME_ like #{nameLike}
+        and HTI.NAME_ like #{nameLike}
       </if>
       <if test="assignee != null">
-        and HAI.ASSIGNEE_ = #{assignee}
+        and HTI.ASSIGNEE_ = #{assignee}
       </if>
    	  <if test="entryClassName != null">
    	    and APL.class_name = #{entryClassName}
       </if>	
     </where>
   </sql>
-
 
 
 </mapper>

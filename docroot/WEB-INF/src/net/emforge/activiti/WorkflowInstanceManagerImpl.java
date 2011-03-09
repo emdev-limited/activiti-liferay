@@ -79,7 +79,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		if (inst != null) {
 			return getWorkflowInstance(inst, null);
 		} else {
-			_log.info("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + "). try to find in history");
+			_log.debug("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + "). try to find in history");
 			
 			HistoricProcessInstance hpi = historyService.createHistoricProcessInstanceQuery().processInstanceId(procId).singleResult();
 			
@@ -265,8 +265,18 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
         
         inst.setEndDate(historyPI.getEndTime());
         inst.setStartDate(historyPI.getStartTime());
-        // TODO
-        inst.setState("");
+
+        List<String> activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
+		// activities contains internal ids - need to be converted into names
+		List<String> activityNames = new ArrayList<String>(activities.size());
+		
+		for (String activiti: activities) {
+			List<HistoricActivityInstance> histActs = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstance.getProcessInstanceId()).activityId(activiti).list();
+			if (histActs.size() > 0) {
+				activityNames.add(histActs.get(0).getActivityName());
+			}
+		}
+		inst.setState(StringUtils.join(activityNames, ","));
 
         // copy variables
         Map<String, Object> vars = 	runtimeService.getVariables(processInstance.getId());

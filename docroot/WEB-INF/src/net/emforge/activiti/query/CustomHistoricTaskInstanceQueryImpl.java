@@ -2,49 +2,49 @@ package net.emforge.activiti.query;
 
 import java.util.List;
 
-import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.AbstractQuery;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
 
-public class CustomHistoricActivityInstanceQueryImpl extends AbstractQuery<CustomHistoricActivityInstanceQuery, HistoricActivityInstance> implements CustomHistoricActivityInstanceQuery {
+public class CustomHistoricTaskInstanceQueryImpl extends AbstractQuery<CustomHistoricTaskInstanceQuery, HistoricTaskInstance> implements CustomHistoricTaskInstanceQuery {
 	protected String assignee;
 	protected String nameLike;
 	protected String entryClassName;
 
-	public CustomHistoricActivityInstanceQueryImpl(CommandContext commandContext) {
+	public CustomHistoricTaskInstanceQueryImpl(CommandContext commandContext) {
 		super(commandContext);
 	}
 
-	public CustomHistoricActivityInstanceQueryImpl(CommandExecutor commandExecutor) {
+	public CustomHistoricTaskInstanceQueryImpl(CommandExecutor commandExecutor) {
 		super(commandExecutor);
 	}
 	
-	public CustomHistoricActivityInstanceQuery taskNameLike(String taskName) {
+	public CustomHistoricTaskInstanceQueryImpl taskNameLike(String taskName) {
 		this.nameLike = taskName; 
 		return this;
 	}
 	
-	public CustomHistoricActivityInstanceQuery taskEntryClassName(String entryClassName) {
+	public CustomHistoricTaskInstanceQuery taskEntryClassName(String entryClassName) {
 		this.entryClassName = entryClassName;
 		return this;
 	}
 	
-	public CustomHistoricActivityInstanceQuery taskAssignee(String assignee) {
+	public CustomHistoricTaskInstanceQueryImpl taskAssignee(String assignee) {
 		this.assignee = assignee;
 		return this;
 	}
 	
 	@Override
 	public long executeCount(CommandContext commandContext) {
-		return (Long) commandContext.getDbSqlSession().selectOne("customSearchHistoricActivityInstanceCount", this);
+		return (Long) commandContext.getDbSqlSession().selectOne("customSearchHistoricTaskInstanceCount", this);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<HistoricActivityInstance> executeList(CommandContext commandContext, Page page) {
-		String statement = "customSearchHistoricActivityInstance";
+	public List<HistoricTaskInstance> executeList(CommandContext commandContext, Page page) {
+		String statement = "customSearchHistoricTaskInstance";
 		
 		return commandContext.getDbSqlSession().selectList(statement, this, page);
 	}
