@@ -3,7 +3,6 @@ package net.emforge.activiti;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipInputStream;
 
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
@@ -12,6 +11,7 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,36 +47,42 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 													   long userId, 
 													   String title, 
 													   InputStream inputStream) throws WorkflowException {
-		String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
-		_log.info("Try to deploy process " + strTitle);
-
-		// deploy
-		Deployment deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", inputStream).deploy();
-
-		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.deploymentId(deployment.getId());
-        List<ProcessDefinition> processDefs = processDefinitionQuery.list();
-
-		_log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
-		
-        _log.info(processDefs.size() + " process definitions deployed");
-        
-        for (ProcessDefinition processDef : processDefs) {
-	        _log.info("Process Definition Id for process " + strTitle + " : " + processDef.getId());
-	        
-	        // save our extension
-	        WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
-				new WorkflowDefinitionExtensionImpl(processDef, companyId, title, processDef.getName(), true, processDef.getVersion());
+		try {
+			String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
+			_log.info("Try to deploy process " + strTitle);
 	
-			workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
-        }
-        
-        // create result (return first process def in case many was deployed
-        if (processDefs.size() > 0) {
-        	return new WorkflowDefinitionImpl(processDefs.get(0), title, true);
-        } else {
-        	return null;
-        }
+			// deploy
+			Deployment deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", inputStream).deploy();
+	
+			ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+	        processDefinitionQuery.deploymentId(deployment.getId());
+	        List<ProcessDefinition> processDefs = processDefinitionQuery.list();
+	
+			_log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
+			
+	        _log.info(processDefs.size() + " process definitions deployed");
+	        
+	        for (ProcessDefinition processDef : processDefs) {
+		        _log.info("Process Definition Id for process " + strTitle + " : " + processDef.getId());
+		        
+		        // Signavio modeller is not stored name into <process> tag - so we need to use title in this case as process name
+		        // save our extension
+		        WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
+					new WorkflowDefinitionExtensionImpl(processDef, companyId, title, StringUtils.isNotBlank(processDef.getName()) ? processDef.getName() : strTitle, true, processDef.getVersion());
+		
+				workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
+	        }
+	        
+	        // create result (return first process def in case many was deployed
+	        if (processDefs.size() > 0) {
+	        	return new WorkflowDefinitionImpl(processDefs.get(0), title, true);
+	        } else {
+	        	return null;
+	        }
+		} catch (Exception ex) {
+			_log.error("Cannot deploy definition", ex);
+			throw new WorkflowException("Cannot deploy definition", ex);
+		}
 	}
 
 	/** Return count of active workflow definitions

@@ -77,7 +77,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(procId).singleResult();
 		
 		if (inst != null) {
-			return getWorkflowInstance(inst, null);
+			return getWorkflowInstance(inst, null, null);
 		} else {
 			_log.debug("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + "). try to find in history");
 			
@@ -145,7 +145,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(insts.size());
 		
 		for (ProcessInstance inst : insts) {
-			result.add(getWorkflowInstance(inst, null));
+			result.add(getWorkflowInstance(inst, null, null));
 		}
 		
 		return result;
@@ -157,7 +157,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 												   Map<String, Serializable> context) throws WorkflowException {
 		processEngine.getIdentityService().setAuthenticatedUserId(String.valueOf(userId));
 		
-		Map<String, Object> vars = convertFromContext(context);
+		//Map<String, Object> vars = convertFromContext(context);
 		
 		// TODO support transition and context
 		runtimeService.signal(idMappingService.getJbpmProcessInstanceId(workflowInstanceId));
@@ -183,7 +183,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		
         ProcessInstance processInstance = runtimeService.startProcessInstanceById(def.getProcessDefinitionId(), vars);
         
-        DefaultWorkflowInstance inst = getWorkflowInstance(processInstance, userId);
+        DefaultWorkflowInstance inst = getWorkflowInstance(processInstance, userId, workflowContext);
 		
         return inst;
 	}
@@ -199,7 +199,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 		
-		return getWorkflowInstance(inst, null);
+		return getWorkflowInstance(inst, null, workflowContext);
 	}
 
 	public static Map<String, Serializable> convertFromVars(Map<String, Object> variables) {
@@ -255,7 +255,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		return result;
 	}
 
-	private DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId) {
+	private DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) {
 		RepositoryService repositoryService = this.processEngine.getRepositoryService();
 		
         HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
@@ -266,7 +266,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
         inst.setEndDate(historyPI.getEndTime());
         inst.setStartDate(historyPI.getStartTime());
 
-        List<String> activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
+        List<String> activities = new ArrayList<String>();
+        try {
+        	activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
+        } catch (Exception ex) {
+        	// in case then process has no user tasks - process may be finished just after it is started
+        	// so - we will not have active activities here.
+        	_log.debug("Error during getting active activities", ex);
+        }
+        
 		// activities contains internal ids - need to be converted into names
 		List<String> activityNames = new ArrayList<String>(activities.size());
 		
@@ -279,8 +287,18 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		inst.setState(StringUtils.join(activityNames, ","));
 
         // copy variables
-        Map<String, Object> vars = 	runtimeService.getVariables(processInstance.getId());
-        Map<String, Serializable> workflowContext = convertFromVars(vars);
+        
+        Map<String, Serializable> workflowContext = null;
+        try {
+        	Map<String, Object> vars = runtimeService.getVariables(processInstance.getId());
+        	workflowContext = convertFromVars(vars);
+        } catch (Exception ex) {
+        	// in case then process has no user tasks - process may be finished just after it is started
+        	// so - we will not have active activities here.
+        	_log.debug("Error during getting context vars", ex);
+        	workflowContext = currentWorkflowContext;
+        }
+        
 		inst.setWorkflowContext(workflowContext);
 
 		inst.setWorkflowDefinitionName(procDef.getName());
@@ -290,11 +308,11 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		if (id == null) {
 			// not exists in DB - create new
 			ProcessInstanceExtensionImpl procInstImpl = new ProcessInstanceExtensionImpl();
-			procInstImpl.setCompanyId(GetterUtil.getLong((Serializable)vars.get(WorkflowConstants.CONTEXT_COMPANY_ID)));
-			procInstImpl.setGroupId(GetterUtil.getLong((Serializable)vars.get(WorkflowConstants.CONTEXT_GROUP_ID)));
+			procInstImpl.setCompanyId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID)));
+			procInstImpl.setGroupId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID)));
 			procInstImpl.setUserId(userId);
-			procInstImpl.setClassName((String)vars.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
-			procInstImpl.setClassPK(GetterUtil.getLong((Serializable)vars.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
+			procInstImpl.setClassName((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
+			procInstImpl.setClassPK(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
 			procInstImpl.setProcessInstanceId(processInstance.getId());
 			
 			id = (Long)processInstanceExtensionDao.save(procInstImpl);
