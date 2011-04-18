@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.workflow.DefaultWorkflowInstance;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
@@ -80,6 +81,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
 	ProcessInstanceHistoryDao processInstanceHistoryDao;
+	
+	@Autowired
+	WorkflowInstanceManagerImpl workflowInstanceManager;
 	
 	@Override
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
@@ -711,7 +715,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
 		Long liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
 		if (liferayProcessInstanceId == null) {
-			throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
+			// subprocess - they do not have liferay process instance - lets try to use original id
+			// lets try to create it
+			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
+			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+			
+			//throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
 		}
 		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
 

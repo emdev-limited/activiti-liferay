@@ -74,10 +74,19 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	@Override
 	public WorkflowInstance getWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
 		String procId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
+		if (procId == null) {
+			procId = String.valueOf(workflowInstanceId);
+		}
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(procId).singleResult();
 		
 		if (inst != null) {
-			return getWorkflowInstance(inst, null, null);
+			try {
+				return getWorkflowInstance(inst, null, null);
+			} catch (Exception ex) {
+				_log.warn("cannot get workflow instance " + ex);
+				_log.debug("cannot get workflow instance", ex);
+				return null;
+			}
 		} else {
 			_log.debug("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + "). try to find in history");
 			
@@ -255,7 +264,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		return result;
 	}
 
-	private DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) {
+	public DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) throws WorkflowException {
 		RepositoryService repositoryService = this.processEngine.getRepositoryService();
 		
         HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
@@ -307,10 +316,17 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		Long id = idMappingService.getLiferayProcessInstanceId(processInstance.getId());
 		if (id == null) {
 			// not exists in DB - create new
+			if (workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID) == null ||
+					workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID) == null ||
+					workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME) == null ||
+					workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK) == null) {
+				// all workflows instances in Liferay should be related to some asset
+				throw new WorkflowException("Process Instance has no asset attached");
+			}
 			ProcessInstanceExtensionImpl procInstImpl = new ProcessInstanceExtensionImpl();
 			procInstImpl.setCompanyId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID)));
 			procInstImpl.setGroupId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID)));
-			procInstImpl.setUserId(userId);
+			procInstImpl.setUserId(userId != null ? userId : 0l);
 			procInstImpl.setClassName((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
 			procInstImpl.setClassPK(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
 			procInstImpl.setProcessInstanceId(processInstance.getId());
