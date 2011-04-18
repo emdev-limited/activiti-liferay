@@ -75,11 +75,12 @@
 	<!-- Activiti Configuration -->
 	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayProcessEngineConfiguration">
 		<property name="dataSource" ref="dataSource"/>
-		<!-- TODO Find a way to autodetect DB -->
-		<!-- property name="databaseType" value="mysql" / -->
 		<property name="transactionManager" ref="transactionManager" />
 		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
 		<property name="databaseSchemaUpdate" value="true" />
+		
+	    <!-- job executor configurations -->
+	    <property name="jobExecutorActivate" value="true" />		
 	</bean>	
 	
 	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">

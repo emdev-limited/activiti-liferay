@@ -2,6 +2,7 @@ package net.emforge.activiti.identity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.GroupQuery;
@@ -10,6 +11,7 @@ import org.activiti.engine.identity.UserQuery;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.cfg.IdentitySession;
 import org.activiti.engine.impl.identity.GroupEntity;
+import org.activiti.engine.impl.identity.IdentityInfoEntity;
 import org.activiti.engine.impl.identity.UserEntity;
 import org.activiti.engine.impl.interceptor.Session;
 import org.apache.commons.lang.ArrayUtils;
@@ -202,44 +204,77 @@ public class LiferayIdentitySessionImpl implements IdentitySession, Session {
 
 	@Override
 	public User createNewUser(String userId) {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
 
 	@Override
 	public void insertUser(User user) {
-		// TODO Auto-generated method stub
+		// _log.error("Method is not implemented"); // TODO
 		
 	}
 
 	@Override
 	public void updateUser(User updatedUser) {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		
 	}
 
 	@Override
 	public Group createNewGroup(String groupId) {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
 
 	@Override
 	public void updateGroup(Group updatedGroup) {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		
 	}
 
 	@Override
 	public GroupQuery createNewGroupQuery() {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
 
 	@Override
 	public UserQuery createNewUserQuery() {
-		// TODO Auto-generated method stub
+		_log.error("Method is not implemented"); // TODO
 		return null;
+	}
+
+	@Override
+	public void deleteUserInfoByUserIdAndKey(String arg0, String arg1) {
+		_log.error("Method is not implemented"); // TODO
+		
+	}
+
+	@Override
+	public IdentityInfoEntity findUserAccountByUserIdAndKey(String arg0,
+			String arg1, String arg2) {
+		_log.error("Method is not implemented"); // TODO
+		return null;
+	}
+
+	@Override
+	public IdentityInfoEntity findUserInfoByUserIdAndKey(String arg0,
+			String arg1) {
+		_log.error("Method is not implemented"); // TODO
+		return null;
+	}
+
+	@Override
+	public List<String> findUserInfoKeysByUserIdAndType(String arg0, String arg1) {
+		_log.error("Method is not implemented"); // TODO
+		return null;
+	}
+
+	@Override
+	public void setUserInfo(String arg0, String arg1, String arg2, String arg3,
+			String arg4, String arg5, Map<String, String> arg6) {
+		_log.error("Method is not implemented"); // TODO
+		
 	}
 
 }

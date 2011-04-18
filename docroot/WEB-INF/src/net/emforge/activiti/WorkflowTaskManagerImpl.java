@@ -95,43 +95,49 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			long workflowTaskId, long assigneeUserId, String comment,
 			Date dueDate, Map<String, Serializable> context)
 			throws WorkflowException {
-		identityService.setAuthenticatedUserId(String.valueOf(userId));
-		
-		String taskId = String.valueOf(workflowTaskId);
-		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-		String currentAssignee = task.getAssignee();
-		
-		// assign task
-		taskService.setAssignee(taskId, String.valueOf(assigneeUserId));
-		
-		// update vars
-		if (dueDate != null) {
-			Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
-			vars.put("dueDate", dueDate);
-			
-			runtimeService.setVariables(task.getProcessInstanceId(), vars);
-		}
-		
-		// save log
-		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
-		processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
-		processInstanceHistory.setUserId(assigneeUserId);
-		
-		Long prevUserId = null;
 		try {
-			prevUserId = Long.valueOf(currentAssignee);
-		} catch (Exception ex) {}
-		
-		if (prevUserId != null) {
-			processInstanceHistory.setPreviousUserId(prevUserId);
+			identityService.setAuthenticatedUserId(String.valueOf(userId));
+			
+			String taskId = String.valueOf(workflowTaskId);
+			Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+			String currentAssignee = task.getAssignee();
+			
+			// assign task
+			taskService.setAssignee(taskId, String.valueOf(assigneeUserId));
+			
+			// update vars
+			if (dueDate != null) {
+				Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
+				vars.put("dueDate", dueDate);
+				
+				runtimeService.setVariables(task.getProcessInstanceId(), vars);
+			}
+			
+			// save log
+			ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
+			processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
+			processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
+			processInstanceHistory.setUserId(assigneeUserId);
+			
+			Long prevUserId = null;
+			try {
+				prevUserId = Long.valueOf(currentAssignee);
+			} catch (Exception ex) {}
+			
+			if (prevUserId != null) {
+				processInstanceHistory.setPreviousUserId(prevUserId);
+			}
+			processInstanceHistory.setComment(comment);
+			processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+	
+			// get new state of task
+			task = taskService.createTaskQuery().taskId(taskId).singleResult();
+			return getWorkflowTask(task);
+		} catch (WorkflowException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new WorkflowException("Cannot assign task", ex);
 		}
-		processInstanceHistory.setComment(comment);
-		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
-
-		// get new state of task
-		task = taskService.createTaskQuery().taskId(taskId).singleResult();
-		return getWorkflowTask(task);
 	}
 
 	@Override
@@ -661,7 +667,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
 		
 		for (Task task : list) {
-			result.add(getWorkflowTask(task));
+			try {
+				result.add(getWorkflowTask(task));
+			} catch (Exception ex) {
+				_log.warn("Cannot convert Activiti task " + task.getId() + " into Liferay: " + ex);
+				_log.debug("Cannot convert Activiti task into Liferay", ex);
+			}
 		}
 		
 		return result;
@@ -672,7 +683,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	 * @param task
 	 * @return
 	 */
-	private WorkflowTask getWorkflowTask(Task task) {
+	private WorkflowTask getWorkflowTask(Task task) throws WorkflowException {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
 		String processInstanceId = task.getProcessInstanceId();
@@ -698,7 +709,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		workflowTask.setWorkflowDefinitionName(processDef.getName());
 		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
-		workflowTask.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(processInstanceId));
+		Long liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+		if (liferayProcessInstanceId == null) {
+			throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
+		}
+		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
 
 		/*
 		long companyId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "companyId"));
