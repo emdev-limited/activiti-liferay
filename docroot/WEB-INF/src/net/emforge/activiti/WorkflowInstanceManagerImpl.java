@@ -59,7 +59,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	
 	@Override
 	public void deleteWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
-		runtimeService.deleteProcessInstance(idMappingService.getJbpmProcessInstanceId(workflowInstanceId), "cancelled");
+		String processInstanceId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
+		_log.info("Deleting process instance " + processInstanceId);
+		    
+		ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery();
+		processInstanceQuery.processInstanceId(processInstanceId);
+		List<ProcessInstance> processInstanceList = processInstanceQuery.list();
+		if (processInstanceList != null && !processInstanceList.isEmpty()) {
+			runtimeService.deleteProcessInstance(processInstanceId, "cancelled");
+		}
 	}
 
 	@Override
