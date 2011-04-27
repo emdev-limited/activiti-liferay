@@ -620,7 +620,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
-			Long count = taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getJbpmProcessInstanceId(workflowInstanceId)).count();
+			Long count = taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId)).count();
 			
 			return count.intValue();
 		}
@@ -636,7 +636,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
-			taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getJbpmProcessInstanceId(workflowInstanceId));
+			taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
 			
 			/* TODO Ordering is not supported
 			if (orderByComparator != null) {

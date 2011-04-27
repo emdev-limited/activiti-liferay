@@ -65,7 +65,7 @@ public class IdMappingService {
 		}
 	}
 	
-	public String getJbpmProcessInstanceId(Long id) {
+	public String getActivitiProcessInstanceId(Long id) {
 		ProcessInstanceExtensionImpl procInst = processInstanceExtensionDao.get(ProcessInstanceExtensionImpl.class, id);
 		if (procInst == null) {
 			return null;

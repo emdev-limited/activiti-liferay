@@ -59,7 +59,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	
 	@Override
 	public void deleteWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
-		String processInstanceId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
+		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		_log.info("Deleting process instance " + processInstanceId);
 		    
 		ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery();
@@ -81,7 +81,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	 */
 	@Override
 	public WorkflowInstance getWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
-		String procId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
+		String procId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		if (procId == null) {
 			procId = String.valueOf(workflowInstanceId);
 		}
@@ -177,7 +177,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		//Map<String, Object> vars = convertFromContext(context);
 		
 		// TODO support transition and context
-		runtimeService.signal(idMappingService.getJbpmProcessInstanceId(workflowInstanceId));
+		runtimeService.signal(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
 		return null;
 	}
 
@@ -208,7 +208,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 
 	@Override
 	public WorkflowInstance updateWorkflowContext(long companyId, long workflowInstanceId, Map<String, Serializable> workflowContext) throws WorkflowException {
-		String processInstanceId = idMappingService.getJbpmProcessInstanceId(workflowInstanceId);
+		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		
 		for (String key : workflowContext.keySet()) {
 			runtimeService.setVariable(processInstanceId, key, workflowContext.get(key));
