@@ -40,6 +40,8 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		
 		// Add Liferay Script Engine Factory
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory());
+		// Add Groovy Script Engine Factory
+		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new GroovyScriptEngineFactory());
 		
 		return processEngine;
 	}
