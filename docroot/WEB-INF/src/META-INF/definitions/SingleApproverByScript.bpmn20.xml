@@ -49,7 +49,11 @@
 			<conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Reject"}]]></conditionExpression>
 		</sequenceFlow>
 		<sequenceFlow id="flow7" name="" sourceRef="usertask2"
-			targetRef="usertask1"></sequenceFlow>
+			targetRef="usertask1">
+			<extensionElements>
+        		<activiti:executionListener event="take" expression="#{execution.removeVariable(&quot;outputTransition&quot;)}"></activiti:executionListener>
+      		</extensionElements>	
+		</sequenceFlow>
 		<endEvent id="endevent1" name="End"></endEvent>
 		<sequenceFlow id="flow8" name="Deny" sourceRef="exclusivegateway1"
 			targetRef="scripttask2">
