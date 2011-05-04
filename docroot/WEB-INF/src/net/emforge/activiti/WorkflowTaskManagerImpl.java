@@ -11,7 +11,7 @@ import java.util.Set;
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
 import net.emforge.activiti.entity.ProcessInstanceHistory;
-import net.emforge.activiti.identity.LiferayIdentitySessionImpl;
+import net.emforge.activiti.identity.LiferayIdentityService;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
@@ -76,7 +76,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Autowired
 	IdMappingService idMappingService;
 	@Autowired
-	LiferayIdentitySessionImpl liferayIdentitySession;
+	LiferayIdentityService liferayIdentityService;
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
@@ -221,7 +221,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		for (IdentityLink participation : participations) {
 			if (StringUtils.isNotEmpty(participation.getGroupId())) {
-				List<org.activiti.engine.identity.User> users = liferayIdentitySession.findUsersByGroup(companyId, participation.getGroupId());
+				List<org.activiti.engine.identity.User> users = liferayIdentityService.findUsersByGroup(companyId, participation.getGroupId());
 				for (org.activiti.engine.identity.User user : users) {
 					userIds.add(Long.valueOf(user.getId()));
 				}

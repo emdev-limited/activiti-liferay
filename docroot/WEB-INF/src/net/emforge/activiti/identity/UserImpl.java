@@ -1,6 +1,6 @@
 package net.emforge.activiti.identity;
 
-import org.activiti.engine.impl.identity.UserEntity;
+import org.activiti.engine.impl.persistence.entity.UserEntity;
 
 
 

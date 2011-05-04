@@ -1,19 +1,18 @@
 package net.emforge.activiti;
 
-import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
-import net.emforge.activiti.identity.LiferayIdentitySessionFactory;
+import net.emforge.activiti.identity.LiferayGroupManagerSessionFactory;
+import net.emforge.activiti.identity.LiferayUserManagerSessionFactory;
 
 import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.impl.cfg.IdentitySession;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.interceptor.SessionFactory;
+import org.activiti.engine.impl.persistence.entity.GroupManager;
+import org.activiti.engine.impl.persistence.entity.UserManager;
 import org.activiti.spring.ProcessEngineFactoryBean;
-import org.apache.commons.lang.StringUtils;
-import org.apache.ibatis.mapping.MappedStatement;
 import org.codehaus.groovy.jsr223.GroovyScriptEngineFactory;
 
 import com.liferay.portal.kernel.log.Log;
@@ -36,8 +35,9 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		ProcessEngine processEngine = super.getObject();
 		
 		// preconfigure process engine to use our identity session
-		Map<Class< ? >, SessionFactory> sessionFactories = processEngineConfiguration.getSessionFactories();
-		sessionFactories.put(IdentitySession.class, new LiferayIdentitySessionFactory());
+		Map<Class<?>, SessionFactory> sessionFactories = processEngineConfiguration.getSessionFactories();
+		sessionFactories.put(GroupManager.class, new LiferayGroupManagerSessionFactory());
+		sessionFactories.put(UserManager.class, new LiferayUserManagerSessionFactory());
 		
 		// Add Liferay Script Engine Factory
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory());

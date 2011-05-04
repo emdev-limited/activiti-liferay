@@ -1,6 +1,6 @@
 package net.emforge.activiti.identity;
 
-import org.activiti.engine.impl.identity.GroupEntity;
+import org.activiti.engine.impl.persistence.entity.GroupEntity;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
