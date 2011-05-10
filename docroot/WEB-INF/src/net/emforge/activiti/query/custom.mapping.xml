@@ -25,9 +25,6 @@
     	<if test="entryClassName != null">
     	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName'
 	    </if>
-    	<if test="orderByDueDate">
-    	  left join ACT_RU_VARIABLE DUE_DATE on (T.ID_ = DUE_DATE.TASK_ID_ or DUE_DATE.PROC_INST_ID_ = T.PROC_INST_ID_) and DUE_DATE.NAME_= 'dueDate'
-	    </if>
 	    
     	<where>
 	      <if test="nameLike != null">

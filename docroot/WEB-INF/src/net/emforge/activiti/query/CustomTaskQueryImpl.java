@@ -56,7 +56,7 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	
 	public CustomTaskQuery orderByDueDate() {
 		orderByDueDate = true;
-		return orderBy(new TaskQueryProperty("DUE_DATE.LONG_"));
+		return orderBy(new TaskQueryProperty("T.DUE_DATE_"));
 	}
 	
 	@Override

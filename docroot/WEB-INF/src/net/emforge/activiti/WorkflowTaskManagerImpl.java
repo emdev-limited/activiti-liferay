@@ -104,18 +104,18 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			
 			String taskId = String.valueOf(workflowTaskId);
 			Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+			
+			// update due date
+			if (dueDate != null) {
+				task.setDueDate(dueDate);
+			}
+			taskService.saveTask(task);
+			
+			// update assignee
 			String currentAssignee = task.getAssignee();
 			
 			// assign task
 			taskService.setAssignee(taskId, String.valueOf(assigneeUserId));
-			
-			// update vars
-			if (dueDate != null) {
-				Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
-				vars.put("dueDate", dueDate);
-				
-				runtimeService.setVariables(task.getProcessInstanceId(), vars);
-			}
 			
 			// save log
 			ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
@@ -434,7 +434,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		
-		runtimeService.setVariable(task.getProcessInstanceId(), "dueDate", dueDate);		
+		task.setDueDate(dueDate);
+		taskService.saveTask(task);
 		
 		// save log
 		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
@@ -704,7 +705,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		workflowTask.setName(task.getName());
 		
 		Map<String, Object> vars = runtimeService.getVariables(processInstanceId);
-		workflowTask.setDueDate((Date)vars.get("dueDate"));
+		workflowTask.setDueDate(task.getDueDate() != null ? task.getDueDate() : (Date)vars.get("dueDate")); // keep getting dueDate from vars for backward compatibility
 		
 		workflowTask.setOptionalAttributes(WorkflowInstanceManagerImpl.convertFromVars(vars));
 		
