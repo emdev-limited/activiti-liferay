@@ -22,6 +22,12 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 public class LiferayScriptEngine implements ScriptEngine {
 	private static Log _log = LogFactoryUtil.getLog(LiferayScriptEngine.class);
 
+	private String liferayScriptName;
+	
+	public LiferayScriptEngine(String liferayScriptName) {
+		this.liferayScriptName = liferayScriptName;
+	}
+	
 	@Override
 	public void setBindings(Bindings arg0, int arg1) {
 		// we just don't need it in activiti
@@ -30,7 +36,7 @@ public class LiferayScriptEngine implements ScriptEngine {
 	
 	@Override
 	public Object eval(String script, Bindings bindings) throws ScriptException {
-		_log.info("Perform Script: " + script);
+		_log.info("Perform Script (" + liferayScriptName + "): " + script);
 		
 		try {
 			Map<String, Serializable> workflowContext = toWorkflowContext(bindings);
@@ -44,7 +50,7 @@ public class LiferayScriptEngine implements ScriptEngine {
 	
 				inputObjects.put(WorkflowConstants.CONTEXT_USER_ID, String.valueOf(user.getUserId()));
 				
-				ScriptingUtil.exec(null, inputObjects, "javascript", script);
+				ScriptingUtil.exec(null, inputObjects, liferayScriptName, script);
 			}
 		} catch (Exception ex) {
 			_log.error("Cannot execute Script", ex);

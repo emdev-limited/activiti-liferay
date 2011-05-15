@@ -16,9 +16,17 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 public class LiferayScriptEngineFactory implements ScriptEngineFactory {
 	private static Log _log = LogFactoryUtil.getLog(LiferayScriptEngineFactory.class);
 	
+	private String activitiScriptName;
+	private String liferayScriptName;
+	
+	public LiferayScriptEngineFactory(String activitiScriptName, String liferayScriptName) {
+		this.activitiScriptName = activitiScriptName;
+		this.liferayScriptName = liferayScriptName;
+	}
+	
 	@Override
 	public String getEngineName() {
-		return "LiferayJavaScript";
+		return activitiScriptName;
 	}
 
 	@Override
@@ -33,7 +41,7 @@ public class LiferayScriptEngineFactory implements ScriptEngineFactory {
 
 	@Override
 	public String getLanguageName() {
-		return "LiferayJavaScript";
+		return activitiScriptName;
 	}
 
 	@Override
@@ -79,7 +87,7 @@ public class LiferayScriptEngineFactory implements ScriptEngineFactory {
 
 	@Override
 	public ScriptEngine getScriptEngine() {
-		return new LiferayScriptEngine();
+		return new LiferayScriptEngine(liferayScriptName);
 	}
 
 }

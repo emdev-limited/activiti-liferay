@@ -42,7 +42,9 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		sessionFactories.put(UserManager.class, new LiferayUserManagerSessionFactory());
 		
 		// Add Liferay Script Engine Factory
-		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory());
+		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory("LiferayJavaScript", "javascript"));
+		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory("LiferayGroovy", "groovy"));
+		
 		// Add Groovy Script Engine Factory
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new GroovyScriptEngineFactory());
 		
