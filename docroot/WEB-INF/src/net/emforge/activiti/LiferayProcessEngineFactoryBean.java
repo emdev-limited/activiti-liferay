@@ -1,7 +1,5 @@
 package net.emforge.activiti;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import net.emforge.activiti.identity.LiferayGroupManagerSessionFactory;
@@ -14,6 +12,7 @@ import org.activiti.engine.impl.persistence.entity.GroupManager;
 import org.activiti.engine.impl.persistence.entity.UserManager;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.codehaus.groovy.jsr223.GroovyScriptEngineFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -27,6 +26,9 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineFactoryBean.class);
 	
+	@Autowired
+	LiferayGroupManagerSessionFactory liferayGroupManagerSessionFactory;
+	
 	@Override
 	public ProcessEngine getObject() throws Exception {
 		// set history level
@@ -36,7 +38,7 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		
 		// preconfigure process engine to use our identity session
 		Map<Class<?>, SessionFactory> sessionFactories = processEngineConfiguration.getSessionFactories();
-		sessionFactories.put(GroupManager.class, new LiferayGroupManagerSessionFactory());
+		sessionFactories.put(GroupManager.class, liferayGroupManagerSessionFactory);
 		sessionFactories.put(UserManager.class, new LiferayUserManagerSessionFactory());
 		
 		// Add Liferay Script Engine Factory

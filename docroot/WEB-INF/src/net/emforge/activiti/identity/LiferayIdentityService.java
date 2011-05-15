@@ -3,11 +3,14 @@ package net.emforge.activiti.identity;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.emforge.activiti.IdMappingService;
+
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.persistence.entity.UserEntity;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
@@ -22,12 +25,15 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 public class LiferayIdentityService {
 	private static Log _log = LogFactoryUtil.getLog(LiferayIdentityService.class);
 
+	@Autowired
+	IdMappingService idMappingService;
+
 	// Groups
 	
-	public List<Group> findGroupsByUser(String userId) {
+	public List<Group> findGroupsByUser(String userName) {
 		try {
 			// get regular roles
-			List<Role> roles = RoleLocalServiceUtil.getUserRoles(Long.valueOf(userId));
+			List<Role> roles = RoleLocalServiceUtil.getUserRoles(idMappingService.getUserId(userName));
 
 			// conert from site roles to the groups
 			List<Group> groups = new ArrayList<Group>();
@@ -37,7 +43,7 @@ public class LiferayIdentityService {
 			}
 			
 			// get group roles for specified user
-			List<UserGroupRole> groupRoles = UserGroupRoleLocalServiceUtil.getUserGroupRoles(Long.valueOf(userId));
+			List<UserGroupRole> groupRoles = UserGroupRoleLocalServiceUtil.getUserGroupRoles(idMappingService.getUserId(userName));
 			for (UserGroupRole groupRole : groupRoles) {
 				GroupImpl groupImpl = new GroupImpl(groupRole);
 				groups.add(groupImpl);
@@ -45,7 +51,7 @@ public class LiferayIdentityService {
 			
 			return groups;
 		} catch (Exception e) {
-			_log.error("Cannot get list of user roles", e);
+			_log.error("Cannot get list of roles for user: " + userName, e);
 			return new ArrayList<Group>();
 		}
 	}
@@ -89,12 +95,12 @@ public class LiferayIdentityService {
 	
 	// Users
 	
-	public UserEntity findUserById(String userId) {
+	public UserEntity findUserById(String userName) {
 		try {
-			com.liferay.portal.model.User liferayUser = UserLocalServiceUtil.getUser(Long.valueOf(userId));
+			com.liferay.portal.model.User liferayUser = UserLocalServiceUtil.getUser(idMappingService.getUserId(userName));
 			return new UserImpl(liferayUser);
 		} catch (Exception ex) {
-			_log.error("Cannot find user " + userId + " : " + ex.getMessage());
+			_log.error("Cannot find user " + userName + " : " + ex.getMessage());
 			return null;
 		}
 	}

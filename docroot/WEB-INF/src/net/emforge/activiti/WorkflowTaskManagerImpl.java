@@ -44,7 +44,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.workflow.DefaultWorkflowInstance;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
@@ -100,7 +99,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			Date dueDate, Map<String, Serializable> context)
 			throws WorkflowException {
 		try {
-			identityService.setAuthenticatedUserId(String.valueOf(userId));
+			identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
 			
 			String taskId = String.valueOf(workflowTaskId);
 			Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -115,7 +114,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			String currentAssignee = task.getAssignee();
 			
 			// assign task
-			taskService.setAssignee(taskId, String.valueOf(assigneeUserId));
+			taskService.setAssignee(taskId, idMappingService.getUserName(assigneeUserId));
 			
 			// save log
 			ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
@@ -148,7 +147,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public WorkflowTask completeWorkflowTask(long companyId, long userId, long workflowTaskId, 
 											 String transitionName, String comment,
 											 Map<String, Serializable> context) throws WorkflowException {
-		identityService.setAuthenticatedUserId(String.valueOf(userId));
+		identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -201,7 +200,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		result.add("Done");
 		
 		return result;
-	}
+	}	
 
 	@Override
 	public long[] getPooledActorsIds(long companyId, long workflowTaskId) throws WorkflowException {
@@ -332,7 +331,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
 
         		// is comparator specified
         		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
@@ -356,7 +355,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
 
         		// is comparator specified
         		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
@@ -376,7 +375,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
 
         		if (orderByComparator != null) {
         			// TODO need to be implemented
@@ -403,7 +402,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
 	        	
         		Long count = taskQuery.count();
 	    		return count.intValue();
@@ -413,12 +412,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
 	        	
 	    		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(String.valueOf(userId)).finished();
+        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(idMappingService.getUserName(userId)).finished();
         		
         		Long count = query.count();
 	    		return count.intValue();
@@ -429,7 +428,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Override
 	public WorkflowTask updateDueDate(long companyId, long userId, long workflowTaskId, String comment, Date dueDate)
 			throws WorkflowException {
-		identityService.setAuthenticatedUserId(String.valueOf(userId));
+		identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -477,7 +476,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));;
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));;
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -507,7 +506,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -533,7 +532,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
-        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			query.taskNameLike(taskName);
@@ -568,7 +567,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(String.valueOf(userId));;
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -585,7 +584,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         } else {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(String.valueOf(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -598,7 +597,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		return count.intValue();
         	} else {
         		// search for completed tasks in history service
-        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(String.valueOf(userId));
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			query.taskNameLike(taskName);
@@ -621,7 +620,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
-			Long count = taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId)).count();
+			Long count = taskQuery.taskAssignee(idMappingService.getUserName(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId)).count();
 			
 			return count.intValue();
 		}
@@ -637,7 +636,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
-			taskQuery.taskAssignee(String.valueOf(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
+			taskQuery.taskAssignee(idMappingService.getUserName(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
 			
 			/* TODO Ordering is not supported
 			if (orderByComparator != null) {
@@ -733,8 +732,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		String assignee = task.getAssignee();
 		if (assignee != null && !"null".equals(assignee)) { // TODO check why we have this "null" string
 			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			
 			WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
-					User.class.getName(), Long.valueOf(assignee));
+					User.class.getName(), idMappingService.getUserId(assignee));
 			workflowTaskAssignees.add(workflowTaskAssignee);
 			
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
@@ -745,7 +745,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return workflowTask;
 	}
 
-	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricTaskInstance> list) {
+	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricTaskInstance> list) throws WorkflowException {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
 		
 		for (HistoricTaskInstance task : list) {
@@ -756,7 +756,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return result;
 	}
 	
-	private WorkflowTask getHistoryWorkflowTask(HistoricTaskInstance task) {
+	private WorkflowTask getHistoryWorkflowTask(HistoricTaskInstance task) throws WorkflowException {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
 		// TODO setAsynchronous(!task.isBlocking());
@@ -793,7 +793,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		if (assignee != null && !"null".equals(assignee)) { // TODO check why we have this "null" string
 			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
 			WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
-					User.class.getName(), Long.valueOf(assignee));
+					User.class.getName(), idMappingService.getUserId(assignee));
 			workflowTaskAssignees.add(workflowTaskAssignee);
 			
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);

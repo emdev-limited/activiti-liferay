@@ -172,7 +172,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	public WorkflowInstance signalWorkflowInstance(long companyId, long userId,
 												   long workflowInstanceId, String transitionName,
 												   Map<String, Serializable> context) throws WorkflowException {
-		processEngine.getIdentityService().setAuthenticatedUserId(String.valueOf(userId));
+		processEngine.getIdentityService().setAuthenticatedUserId(idMappingService.getUserName(userId));
 		
 		//Map<String, Object> vars = convertFromContext(context);
 		
@@ -187,7 +187,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 												  Map<String, Serializable> workflowContext) throws WorkflowException {
 		_log.info("Start workflow instance " + workflowDefinitionName + " : " + workflowDefinitionVersion);
 		
-		processEngine.getIdentityService().setAuthenticatedUserId(String.valueOf(userId));
+		processEngine.getIdentityService().setAuthenticatedUserId(idMappingService.getUserName(userId));
 		
 		WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
 		

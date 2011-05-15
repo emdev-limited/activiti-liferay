@@ -2,6 +2,8 @@ package net.emforge.activiti.identity;
 
 import java.util.List;
 
+import net.emforge.activiti.IdMappingService;
+
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.GroupQuery;
 import org.activiti.engine.impl.Page;
@@ -13,11 +15,12 @@ import org.springframework.stereotype.Service;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+@Service("liferayGroupManagerSession")
 public class LiferayGroupManagerSession extends GroupManager {
-	
 	private static Log _log = LogFactoryUtil.getLog(LiferayGroupManagerSession.class);
 
-	private LiferayIdentityService liferayIdentityService = new LiferayIdentityService();
+	@Autowired
+	private LiferayIdentityService liferayIdentityService;
 	
 	@Override
 	public Group createNewGroup(String groupId) {
