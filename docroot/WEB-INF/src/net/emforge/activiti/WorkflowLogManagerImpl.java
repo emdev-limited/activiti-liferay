@@ -1,13 +1,18 @@
 package net.emforge.activiti;
 
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
-import net.emforge.activiti.entity.ProcessInstanceHistory;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.ProcessEngine;
+import net.emforge.activiti.log.WorkflowLogEntry;
+
+import org.activiti.engine.TaskService;
+import org.activiti.engine.impl.persistence.entity.CommentEntity;
+import org.activiti.engine.task.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,14 +29,11 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 	private static Log _log = LogFactoryUtil.getLog(WorkflowLogManagerImpl.class);
 
 	@Autowired
-	ProcessEngine processEngine;
+	TaskService taskService;
+
 	@Autowired
 	IdMappingService idMappingService;
-	@Autowired
-	HistoryService historyService;
-	
-	@Autowired
-	ProcessInstanceHistoryDao processInstanceHistoryDao;
+
 	
 	@Override
 	public int getWorkflowLogCountByWorkflowInstance(long companyId, long workflowInstanceId, 
@@ -53,9 +55,70 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 															   List<Integer> logTypes, 
 															   int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
 		
-		List<ProcessInstanceHistory> historyDetails = processInstanceHistoryDao.searchByWorkflowInstance(workflowInstanceId, logTypes, start, end, orderByComparator);
+		List<Comment> processInstanceComments = taskService.getProcessInstanceComments(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
+		List<WorkflowLog> workflowLogs = getWorkflowLogsFromComments(processInstanceComments);
+		
+		return workflowLogs;
+	}
 
-		return getWorkflowLogs(historyDetails);
+	private List<WorkflowLog> getWorkflowLogsFromComments(
+			List<Comment> processInstanceComments) {
+		List<WorkflowLog> logs = new ArrayList<WorkflowLog>(processInstanceComments.size());
+		
+		for (Comment comment : processInstanceComments) {
+			WorkflowLog log = getWorkflowLogFromComment(comment);
+			if(log != null) {
+				logs.add(log);
+			}
+		}
+		
+		return logs;
+	}
+	
+	private WorkflowLog getWorkflowLogFromComment(Comment comment) {
+		
+		if (comment instanceof CommentEntity) {
+			CommentEntity commentEntity = (CommentEntity) comment;
+			
+			if (commentEntity.getType().equals(CommentEntity.TYPE_EVENT)
+					&& (commentEntity.getAction().equals(WorkflowLogEntry.TASK_ASSIGN)
+						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_COMPLETION) 
+						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_UPDATE))) {
+				
+				WorkflowLogEntry workflowLogEntry = null;
+				try {
+					JAXBContext context = JAXBContext.newInstance(WorkflowLogEntry.class);
+					Unmarshaller unmarshaller = context.createUnmarshaller();
+					//note: setting schema to null will turn validator off
+					unmarshaller.setSchema(null);
+					
+					StringReader stringReader = new StringReader(commentEntity.getFullMessage());
+					workflowLogEntry = (WorkflowLogEntry) unmarshaller.unmarshal(stringReader);
+				} catch (Exception e) {
+					_log.error("Could not deserialize WorkflowLogEntry from XML", e);
+				}
+				
+				DefaultWorkflowLog log = new DefaultWorkflowLog();
+				
+				log.setUserId(Long.valueOf(commentEntity.getUserId()));
+				log.setCreateDate(commentEntity.getTime());
+				log.setWorkflowLogId(Long.valueOf(commentEntity.getId()));
+				
+				if (workflowLogEntry != null) {
+					log.setComment(workflowLogEntry.getComment());
+					log.setPreviousState(workflowLogEntry.getPreviousState());
+					log.setPreviousUserId(workflowLogEntry.getPreviousUserId());
+					log.setPreviousRoleId(workflowLogEntry.getPreviousRoleId());
+					log.setState(workflowLogEntry.getState());
+					log.setType(workflowLogEntry.getType());
+					log.setRoleId(workflowLogEntry.getRoleId());
+				}
+				
+				return log;
+			}
+		}
+		
+		return null;		
 	}
 
 	@Override
@@ -66,34 +129,5 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 		return null;
 	}
 
-	private List<WorkflowLog> getWorkflowLogs(List<ProcessInstanceHistory> historyDetails) {
-		List<WorkflowLog> logs = new ArrayList<WorkflowLog>(historyDetails.size());
-		
-		for (ProcessInstanceHistory historyDetail : historyDetails) {
-			WorkflowLog log = getWorkflowLog(historyDetail);
-			if (log != null) {
-				logs.add(log);
-			}
-		}
-		
-		return logs;
-	}
-
-	private WorkflowLog getWorkflowLog(ProcessInstanceHistory historyDetail) {
-		DefaultWorkflowLog log = new DefaultWorkflowLog();
-		
-		log.setComment(historyDetail.getComment());
-		log.setCreateDate(historyDetail.getCreateDate());
-		log.setPreviousState(historyDetail.getPreviousState());
-		log.setPreviousUserId(historyDetail.getPreviousUserId());
-		log.setPreviousRoleId(historyDetail.getPreviousRoleId());
-		log.setState(historyDetail.getState());
-		log.setType(historyDetail.getType());
-		log.setRoleId(historyDetail.getRoleId());
-		log.setUserId(historyDetail.getUserId());
-		log.setWorkflowLogId(historyDetail.getProcessInstanceHistoryId());
-		
-		return log;
-	}
 
 }

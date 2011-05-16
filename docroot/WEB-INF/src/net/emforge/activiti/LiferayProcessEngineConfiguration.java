@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import net.emforge.activiti.engine.impl.LiferayTaskServiceImpl;
+
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.db.IbatisVariableTypeHandler;
 import org.activiti.engine.impl.util.IoUtil;
@@ -21,6 +23,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfiguration {
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineConfiguration.class);
+	
+	public LiferayProcessEngineConfiguration() {
+		//replace taskService with own implementation 
+		taskService = new LiferayTaskServiceImpl();
+	}
 	
 	@Override
 	public void initDatabaseType() {

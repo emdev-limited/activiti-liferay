@@ -80,7 +80,10 @@
 		<property name="databaseSchemaUpdate" value="true" />
 		
 	    <!-- job executor configurations -->
-	    <property name="jobExecutorActivate" value="true" />		
+	    <property name="jobExecutorActivate" value="true" />
+	    
+	    <!-- history configuration -->
+	    <property name="history" value="audit" />		
 	</bean>	
 	
 	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">

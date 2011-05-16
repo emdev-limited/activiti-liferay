@@ -1,6 +1,7 @@
 package net.emforge.activiti;
 
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -8,10 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
-import net.emforge.activiti.dao.ProcessInstanceHistoryDao;
-import net.emforge.activiti.entity.ProcessInstanceHistory;
+import net.emforge.activiti.engine.LiferayTaskService;
 import net.emforge.activiti.identity.LiferayIdentityService;
+import net.emforge.activiti.log.WorkflowLogEntry;
+import net.emforge.activiti.log.WorkflowLogTypeMapperUtil;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
@@ -79,9 +84,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
-	ProcessInstanceHistoryDao processInstanceHistoryDao;
-	
-	@Autowired
 	WorkflowInstanceManagerImpl workflowInstanceManager;
 	
 	@Override
@@ -117,10 +119,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			taskService.setAssignee(taskId, idMappingService.getUserName(assigneeUserId));
 			
 			// save log
-			ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
-			processInstanceHistory.setType(WorkflowLog.TASK_ASSIGN);
-			processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
-			processInstanceHistory.setUserId(assigneeUserId);
+			WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+			workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
 			
 			Long prevUserId = null;
 			try {
@@ -128,11 +128,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			} catch (Exception ex) {}
 			
 			if (prevUserId != null) {
-				processInstanceHistory.setPreviousUserId(prevUserId);
+				workflowLogEntry.setPreviousUserId(prevUserId);
 			}
-			processInstanceHistory.setComment(comment);
-			processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
-	
+			workflowLogEntry.setComment(comment);
+			
+			addWorkflowLogEntryToProcess(task, workflowLogEntry);
+			
 			// get new state of task
 			task = taskService.createTaskQuery().taskId(taskId).singleResult();
 			return getWorkflowTask(task);
@@ -158,17 +159,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		taskService.complete(taskId, vars);
 
 		// save log
-		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
-		processInstanceHistory.setType(WorkflowLog.TASK_COMPLETION);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
-		processInstanceHistory.setUserId(userId);
-		processInstanceHistory.setComment(comment);
-		processInstanceHistory.setState(task.getName());
+		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
+		workflowLogEntry.setComment(comment);
+		workflowLogEntry.setState(task.getName());
 		
-		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+		addWorkflowLogEntryToProcess(task, workflowLogEntry);
 
 		
-		addTaskComment(userId, taskId, comment);
 		
 		// TODO - find the next task
 		return null;
@@ -437,13 +435,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		taskService.saveTask(task);
 		
 		// save log
-		ProcessInstanceHistory processInstanceHistory = new ProcessInstanceHistory();
-		processInstanceHistory.setType(WorkflowLog.TASK_UPDATE);
-		processInstanceHistory.setWorkflowInstanceId(idMappingService.getLiferayProcessInstanceId(task.getProcessInstanceId()));
-		processInstanceHistory.setUserId(userId);
-		processInstanceHistory.setComment(comment);
+		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+		workflowLogEntry.setType(WorkflowLog.TASK_UPDATE);
+		workflowLogEntry.setComment(comment);
 		
-		processInstanceHistoryDao.saveOrUpdate(processInstanceHistory);
+		addWorkflowLogEntryToProcess(task, workflowLogEntry);
 		
 		task = taskService.createTaskQuery().taskId(taskId).singleResult();
 		return getWorkflowTask(task);
@@ -805,15 +801,33 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return workflowTask;
 	}
 	
-	/** Add comment for the task and whole process
+	/** 
+	 * Add workflow log entry to process.
 	 * 
 	 * @param taskId
 	 * @param comment
 	 */
-	private void addTaskComment(Long userId, String taskId, String comment) {
-		// TODO Looks like comments is not supported at all in Activiti :(
-		return;
+	private void addWorkflowLogEntryToProcess(Task task, WorkflowLogEntry workflowLogEntry) {
+		
+		if (taskService instanceof LiferayTaskService) {
+			LiferayTaskService liferayTaskService = (LiferayTaskService) taskService;
+			liferayTaskService.addWorkflowLogEntry(task.getId(), task.getProcessInstanceId(), workflowLogEntry);
+		}
 	}
+	
+//	/** 
+//	 * Add workflow log entry to task.
+//	 * 
+//	 * @param taskId
+//	 * @param comment
+//	 */
+//	private void addWorkflowLogEntryToTask(Task task, WorkflowLogEntry workflowLogEntry) {
+//		
+//		if (taskService instanceof LiferayTaskService) {
+//			LiferayTaskService liferayTaskService = (LiferayTaskService) taskService;
+//			liferayTaskService.addWorkflowLogEntry(task.getId(), null, workflowLogEntry);
+//		}
+//	}
 
 	
 	private String getAssetClassName(String assetType) {
