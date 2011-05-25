@@ -9,6 +9,7 @@ import java.util.zip.ZipInputStream;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
 
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -22,7 +23,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
 import com.liferay.portal.kernel.workflow.WorkflowException;
@@ -64,6 +64,10 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 				deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
 			} catch (Exception ex) {
+				if (ex instanceof ActivitiException) {
+					_log.error("Cannot load worfklow definition", ex);
+				}
+				
 				_log.info("Cannot deploy process as xml - lets try as bar");
 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
