@@ -32,7 +32,7 @@
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-orm.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/commons-io.jar"/>
 	<classpathentry kind="lib" path="docroot/WEB-INF/lib/groovy-1.7.5.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.5.jar" sourcepath="/activiti-engine"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.5.jar" sourcepath="/activiti-spring"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.6.jar"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
