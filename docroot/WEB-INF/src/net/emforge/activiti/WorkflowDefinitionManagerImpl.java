@@ -60,21 +60,33 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 			
 			// deploy
 			Deployment deployment = null;
+			ActivitiException activitiException = null;			
+			
 			try {
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 				deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
-			} catch (Exception ex) {
-				if (ex instanceof ActivitiException) {
-					_log.error("Cannot load worfklow definition", ex);
-				}
-				
+			} catch (ActivitiException ae) {
+				//save exception
+				activitiException = ae;
+			}
+			
+			if (deployment == null && activitiException != null) {
 				_log.info("Cannot deploy process as xml - lets try as bar");
 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 				ZipInputStream zipInputStream = new ZipInputStream(bais);
+				try {
 				deployment = repositoryService.createDeployment().name(strTitle + ".bar").addZipInputStream(zipInputStream).deploy();
-
+				} catch (ActivitiException ae) {
+					//save exception
+					activitiException = ae;
+				}
 			}
+			
+			if (deployment == null && activitiException != null) {
+				_log.error("Unable to deploy worfklow definition", activitiException);
+			}
+			
 	
 			ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
 	        processDefinitionQuery.deploymentId(deployment.getId());

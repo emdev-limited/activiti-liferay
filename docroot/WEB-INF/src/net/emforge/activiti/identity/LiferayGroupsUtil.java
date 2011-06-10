@@ -25,12 +25,12 @@ import com.liferay.portal.service.RoleLocalServiceUtil;
 /** This class is responsible for converting group roles into groups with format groupId/roleName
  * 
  * @author akakunin
- * @author oteichmann
+ * @author Oliver Teichmann, PRODYNA AG
  *
  */
 @Service("liferayGroups")
-public class LiferayGroups {
-	private static Log _log = LogFactoryUtil.getLog(LiferayGroups.class);
+public class LiferayGroupsUtil {
+	private static Log _log = LogFactoryUtil.getLog(LiferayGroupsUtil.class);
 	
 	public Collection<String> getGroups(DelegateExecution execution, String groups) {
 		String[] groupsArray = groups.split(",");

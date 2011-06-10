@@ -21,12 +21,20 @@ import org.apache.ibatis.type.JdbcType;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+/**
+ * Custom {@link SpringProcessEngineConfiguration} implementation to load own classloader and database configurations.
+ *
+ * @author akakunin
+ * @author Oliver Teichmann, PRODYNA AG
+ *
+ */
 public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfiguration {
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineConfiguration.class);
 	
 	public LiferayProcessEngineConfiguration() {
 		//replace taskService with own implementation 
 		taskService = new LiferayTaskServiceImpl();
+		classLoader = new DatabaseClassloader(this.getClass().getClassLoader());
 	}
 	
 	@Override

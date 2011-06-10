@@ -21,12 +21,12 @@ import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
 /**
  * Service utility class for asset opperations.
  * 
- * @author oteichmann
+ * @author Oliver Teichmann, PRODYNA AG
  */
 @Service("liferayAssets")
-public class LiferayAssets {
+public class LiferayAssetsUtil {
 	
-	private static Log _log = LogFactoryUtil.getLog(LiferayAssets.class);
+	private static Log _log = LogFactoryUtil.getLog(LiferayAssetsUtil.class);
 	
 	/**
 	 * Get the tag list for the asset of the current execution.

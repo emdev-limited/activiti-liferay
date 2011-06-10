@@ -31,9 +31,11 @@ import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import net.emforge.activiti.StartUpAction;
 
-/** Stratup action called for Activiti Workflow Engine
+/** 
+ * Startup action called after deployment of Activiti Workflow plugin. Initial settings get configured in Liferay. 
  * 
  * @author akakunin
+ * @author Oliver Teichmann, PRODYNA AG
  *
  */
 public class StartUpAction extends SimpleAction {
@@ -151,7 +153,7 @@ public class StartUpAction extends SimpleAction {
 		// Deploy workflow definitions
 		int workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_SINGLE_APPROVER_BY_SCRIPT);
 		if(workflowDefinitionCount < 1) { 
-			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/definitions/" + PROCDEF_SINGLE_APPROVER_BY_SCRIPT + ".bpmn20.xml");
+			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_SINGLE_APPROVER_BY_SCRIPT + ".bar");
 			if(resourceAsStream != null) {
 				WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_SINGLE_APPROVER_BY_SCRIPT, resourceAsStream);
 			}
@@ -159,7 +161,7 @@ public class StartUpAction extends SimpleAction {
 		
 		workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_TAG_BASED_CONTENT_APPROVER);
 		if(workflowDefinitionCount < 1) { 
-			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/definitions/" + PROCDEF_TAG_BASED_CONTENT_APPROVER + ".bpmn20.xml");
+			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_TAG_BASED_CONTENT_APPROVER + ".bar");
 			if(resourceAsStream != null) {
 				WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_TAG_BASED_CONTENT_APPROVER, resourceAsStream);
 			}

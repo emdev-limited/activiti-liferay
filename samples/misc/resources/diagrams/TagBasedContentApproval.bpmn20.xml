@@ -7,7 +7,7 @@
 	<process id="TagBasedContentApproval" name="TagBasedContentApproval">
 		<startEvent id="startevent1" name="Start"></startEvent>
 		<serviceTask id="servicetask1" name="Get Candidate Groups For Asset Tags"
-			activiti:expression="#{tagBasedContentApproval.getCandidateGroupsForAssetTags(execution)}" activiti:resultVariableName="candidateGroupList"></serviceTask>
+			activiti:class="net.emforge.acitiviti.samples.GetCandidateGroupsForAssetTagsDelegate"></serviceTask>
 		<userTask id="usertask1" name="Review Asset"
 			activiti:candidateGroups="#{liferayGroups.getGroupsFromList(execution,candidateGroupList)}">
 			<extensionElements>

@@ -9,68 +9,59 @@
 		</copy>
 	</target>
 	
+	<path id="project.classpath">
+		<path refid="portal.classpath"/>
+		<path path="bin" />
+		<fileset dir="docroot/WEB-INF/lib/">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	
 	<target name="build-samples">
-		<delete dir="samples" />
-		<mkdir dir="samples" />
 		
 		<!-- todo -->
-		<copy 
-			file="docroot/WEB-INF/src/META-INF/definitions/todo.bpmn20.xml" 
-			overwrite="true"
-			tofile="samples/todo.bpmn20.xml"
-		/>
-
-		<jar
-			basedir="samples"
-			excludes="*.bar"
-			jarfile="samples/ToDo.bar"
-		/>
-
-		<delete file="samples/todo.bpmn20.xml" />
+		<zip destfile="samples/misc/dist/ToDo.bar">
+			<fileset dir="samples/misc/resources/diagrams/">
+				<include name="todo.bpmn20.xml"/>
+			</fileset>
+		</zip>
 		
 		<!-- Administrator Task -->
-		<copy 
-			file="docroot/WEB-INF/src/META-INF/definitions/AdministratorTask.bpmn20.xml" 
-			overwrite="true"
-			tofile="samples/AdministratorTask.bpmn20.xml"
-		/>
-
-		<jar
-			basedir="samples"
-			excludes="*.bar"
-			jarfile="samples/AdministratorTask.bar"
-		/>
-
-		<delete file="samples/AdministratorTask.bpmn20.xml" />
+		<zip destfile="samples/misc/dist/AdministratorTask.bar">
+			<fileset dir="samples/misc/resources/diagrams/">
+				<include name="AdministratorTask.bpmn20.xml"/>
+			</fileset>
+		</zip>
 		
 		<!-- Single Approver -->
-		<copy 
-			file="docroot/WEB-INF/src/META-INF/definitions/SingleApprover.bpmn20.xml" 
-			overwrite="true"
-			tofile="samples/SingleApprover.bpmn20.xml"
-		/>
-
-		<jar
-			basedir="samples"
-			excludes="*.bar"
-			jarfile="samples/SingleApprover.bar"
-		/>
-
-		<delete file="samples/SingleApprover.bpmn20.xml" />
+		<zip destfile="samples/misc/dist/SingleApprover.bar">
+			<fileset dir="samples/misc/resources/diagrams/">
+				<include name="SingleApprover.bpmn20.xml"/>
+			</fileset>
+		</zip>
 		
 		<!-- Single Approver By Script -->
-		<copy 
-			file="docroot/WEB-INF/src/META-INF/definitions/SingleApproverByScript.bpmn20.xml" 
-			overwrite="true"
-			tofile="samples/SingleApproverByScript.bpmn20.xml"
-		/>
+		<zip destfile="samples/misc/dist/SingleApproverByScript.bar">
+			<fileset dir="samples/misc/resources/diagrams/">
+				<include name="SingleApproverByScript.bpmn20.xml"/>
+			</fileset>
+		</zip>
+		
+		<!-- Tag Based Content Approval -->
+		<mkdir dir="samples/tbca/tempclasses"/>
+		
+		<javac srcdir="samples/tbca/java" destdir="samples/tbca/tempclasses" classpathref="project.classpath" debug="on" />
+		
+		<zip destfile="samples/tbca/dist/TagBasedContentApproval.bar">
+			<fileset dir="samples/tbca/resources/diagrams">
+			    <include name="TagBasedContentApproval.bpmn20.xml"/>
+			</fileset>
+			<zipfileset dir="samples/tbca/tempclasses" prefix="classes">
+				<include name="**/*.class"/>
+			</zipfileset>
+		</zip>
+	
+		<delete dir="samples/tbca/tempclasses" />
 
-		<jar
-			basedir="samples"
-			excludes="*.bar"
-			jarfile="samples/SingleApproverByScript.bar"
-		/>
-
-		<delete file="samples/SingleApproverByScript.bpmn20.xml" />
 	</target>	
 </project>
