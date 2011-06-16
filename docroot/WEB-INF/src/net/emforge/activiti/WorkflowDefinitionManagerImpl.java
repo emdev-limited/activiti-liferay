@@ -76,7 +76,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 				}
 			}
 			
-			if (deployment == null && activitiException != null) {
+			if (deployment == null) {
 				_log.info("Cannot deploy process as xml - lets try as bar");
 
 				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -89,8 +89,14 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 				}
 			}
 			
-			if (deployment == null && activitiException != null) {
-				_log.error("Unable to deploy worfklow definition", activitiException);
+			if (deployment == null) {
+				if (activitiException != null) {
+					_log.error("Unable to deploy worfklow definition", activitiException);
+				} else {
+					_log.error("No workflows found");
+				}
+				
+				throw new WorkflowException("Cannot deploy definition");
 			}
 
 			ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
@@ -100,6 +106,10 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 			_log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
 			
 	        _log.info(processDefs.size() + " process definitions deployed");
+	        
+	        if (processDefs.size() == 0) {
+	        	throw new WorkflowException("No process definitions found");
+	        }
 	        
 	        for (ProcessDefinition processDef : processDefs) {
 		        _log.info("Process Definition Id for process " + processDef.getName() + " : " + processDef.getId());
