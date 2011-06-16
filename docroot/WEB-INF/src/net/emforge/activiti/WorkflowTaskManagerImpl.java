@@ -176,20 +176,24 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public List<String> getNextTransitionNames(long companyId, long userId, long workflowTaskId) throws WorkflowException {
 		if (workflowTaskId != 0) {
 			String taskId = String.valueOf(workflowTaskId);
-			TaskFormData formData = processEngine.getFormService().getTaskFormData(taskId);
-			
-			List<FormProperty> properties = formData.getFormProperties();
-			for (FormProperty property : properties) {
-				if (property.getId().equals("outputTransition")) {
-					// get values
-					Map<String, String> outputTransitions = (Map<String, String>)property.getType().getInformation("values");
-					
-					// create list from them
-					List<String> result = new ArrayList<String>();
-					result.addAll(outputTransitions.keySet());
-					
-					return result;
+			try {
+				TaskFormData formData = processEngine.getFormService().getTaskFormData(taskId);
+				
+				List<FormProperty> properties = formData.getFormProperties();
+				for (FormProperty property : properties) {
+					if (property.getId().equals("outputTransition")) {
+						// get values
+						Map<String, String> outputTransitions = (Map<String, String>)property.getType().getInformation("values");
+						
+						// create list from them
+						List<String> result = new ArrayList<String>();
+						result.addAll(outputTransitions.keySet());
+						
+						return result;
+					}
 				}
+			} catch (Exception ex) {
+				_log.error("Cannot get next transitions", ex);
 			}
 		}
 		
