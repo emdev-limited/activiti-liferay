@@ -636,7 +636,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
-			taskQuery.taskAssignee(idMappingService.getUserName(userId)).processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
+			
+			if (userId != 0l) {
+				taskQuery.taskAssignee(idMappingService.getUserName(userId));
+			}
+			
+			taskQuery.processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
 			
 			/* TODO Ordering is not supported
 			if (orderByComparator != null) {
