@@ -193,7 +193,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 					}
 				}
 			} catch (Exception ex) {
-				_log.error("Cannot get next transitions", ex);
+				_log.warn("Cannot get next transitions: " + ex.getMessage());
+				_log.debug("Cannot get next transitions", ex);
 			}
 		}
 		
