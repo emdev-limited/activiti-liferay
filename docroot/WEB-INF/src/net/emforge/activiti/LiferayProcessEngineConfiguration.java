@@ -3,11 +3,18 @@ package net.emforge.activiti;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import net.emforge.activiti.engine.impl.LiferayTaskServiceImpl;
+import net.emforge.activiti.hook.LiferayBpmnParser;
 
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
+import org.activiti.engine.impl.bpmn.parser.BpmnParser;
 import org.activiti.engine.impl.db.IbatisVariableTypeHandler;
+import org.activiti.engine.impl.persistence.deploy.Deployer;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.impl.util.ReflectUtil;
 import org.activiti.engine.impl.variable.VariableType;
@@ -76,6 +83,29 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 				IoUtil.closeSilently(inputStream);
 			}
 		}
+	}
+	
+	@Override
+	protected Collection<? extends Deployer> getDefaultDeployers() {
+		List<Deployer> defaultDeployers = new ArrayList<Deployer>();
+
+		BpmnDeployer bpmnDeployer = new BpmnDeployer();
+		bpmnDeployer.setExpressionManager(expressionManager);
+		bpmnDeployer.setIdGenerator(idGenerator);
+		BpmnParser bpmnParser = new LiferayBpmnParser(expressionManager);
+
+		if (preParseListeners != null) {
+			bpmnParser.getParseListeners().addAll(preParseListeners);
+		}
+		bpmnParser.getParseListeners().addAll(getDefaultBPMNParseListeners());
+		if (postParseListeners != null) {
+			bpmnParser.getParseListeners().addAll(postParseListeners);
+		}
+
+		bpmnDeployer.setBpmnParser(bpmnParser);
+
+		defaultDeployers.add(bpmnDeployer);
+		return defaultDeployers;
 	}
 
 }
