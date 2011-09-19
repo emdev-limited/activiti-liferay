@@ -108,7 +108,13 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	        _log.info(processDefs.size() + " process definitions deployed");
 	        
 	        if (processDefs.size() == 0) {
-	        	throw new WorkflowException("No process definitions found");
+				if (activitiException != null) {
+					_log.error("Unable to deploy worfklow definition", activitiException);
+				} else {
+					_log.error("No workflows found");
+				}
+
+				throw new WorkflowException("No process definitions found");
 	        }
 	        
 	        for (ProcessDefinition processDef : processDefs) {
