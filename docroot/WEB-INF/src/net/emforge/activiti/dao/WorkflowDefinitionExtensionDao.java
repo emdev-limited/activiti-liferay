@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.hibernate3.HibernateTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
+
 /** Dao for working with WorkflowDefinitionExtension
  *  
  * @author akakunin
@@ -50,7 +52,11 @@ public class WorkflowDefinitionExtensionDao extends HibernateTemplate {
         	criteria.add(Restrictions.eq("name", name));
         }
 
-        return findByCriteria(criteria, start, end-start);
+        if (start != QueryUtil.ALL_POS && end != QueryUtil.ALL_POS) {
+        	return findByCriteria(criteria, start, end-start);
+        } else {
+        	return findByCriteria(criteria);
+        }
     }
 
     /** Find Workflow Definition

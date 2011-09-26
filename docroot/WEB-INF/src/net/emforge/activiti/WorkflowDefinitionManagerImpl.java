@@ -20,6 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
@@ -173,8 +174,22 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 
 	@Override
 	public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
-		WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
-		return new WorkflowDefinitionImpl(def);
+		if (version != 0) {
+			WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
+			return new WorkflowDefinitionImpl(def);
+		} else {
+			// return last (active) workflow definition
+			List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+			if (defs.size() == 0) {
+				return null;
+			}
+			
+			if (defs.size() > 1) {
+				_log.warn("More then 1 active workflow definition found for name: " + name);
+			}
+			
+			return new WorkflowDefinitionImpl(defs.get(0));
+		}
 	}
 
 	@Override
