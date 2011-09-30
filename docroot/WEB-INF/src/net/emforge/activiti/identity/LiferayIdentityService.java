@@ -93,6 +93,36 @@ public class LiferayIdentityService {
 		return result;
 	}
 	
+	public Role findRole(long companyId, String groupName) {
+		// first - try to parse group to identify - it is regular group or org/community group
+		String[] parsedName = groupName.split("/");
+		List<com.liferay.portal.model.User> users = null;
+		List<User> result = new ArrayList<User>();
+		
+		try {
+			if (parsedName.length == 1) {
+				// regilar group
+				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
+				
+				return role;
+			} else {
+				long groupId = Long.valueOf(parsedName[0]);
+				groupName = parsedName[1];
+				
+				if (parsedName.length > 2) {
+					groupName = StringUtils.join(ArrayUtils.subarray(parsedName, 1, parsedName.length), "/");
+				}
+				
+				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
+				
+				return role;
+			}
+		} catch (Exception ex) {
+			_log.warn("Cannot get group users", ex);
+			return null;
+		}
+	}
+
 	// Users
 	
 	public UserEntity findUserById(String userName) {

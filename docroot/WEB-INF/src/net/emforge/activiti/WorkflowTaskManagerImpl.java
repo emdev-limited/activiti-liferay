@@ -1,7 +1,6 @@
 package net.emforge.activiti;
 
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -9,14 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-
 import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.engine.LiferayTaskService;
 import net.emforge.activiti.identity.LiferayIdentityService;
 import net.emforge.activiti.log.WorkflowLogEntry;
-import net.emforge.activiti.log.WorkflowLogTypeMapperUtil;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
@@ -47,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
@@ -58,6 +54,7 @@ import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
+import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
 
 @Service("workflowTaskManager")
@@ -730,8 +727,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
 
-		/*
 		long companyId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "companyId"));
+		/*
 		long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
 		*/
 		
@@ -743,6 +740,26 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 					User.class.getName(), idMappingService.getUserId(assignee));
 			workflowTaskAssignees.add(workflowTaskAssignee);
 			
+			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
+		} else {
+			// return group (if exists)
+			List<IdentityLink> participations = new ArrayList<IdentityLink>();
+			
+			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			try {					
+				participations = taskService.getIdentityLinksForTask(task.getId());
+			} catch (Exception ex) {
+				// for completed tasks it will simple produce exception - ignore it
+			}
+			
+			for (IdentityLink participation : participations) {
+				if (StringUtils.isNotEmpty(participation.getGroupId())) {
+					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
+					WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+							Role.class.getName(), role.getRoleId());
+					workflowTaskAssignees.add(workflowTaskAssignee);
+				}
+			}
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
 		}
 		
