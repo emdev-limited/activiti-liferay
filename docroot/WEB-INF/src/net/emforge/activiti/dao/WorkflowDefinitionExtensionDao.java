@@ -6,6 +6,7 @@ import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,8 @@ public class WorkflowDefinitionExtensionDao extends HibernateTemplate {
         	criteria.add(Restrictions.eq("name", name));
         }
 
+        criteria.addOrder(Order.desc("version"));
+        
         if (start != QueryUtil.ALL_POS && end != QueryUtil.ALL_POS) {
         	return findByCriteria(criteria, start, end-start);
         } else {

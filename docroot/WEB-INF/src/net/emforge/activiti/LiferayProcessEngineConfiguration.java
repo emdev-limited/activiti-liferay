@@ -1,8 +1,6 @@
 package net.emforge.activiti;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -64,8 +62,7 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 				// update the jdbc parameters to the configured ones...
 				Environment environment = new Environment("default",
 						transactionFactory, dataSource);
-				Reader reader = new InputStreamReader(inputStream);
-				XMLConfigBuilder parser = new XMLConfigBuilder(reader);
+				XMLConfigBuilder parser = new XMLConfigBuilder(inputStream);
 				Configuration configuration = parser.getConfiguration();
 				configuration.setEnvironment(environment);
 				configuration.getTypeHandlerRegistry().register(

@@ -34,8 +34,8 @@
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-orm.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/commons-io.jar"/>
 	<classpathentry kind="lib" path="docroot/WEB-INF/lib/groovy-1.7.5.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.7.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.7.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/mybatis-3.0.4.jar"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/mybatis-3.0.4.jar" sourcepath="/Users/akakunin/.m2/repository/org/mybatis/mybatis/3.0.4/mybatis-3.0.4-sources.jar"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.8.jar" sourcepath="/activiti-engine/src/main/java"/>
+	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
