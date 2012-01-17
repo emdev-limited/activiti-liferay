@@ -26,9 +26,6 @@
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-transaction.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-web.jar" sourcepath="C:/Users/oteichmann/.m2/repository/org/springframework/spring-web/3.0.5.RELEASE/spring-web-3.0.5.RELEASE-sources.jar"/>
 	<classpathentry kind="lib" path="/portal/portal-service/portal-service.jar"/>
-	<classpathentry kind="lib" path="/portal/util-bridges/util-bridges.jar"/>
-	<classpathentry kind="lib" path="/portal/util-java/util-java.jar"/>
-	<classpathentry kind="lib" path="/portal/util-taglib/util-taglib.jar"/>
 	<classpathentry kind="lib" path="docroot/WEB-INF/lib/hibernate-jpa-2.0-api-1.0.0.Final.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/hibernate3.jar"/>
 	<classpathentry kind="lib" path="/portal/lib/portal/spring-orm.jar"/>

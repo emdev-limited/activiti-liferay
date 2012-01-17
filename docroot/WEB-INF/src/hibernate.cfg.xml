@@ -9,7 +9,7 @@
      <!-- This should be set to validate on production -->
      <property name="hibernate.hbm2ddl.auto">update</property>
      <property name="hibernate.format_sql">true</property>
-     <property name="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</property>     
+     <!--<property name="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</property>-->     
      <property name="hibernate.cache.use_second_level_cache">true</property>
   </session-factory>
 </hibernate-configuration>
