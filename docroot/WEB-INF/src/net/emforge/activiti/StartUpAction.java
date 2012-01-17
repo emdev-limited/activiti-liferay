@@ -1,7 +1,7 @@
 package net.emforge.activiti;
 
 import static net.emforge.activiti.constants.RoleConstants.APPROVER_ROLE_DESCRIPTION;
-import static net.emforge.activiti.constants.RoleConstants.COMMUNITY_CONTENT_REVIEWER;
+import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.PURCHASING_CONTENT_REVIEWER;
@@ -10,13 +10,17 @@ import static net.emforge.activiti.constants.TagConstants.TAG_PURCHASING_CONTENT
 import static net.emforge.activiti.constants.TagConstants.TAG_SALES_CONTENT;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
@@ -79,9 +83,12 @@ public class StartUpAction extends SimpleAction {
 			role = RoleLocalServiceUtil.getRole(companyId, PORTAL_CONTENT_REVIEWER);
 		} catch (Exception ex) {}
 		
+		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
+		descriptionMap.put(LocaleUtil.getDefault(), APPROVER_ROLE_DESCRIPTION);
+		
 		if (role == null) {
 			log.info("Create role: " + PORTAL_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PORTAL_CONTENT_REVIEWER, null, APPROVER_ROLE_DESCRIPTION, RoleConstants.TYPE_REGULAR);
+			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PORTAL_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_REGULAR);
 		}
 		
 		// Organization Content Reviewer
@@ -92,18 +99,18 @@ public class StartUpAction extends SimpleAction {
 		
 		if (role == null) {
 			log.info("Create role: " + ORGANIZATION_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, ORGANIZATION_CONTENT_REVIEWER, null, APPROVER_ROLE_DESCRIPTION, RoleConstants.TYPE_ORGANIZATION);
+			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, ORGANIZATION_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_ORGANIZATION);
 		}
 		
-		// Community Content Reviewer
+		// Site Content Reviewer
 		role = null;
 		try {
-			role = RoleLocalServiceUtil.getRole(companyId, COMMUNITY_CONTENT_REVIEWER);
+			role = RoleLocalServiceUtil.getRole(companyId, SITE_CONTENT_REVIEWER);
 		} catch (Exception ex) {}
 		
 		if (role == null) {
-			log.info("Create role: " + COMMUNITY_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, COMMUNITY_CONTENT_REVIEWER, null, APPROVER_ROLE_DESCRIPTION, RoleConstants.TYPE_COMMUNITY);
+			log.info("Create role: " + SITE_CONTENT_REVIEWER);
+			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SITE_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
 		}
 		
 		// Purchasing Content Reviewer
@@ -114,7 +121,7 @@ public class StartUpAction extends SimpleAction {
 		
 		if (role == null) {
 			log.info("Create role: " + PURCHASING_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PURCHASING_CONTENT_REVIEWER, null, APPROVER_ROLE_DESCRIPTION, RoleConstants.TYPE_COMMUNITY);
+			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PURCHASING_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
 		}
 		
 		// Sales Content Reviewer
@@ -125,7 +132,7 @@ public class StartUpAction extends SimpleAction {
 		
 		if (role == null) {
 			log.info("Create role: " + SALES_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SALES_CONTENT_REVIEWER, null, APPROVER_ROLE_DESCRIPTION, RoleConstants.TYPE_COMMUNITY);
+			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SALES_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
 		}
 		
 		AssetTag purchasingContentTag = null;

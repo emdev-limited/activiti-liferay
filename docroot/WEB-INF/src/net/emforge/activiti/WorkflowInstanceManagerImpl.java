@@ -254,6 +254,20 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		int count = processInstanceExtensionDao.count(companyId, userId, assetClassName, assetClassPK, completed);
 		return count;
 	}
+	
+	/**
+	 * added by Maxx
+	 */
+	@Override
+	public int getWorkflowInstanceCount(long companyId, Long userId,
+			String[] assetClassNames, Boolean completed)
+			throws WorkflowException {
+		int count = 0;
+		// TODO: better solution - modify metod processInstanceExtensionDao.count(...)
+		for(String assetClassName : assetClassNames)
+			count += processInstanceExtensionDao.count(companyId, userId, assetClassName, null, completed);
+		return count;
+	}
 
 	@Override
 	public List<WorkflowInstance> getWorkflowInstances(long companyId, Long userId, 
@@ -269,6 +283,21 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			result.add(workflowInstance);
 		}
 		
+		return result;
+	}
+	
+	/**
+	 * added by Maxx
+	 */
+	@Override
+	public List<WorkflowInstance> getWorkflowInstances(long companyId,
+			Long userId, String[] assetClassNames, Boolean completed,
+			int start, int end, OrderByComparator orderByComparator)
+			throws WorkflowException {
+		List<WorkflowInstance> result = new ArrayList<WorkflowInstance>();
+		// TODO: better solution - modify metod processInstanceExtensionDao.find(...)
+		for(String assetClassName : assetClassNames)
+			result.addAll(getWorkflowInstances(companyId, userId, assetClassName, null, completed, start, end, orderByComparator));
 		return result;
 	}
 

@@ -463,13 +463,16 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
+	/**
+	 * parameter Long[] assetPrimaryKey added by Maxx
+	 */
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
-			String taskName, String assetType, Date dueDateGT, Date dueDateLT,
+			String taskName, String assetType, Long[] assetPrimaryKey, Date dueDateGT, Date dueDateLT,
 			Boolean completed, Boolean searchByUserRoles, boolean andOperator,
 			int start, int end, OrderByComparator orderByComparator)
 			throws WorkflowException {
-		if (dueDateGT != null || dueDateLT != null) {
+		if (dueDateGT != null || dueDateLT != null || assetPrimaryKey != null) {
 			_log.warn("Method is partially implemented"); // TODO
 		}
 		
@@ -554,13 +557,34 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	}
         }
 	}
+	
+	/**
+	 * added by Maxx
+	 */
+	@Override
+	public List<WorkflowTask> search(
+			long companyId, long userId, String keywords, String[] assetTypes,
+			Boolean completed, Boolean searchByUserRoles, int start, int end,
+			OrderByComparator orderByComparator)
+		throws WorkflowException {
+		
+		List<WorkflowTask> result = new ArrayList<WorkflowTask>();
+		for(String assetType : assetTypes)
+			result.addAll(search(companyId, userId, null, assetType, null, null, null,
+					completed, searchByUserRoles, true,
+					start, end, orderByComparator));
+		return result;
+	}
 
+	/**
+	 * parameter Long[] assetPrimaryKey added by Maxx
+	 */
 	@Override
 	public int searchCount(long companyId, long userId, String taskName,
-			String assetType, Date dueDateGT, Date dueDateLT,
+			String assetType, Long[] assetPrimaryKey, Date dueDateGT, Date dueDateLT,
 			Boolean completed, Boolean searchByUserRoles, boolean andOperator)
 			throws WorkflowException {
-		if (dueDateGT != null || dueDateLT != null) {
+		if (dueDateGT != null || dueDateLT != null || assetPrimaryKey != null) {
 			_log.warn("Method is partially implemented"); // TODO
 		}
 		
@@ -609,6 +633,23 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	    		return count.intValue();
         	}
         }
+	}
+	
+	/**
+	 * added by Maxx
+	 */
+	@Override
+	public int searchCount(
+			long companyId, long userId, String keywords, String[] assetTypes,
+			Boolean completed, Boolean searchByUserRoles)
+		throws WorkflowException {
+		
+		int count = 0;
+		for(String assetType : assetTypes)
+			count += searchCount(companyId, userId, null,
+					assetType, null, null, null,
+					completed, searchByUserRoles, true);
+		return count;
 	}
 
 	@Override

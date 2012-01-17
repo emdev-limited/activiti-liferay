@@ -1,6 +1,6 @@
 package net.emforge.activiti.identity;
 
-import static net.emforge.activiti.constants.RoleConstants.COMMUNITY_CONTENT_REVIEWER;
+import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
 
@@ -88,8 +88,8 @@ public class LiferayGroupsUtil {
 		_log.debug("Adding role: " + PORTAL_CONTENT_REVIEWER);
 		candidateRoleList.add(ORGANIZATION_CONTENT_REVIEWER);
 		_log.debug("Adding role: " + ORGANIZATION_CONTENT_REVIEWER);
-		candidateRoleList.add(COMMUNITY_CONTENT_REVIEWER);
-		_log.debug("Adding role: " + COMMUNITY_CONTENT_REVIEWER);
+		candidateRoleList.add(SITE_CONTENT_REVIEWER);
+		_log.debug("Adding role: " + SITE_CONTENT_REVIEWER);
 		
 		return candidateRoleList;
 	}

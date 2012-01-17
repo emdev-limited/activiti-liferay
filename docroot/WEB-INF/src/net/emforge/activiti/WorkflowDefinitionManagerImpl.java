@@ -36,243 +36,263 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
  */
 @Service(value="workflowDefinitionManager")
 public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager {
-	private static Log _log = LogFactoryUtil.getLog(WorkflowDefinitionManagerImpl.class);
+    private static Log _log = LogFactoryUtil.getLog(WorkflowDefinitionManagerImpl.class);
+    
+    @Autowired
+    RepositoryService repositoryService;
+    @Autowired
+    WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
+    
+    
+    /** Deploy new workflow
+     * 
+     * TODO Currently we supporting only deployment of jpdl.xml - need add support for whole par deployment
+     */
+    @Override
+    public WorkflowDefinition deployWorkflowDefinition(long companyId,
+                                                       long userId, 
+                                                       String title, 
+                                                       InputStream inputStream) throws WorkflowException {
+        try {
+            String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
+            _log.info("Try to deploy process " + strTitle);
+    
+            // since we may need to reuse this input stream - lets copy it into bytes and user ByteInputStream
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+            
+            // try to fix xml
+            SignavioFixer fixer = new SignavioFixer(strTitle);
+            byte[] xmlBytes = fixer.fixSignavioXml(bytes);
+            
+            // deploy
+            Deployment deployment = null;
+            ActivitiException activitiException = null;			
+            if (xmlBytes != null) {
+                try {
+                    ByteArrayInputStream bais = new ByteArrayInputStream(xmlBytes);
+                    deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
+                } catch (ActivitiException ae) {
+                    //save exception
+                    activitiException = ae;
+                }
+            }
+            
+            if (deployment == null) {
+                _log.info("Cannot deploy process as xml - lets try as bar");
+
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                ZipInputStream zipInputStream = new ZipInputStream(bais);
+                try {
+                deployment = repositoryService.createDeployment().name(strTitle + ".bar").addZipInputStream(zipInputStream).deploy();
+                } catch (ActivitiException ae) {
+                    //save exception
+                    activitiException = ae;
+                }
+            }
+            
+            if (deployment == null) {
+                if (activitiException != null) {
+                    _log.error("Unable to deploy worfklow definition", activitiException);
+                } else {
+                    _log.error("No workflows found");
+                }
+                
+                throw new WorkflowException("Cannot deploy definition");
+            }
+
+            ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+            processDefinitionQuery.deploymentId(deployment.getId());
+            List<ProcessDefinition> processDefs = processDefinitionQuery.list();
+    
+            _log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
+            
+            _log.info(processDefs.size() + " process definitions deployed");
+            
+            if (processDefs.size() == 0) {
+                if (activitiException != null) {
+                    _log.error("Unable to deploy worfklow definition", activitiException);
+                } else {
+                    _log.error("No workflows found");
+                }
+
+                throw new WorkflowException("No process definitions found");
+            }
+            
+            for (ProcessDefinition processDef : processDefs) {
+                _log.info("Process Definition Id for process " + processDef.getName() + " : " + processDef.getId());
+                
+                WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
+                    new WorkflowDefinitionExtensionImpl(processDef, companyId, title, processDef.getName(), true, processDef.getVersion());
+        
+                workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
+            }
+            
+            // create result (return first process def in case many was deployed
+            if (processDefs.size() > 0) {
+            	return new WorkflowDefinitionImpl(processDefs.get(0), title, true);
+            } else {
+            	return null;
+            }
+        } catch (Exception ex) {
+            _log.error("Cannot deploy definition", ex);
+            throw new WorkflowException("Cannot deploy definition", ex);
+        }
+    }
+
+    /** Return count of active workflow definitions
+     */
+    @Override
+    public int getActiveWorkflowDefinitionCount(long companyId) throws WorkflowException {
+        return workflowDefinitionExtensionDao.count(companyId, null, true).intValue();
+    }
+
+    @Override
+    public int getActiveWorkflowDefinitionCount(long companyId, String name) throws WorkflowException {
+        return workflowDefinitionExtensionDao.count(companyId, name, true).intValue();
+    }
+
+    /** return list of process definitions
+     * 
+     * TODO Take into account requested sorting
+     */
+    @Override
+    public List<WorkflowDefinition> getActiveWorkflowDefinitions(long companyId, int start, int end,
+                                                                 OrderByComparator orderByComparator) throws WorkflowException {
+        List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, null, true, start, end);
+        
+        return getWorkflowDefinitions(defs);
+    }
+
+    @Override
+    public List<WorkflowDefinition> getActiveWorkflowDefinitions(long companyId, String name, 
+                                                                 int start, int end,
+                                                                 OrderByComparator orderByComparator) throws WorkflowException {
+        List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, start, end);
+        
+        return getWorkflowDefinitions(defs);
+    }
+
+    /** 
+	 * added by Maxx
+	 */
+	@Override
+	public WorkflowDefinition getLatestKaleoDefinition(long companyId,
+			String name) throws WorkflowException {
+		 
+		//return last (active) workflow definition
+		return getWorkflowDefinition(companyId, name, 0);
+	}
 	
-	@Autowired
-	RepositoryService repositoryService;
-	@Autowired
-	WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
-	
-	
-	/** Deploy new workflow
-	 * 
-	 * TODO Currently we supporting only deployment of jpdl.xml - need add support for whole par deployment
-	 */
-	@Override
-	public WorkflowDefinition deployWorkflowDefinition(long companyId,
-													   long userId, 
-													   String title, 
-													   InputStream inputStream) throws WorkflowException {
-		try {
-			String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
-			_log.info("Try to deploy process " + strTitle);
-	
-			// since we may need to reuse this input stream - lets copy it into bytes and user ByteInputStream
-			byte[] bytes = IOUtils.toByteArray(inputStream);
-			
-			// try to fix xml
-			SignavioFixer fixer = new SignavioFixer(strTitle);
-			byte[] xmlBytes = fixer.fixSignavioXml(bytes);
-			
-			// deploy
-			Deployment deployment = null;
-			ActivitiException activitiException = null;			
-			if (xmlBytes != null) {
-				try {
-					ByteArrayInputStream bais = new ByteArrayInputStream(xmlBytes);
-					deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
-				} catch (ActivitiException ae) {
-					//save exception
-					activitiException = ae;
-				}
-			}
-			
-			if (deployment == null) {
-				_log.info("Cannot deploy process as xml - lets try as bar");
+    @Override
+    public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
+        _log.info("try to get workflow definition, name: " + name + " , version " + version);
+        if (version != 0) {
+            WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
+            return new WorkflowDefinitionImpl(def);
+        } else {
+            // return last (active) workflow definition
+            List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+            if (defs.size() == 0) {
+                return null;
+            }
+            
+            if (defs.size() > 1) {
+                _log.warn("More then 1 active workflow definition found for name: " + name);
+            }
+            
+            return new WorkflowDefinitionImpl(defs.get(0));
+        }
+    }
 
-				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-				ZipInputStream zipInputStream = new ZipInputStream(bais);
-				try {
-				deployment = repositoryService.createDeployment().name(strTitle + ".bar").addZipInputStream(zipInputStream).deploy();
-				} catch (ActivitiException ae) {
-					//save exception
-					activitiException = ae;
-				}
-			}
-			
-			if (deployment == null) {
-				if (activitiException != null) {
-					_log.error("Unable to deploy worfklow definition", activitiException);
-				} else {
-					_log.error("No workflows found");
-				}
-				
-				throw new WorkflowException("Cannot deploy definition");
-			}
+    @Override
+    public int getWorkflowDefinitionCount(long companyId) throws WorkflowException {
+        return workflowDefinitionExtensionDao.count(companyId, null, null).intValue();
+    }
 
-			ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-	        processDefinitionQuery.deploymentId(deployment.getId());
-	        List<ProcessDefinition> processDefs = processDefinitionQuery.list();
-	
-			_log.info("Process " + strTitle + " deployed with deployment ID " + deployment.getId());
-			
-	        _log.info(processDefs.size() + " process definitions deployed");
-	        
-	        if (processDefs.size() == 0) {
-				if (activitiException != null) {
-					_log.error("Unable to deploy worfklow definition", activitiException);
-				} else {
-					_log.error("No workflows found");
-				}
+    @Override
+    public int getWorkflowDefinitionCount(long companyId, String name) throws WorkflowException {
+        return workflowDefinitionExtensionDao.count(companyId, name, null).intValue();
+    }
 
-				throw new WorkflowException("No process definitions found");
-	        }
-	        
-	        for (ProcessDefinition processDef : processDefs) {
-		        _log.info("Process Definition Id for process " + processDef.getName() + " : " + processDef.getId());
-		        
-		        WorkflowDefinitionExtensionImpl workflowDefinitionExtension =
-					new WorkflowDefinitionExtensionImpl(processDef, companyId, title, processDef.getName(), true, processDef.getVersion());
-		
-				workflowDefinitionExtensionDao.saveOrUpdate(workflowDefinitionExtension);
-	        }
-	        
-	        // create result (return first process def in case many was deployed
-	        if (processDefs.size() > 0) {
-	        	return new WorkflowDefinitionImpl(processDefs.get(0), title, true);
-	        } else {
-	        	return null;
-	        }
-		} catch (Exception ex) {
-			_log.error("Cannot deploy definition", ex);
-			throw new WorkflowException("Cannot deploy definition", ex);
-		}
-	}
+    /** Get workflow definitions
+     * 
+     * TODO Take into account requested sorting
+     */
+    @Override
+    public List<WorkflowDefinition> getWorkflowDefinitions(long companyId,
+                                                           int start, 
+                                                           int end, 
+                                                           OrderByComparator orderByComparator) throws WorkflowException {
+        List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, null, null, start, end);
+        
+        return getWorkflowDefinitions(defs);
+    }
 
-	/** Return count of active workflow definitions
-	 */
-	@Override
-	public int getActiveWorkflowDefinitionCount(long companyId) throws WorkflowException {
-		return workflowDefinitionExtensionDao.count(companyId, null, true).intValue();
-	}
+    /** Get workflow definitions by name
+     * 
+     * TODO Take into account requested sorting
+     */
+    @Override
+    public List<WorkflowDefinition> getWorkflowDefinitions(long companyId, String name, 
+                                                           int start, int end, OrderByComparator orderByComparator)
+            throws WorkflowException {
+        List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, null, start, end);
+        
+        return getWorkflowDefinitions(defs);
+    }
 
-	@Override
-	public int getActiveWorkflowDefinitionCount(long companyId, String name) throws WorkflowException {
-		return workflowDefinitionExtensionDao.count(companyId, name, true).intValue();
-	}
+    @Override
+    public void undeployWorkflowDefinition(long companyId, long userId, String name, int version) throws WorkflowException {
+        // TODO - Not sure it is supported
+        // for now we will simple set process inactive
+        updateActive(companyId, userId, name, version, false);
 
-	/** return list of process definitions
-	 * 
-	 * TODO Take into account requested sorting
-	 */
-	@Override
-	public List<WorkflowDefinition> getActiveWorkflowDefinitions(long companyId, int start, int end,
-																 OrderByComparator orderByComparator) throws WorkflowException {
-		List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, null, true, start, end);
-		
-		return getWorkflowDefinitions(defs);
-	}
+    }
 
-	@Override
-	public List<WorkflowDefinition> getActiveWorkflowDefinitions(long companyId, String name, 
-																 int start, int end,
-																 OrderByComparator orderByComparator) throws WorkflowException {
-		List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, start, end);
-		
-		return getWorkflowDefinitions(defs);
-	}
+    @Override
+    public WorkflowDefinition updateActive(long companyId, long userId, String name, 
+                                           int version, boolean active) throws WorkflowException {
+        WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
+        
+        def.setActive(active);
+        workflowDefinitionExtensionDao.saveOrUpdate(def);
+        
+        return new WorkflowDefinitionImpl(def);
+    }
 
-	@Override
-	public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
-		_log.info("try to get workflow definition, name: " + name + " , version " + version);
-		if (version != 0) {
-			WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
-			return new WorkflowDefinitionImpl(def);
-		} else {
-			// return last (active) workflow definition
-			List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-			if (defs.size() == 0) {
-				return null;
-			}
-			
-			if (defs.size() > 1) {
-				_log.warn("More then 1 active workflow definition found for name: " + name);
-			}
-			
-			return new WorkflowDefinitionImpl(defs.get(0));
-		}
-	}
+    @Override
+    public WorkflowDefinition updateTitle(long companyId, long userId, String name, int version, 
+                                          String title) throws WorkflowException {
+        WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
+        
+        def.setTitle(title);
+        workflowDefinitionExtensionDao.saveOrUpdate(def);
+        
+        return new WorkflowDefinitionImpl(def);
+    }
 
-	@Override
-	public int getWorkflowDefinitionCount(long companyId) throws WorkflowException {
-		return workflowDefinitionExtensionDao.count(companyId, null, null).intValue();
-	}
-
-	@Override
-	public int getWorkflowDefinitionCount(long companyId, String name) throws WorkflowException {
-		return workflowDefinitionExtensionDao.count(companyId, name, null).intValue();
-	}
-
-	/** Get workflow definitions
-	 * 
-	 * TODO Take into account requested sorting
-	 */
-	@Override
-	public List<WorkflowDefinition> getWorkflowDefinitions(long companyId,
-														   int start, 
-														   int end, 
-														   OrderByComparator orderByComparator) throws WorkflowException {
-		List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, null, null, start, end);
-		
-		return getWorkflowDefinitions(defs);
-	}
-
-	/** Get workflow definitions by name
-	 * 
-	 * TODO Take into account requested sorting
-	 */
-	@Override
-	public List<WorkflowDefinition> getWorkflowDefinitions(long companyId, String name, 
-														   int start, int end, OrderByComparator orderByComparator)
-			throws WorkflowException {
-		List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, null, start, end);
-		
-		return getWorkflowDefinitions(defs);
-	}
-
-	@Override
-	public void undeployWorkflowDefinition(long companyId, long userId, String name, int version) throws WorkflowException {
-		// TODO - Not sure it is supported
-		// for now we will simple set process inactive
-		updateActive(companyId, userId, name, version, false);
-
-	}
-
-	@Override
-	public WorkflowDefinition updateActive(long companyId, long userId, String name, 
-										   int version, boolean active) throws WorkflowException {
-		WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
-		
-		def.setActive(active);
-		workflowDefinitionExtensionDao.saveOrUpdate(def);
-		
-		return new WorkflowDefinitionImpl(def);
-	}
-
-	@Override
-	public WorkflowDefinition updateTitle(long companyId, long userId, String name, int version, 
-										  String title) throws WorkflowException {
-		WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
-		
-		def.setTitle(title);
-		workflowDefinitionExtensionDao.saveOrUpdate(def);
-		
-		return new WorkflowDefinitionImpl(def);
-	}
-
-	/** Convert internal workflow definitions objects to interface objects
-	 * 
-	 * @param defs
-	 * @return
-	 */
-	private List<WorkflowDefinition> getWorkflowDefinitions(List<WorkflowDefinitionExtensionImpl> defs) {
-		List<WorkflowDefinition> result = new ArrayList<WorkflowDefinition>(defs.size());
-		
-		for (WorkflowDefinitionExtensionImpl defImpl : defs) {
+    /** Convert internal workflow definitions objects to interface objects
+     * 
+     * @param defs
+     * @return
+     */
+    private List<WorkflowDefinition> getWorkflowDefinitions(List<WorkflowDefinitionExtensionImpl> defs) {
+        List<WorkflowDefinition> result = new ArrayList<WorkflowDefinition>(defs.size());
+        
+        for (WorkflowDefinitionExtensionImpl defImpl : defs) {
             result.add(new WorkflowDefinitionImpl(defImpl));
         }
         
-		return result;
+        return result;
+    }
+    
+    /** 
+	 * added by Maxx
+	 *  
+	 * TODO I don't know what we must to do here =)
+	 */
+	public void validateWorkflowDefinition(InputStream inputStream)
+			throws WorkflowException {
+		_log.info("Has been called validateWorkflowDefinition(...)");
 	}
-
 }
