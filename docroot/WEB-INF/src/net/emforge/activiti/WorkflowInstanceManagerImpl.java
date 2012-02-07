@@ -174,9 +174,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 												   Map<String, Serializable> context) throws WorkflowException {
 		processEngine.getIdentityService().setAuthenticatedUserId(idMappingService.getUserName(userId));
 		
+		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
+		vars.put("outputTransition", transitionName); // Put transition name into outputTransition variable for later use in gateway
+		
 		//Map<String, Object> vars = convertFromContext(context);
 		
-		// TODO support transition and context
+		// put outputTransition into context of workflow instance
+		runtimeService.setVariable(idMappingService.getActivitiProcessInstanceId(workflowInstanceId), "outputTransition", transitionName);
+		
+		// TODO support context
 		runtimeService.signal(idMappingService.getActivitiProcessInstanceId(workflowInstanceId));
 		return null;
 	}
