@@ -277,15 +277,13 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Override
 	public int getWorkflowTaskCountByUser(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return 0;
+		return searchCount(companyId, userId, null, completed, false);
 	}
 
 	@Override
 	public int getWorkflowTaskCountByUserRoles(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return 0;
+		return searchCount(companyId, userId, null, completed, true);
 	}
 
 	@Override
@@ -305,19 +303,16 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	}
 
 	@Override
-	public List<WorkflowTask> getWorkflowTasksByUser(long companyId,
-			long userId, Boolean completed, int start, int end,
-			OrderByComparator orderByComparator) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+	public List<WorkflowTask> getWorkflowTasksByUser(long companyId, long userId, Boolean completed, int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
+		return search(companyId, userId, null, completed, false,
+				start, end, orderByComparator);
 	}
 
 	@Override
-	public List<WorkflowTask> getWorkflowTasksByUserRoles(long companyId,
-			long userId, Boolean completed, int start, int end,
+	public List<WorkflowTask> getWorkflowTasksByUserRoles(long companyId, long userId, Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		return search(companyId, userId, null, completed, true,
+				start, end, orderByComparator);
 	}
 
 	@Transactional
