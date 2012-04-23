@@ -26,6 +26,16 @@ public class MessageProducer {
 		message.put("classPK", classPK);
 		MessageBusUtil.sendMessage(listenerName, message);
 	}
+
+	public void sendMessage(Serializable classPK, String actionName, String listenerName, String arg0) throws Exception {
+		_log.info("Sending message for listener [" + listenerName + "], classPK = [" + classPK + "], action name = [" + actionName + "]");
+		Message message = new Message();
+		message.put("actionName", actionName);
+		message.put("classPK", classPK);
+		message.put("arg0", arg0);
+		
+		MessageBusUtil.sendMessage(listenerName, message);
+	}
 	
 	public String sendMessage(DelegateExecution execution, Serializable classPK, String actionName,
 			String listenerName, String...transitionValues) throws Exception {
@@ -38,6 +48,7 @@ public class MessageProducer {
 		_log.info("Reply fetched [" + reply + "]");
 		return reply;
 	}
+	
 
 	
 }
