@@ -4,6 +4,7 @@ import java.util.Map;
 
 import net.emforge.activiti.identity.LiferayGroupManagerSessionFactory;
 import net.emforge.activiti.identity.LiferayUserManagerSessionFactory;
+import net.emforge.activiti.spring.ApplicationContextWrapper;
 
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -11,6 +12,7 @@ import org.activiti.engine.impl.interceptor.SessionFactory;
 import org.activiti.engine.impl.persistence.entity.GroupManager;
 import org.activiti.engine.impl.persistence.entity.UserManager;
 import org.activiti.spring.ProcessEngineFactoryBean;
+import org.activiti.spring.SpringExpressionManager;
 import org.codehaus.groovy.jsr223.GroovyScriptEngineFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -49,5 +51,13 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new GroovyScriptEngineFactory());
 		
 		return processEngine;
+	}
+	
+	@Override
+	protected void initializeExpressionManager() {
+	    if (applicationContext != null) {
+	        processEngineConfiguration.setExpressionManager(
+	          new SpringExpressionManager(new ApplicationContextWrapper(applicationContext), processEngineConfiguration.getBeans()));
+	      }
 	}
 }
