@@ -27,6 +27,7 @@
     <mapper resource="org/activiti/db/mapping/entity/Task.xml" />
     <mapper resource="org/activiti/db/mapping/entity/User.xml" />
     <mapper resource="org/activiti/db/mapping/entity/VariableInstance.xml" />
+    <mapper resource="org/activiti/db/mapping/entity/EventSubscription.xml" />
     
     <!-- Additional mapping file -->
     <mapper resource="net/emforge/activiti/query/custom.mapping.xml" />    

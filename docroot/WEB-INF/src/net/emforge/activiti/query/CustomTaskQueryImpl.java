@@ -12,12 +12,17 @@ import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.task.Task;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+
 /** Implements additional queries we need to Activiti <-> Liferay integration
  * 
  * @author akakunin
  *
  */
 public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> implements CustomTaskQuery {
+	
+	private static Log _log = LogFactoryUtil.getLog(CustomTaskQueryImpl.class);
 
 	protected String candidateUser;
 	protected String assignee;
@@ -88,6 +93,7 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	    
 	    for (Group group : groups) {
 	    	groupIds.add(group.getId());
+	    	_log.debug("Candidate role added: " + group.getId());
 	    }
 	    
 	    return groupIds;

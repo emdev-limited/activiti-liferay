@@ -3,6 +3,7 @@ package net.emforge.activiti;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
@@ -56,6 +58,11 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.security.permission.PermissionThreadLocal;
+import com.liferay.portal.service.UserLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -149,12 +156,33 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-		
+		//This commented part related to attempts to resolve this issue: http://issues.liferay.com/browse/LPS-27713
+//		if (userId > 0) {
+//			try {
+//				User usr = UserLocalServiceUtil.getUser(userId);
+//				String processInstanceId = task.getProcessInstanceId();
+//				Map<String, Serializable> ctx = new HashMap<String, Serializable>();
+//				if (context != null) {
+//					ctx.putAll(context);
+//				}
+//				ctx.put("latestActivitiUserId", userId); // Put user id to use it in script tasks
+//				for (String key : ctx.keySet()) {
+//					runtimeService.setVariable(processInstanceId, key, ctx.get(key));
+//				}
+//				ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+//				ctx = WorkflowInstanceManagerImpl.convertFromVars(runtimeService.getVariables(processInstanceId));
+//				workflowInstanceManager.getWorkflowInstance(inst, null, ctx);
+////				runtimeService.setVariable(processInstanceId, "latestActivitiUserId", userId);
+//			} catch (Exception e) {
+//				_log.warn("Failed to put latest user into workflow context", e);
+//			}
+//		}
 		// complete task
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
 		vars.put("outputTransition", transitionName); // Put transition name into outputTransition variable for later use in gateway
+		vars.put("latestActivitiUserId", userId); // Put user id to use it in script tasks
 		taskService.complete(taskId, vars);
-
+		
 		// save log
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
@@ -163,8 +191,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
 
-		
-		
 		// TODO - find the next task
 		return null;
 	}

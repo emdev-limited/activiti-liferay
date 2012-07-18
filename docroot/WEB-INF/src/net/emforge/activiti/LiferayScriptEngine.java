@@ -11,12 +11,18 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.scripting.ScriptingUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 public class LiferayScriptEngine implements ScriptEngine {
@@ -49,6 +55,21 @@ public class LiferayScriptEngine implements ScriptEngine {
 				User user = UserLocalServiceUtil.getDefaultUser(companyId);
 	
 				inputObjects.put(WorkflowConstants.CONTEXT_USER_ID, String.valueOf(user.getUserId()));
+				//This commented part related to attempts to resolve this issue: http://issues.liferay.com/browse/LPS-27713
+//				Long userId = (Long) workflowContext.get("latestActivitiUserId");
+//				if (userId != null && userId > 0) {
+//					try {
+//						inputObjects.put(WorkflowConstants.CONTEXT_USER_ID, String.valueOf(userId));
+//						//Set permissions for this thread
+//						PrincipalThreadLocal.setName(userId);
+//						User usr = UserLocalServiceUtil.getUserById(userId);
+//						PermissionChecker permissionChecker =
+//							PermissionCheckerFactoryUtil.create(usr, false);
+//						PermissionThreadLocal.setPermissionChecker(permissionChecker);
+//					} catch (Exception e) {
+//						_log.warn("Could not set PermissionChecker");
+//					}
+//				}
 				
 				ScriptingUtil.exec(null, inputObjects, liferayScriptName, script);
 			}
@@ -74,6 +95,7 @@ public class LiferayScriptEngine implements ScriptEngine {
 		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
 		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_TYPE, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_TYPE));
 		workflowContext.put(WorkflowConstants.CONTEXT_SERVICE_CONTEXT, (Serializable)bindings.get(WorkflowConstants.CONTEXT_SERVICE_CONTEXT));
+		workflowContext.put("latestActivitiUserId", (Serializable)bindings.get("latestActivitiUserId"));
 
 			
 		return workflowContext;
