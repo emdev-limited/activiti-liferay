@@ -23,16 +23,10 @@
     <sequenceFlow id="flow1" name="" sourceRef="startevent1" targetRef="usertask1"></sequenceFlow>
     <sequenceFlow id="flow2" name="" sourceRef="scripttask1" targetRef="endevent1"></sequenceFlow>
     <sequenceFlow id="flow3" name="" sourceRef="usertask1" targetRef="exclusivegateway1"></sequenceFlow>
-    <sequenceFlow id="flow4" name="" sourceRef="exclusivegateway1" targetRef="scripttask1">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Approve"}]]></conditionExpression>
-    </sequenceFlow>
-    <sequenceFlow id="flow5" name="" sourceRef="exclusivegateway1" targetRef="usertask2">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Reject"}]]></conditionExpression>
-    </sequenceFlow>
+    <sequenceFlow id="flow4" name="Approve" sourceRef="exclusivegateway1" targetRef="scripttask1"></sequenceFlow>
+    <sequenceFlow id="flow5" name="Reject" sourceRef="exclusivegateway1" targetRef="usertask2"></sequenceFlow>
     <sequenceFlow id="flow6" name="" sourceRef="usertask2" targetRef="usertask1"></sequenceFlow>
-    <sequenceFlow id="flow7" name="" sourceRef="exclusivegateway1" targetRef="scripttask2">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Deny"}]]></conditionExpression>
-    </sequenceFlow>
+    <sequenceFlow id="flow7" name="Deny" sourceRef="exclusivegateway1" targetRef="scripttask2"></sequenceFlow>
     <sequenceFlow id="flow8" name="" sourceRef="scripttask2" targetRef="endevent1"></sequenceFlow>
   </process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_SingleApproverByScript">

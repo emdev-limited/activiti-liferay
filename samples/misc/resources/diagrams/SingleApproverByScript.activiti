@@ -246,7 +246,7 @@
       <graphicsAlgorithm xsi:type="al:Polyline" foreground="/0/@colors.2" filled="false"/>
       <link businessObjects="flow4"/>
       <connectionDecorators visible="true" active="true" locationRelative="true" location="0.5">
-        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0"/>
+        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0" value="Approve"/>
       </connectionDecorators>
       <connectionDecorators visible="true" locationRelative="true" location="1.0">
         <graphicsAlgorithm xsi:type="al:Polygon" style="/0/@styles.2">
@@ -262,7 +262,7 @@
       <graphicsAlgorithm xsi:type="al:Polyline" foreground="/0/@colors.2" filled="false"/>
       <link businessObjects="flow5"/>
       <connectionDecorators visible="true" active="true" locationRelative="true" location="0.5">
-        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0"/>
+        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0" value="Reject"/>
       </connectionDecorators>
       <connectionDecorators visible="true" locationRelative="true" location="1.0">
         <graphicsAlgorithm xsi:type="al:Polygon" style="/0/@styles.2">
@@ -294,7 +294,7 @@
       <graphicsAlgorithm xsi:type="al:Polyline" foreground="/0/@colors.2" filled="false"/>
       <link businessObjects="flow7"/>
       <connectionDecorators visible="true" active="true" locationRelative="true" location="0.5">
-        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0"/>
+        <graphicsAlgorithm xsi:type="al:Text" x="10" style="/0/@styles.1" font="/0/@fonts.0" value="Deny"/>
       </connectionDecorators>
       <connectionDecorators visible="true" locationRelative="true" location="1.0">
         <graphicsAlgorithm xsi:type="al:Polygon" style="/0/@styles.2">
@@ -347,16 +347,10 @@
   <bpmn2:SequenceFlow id="flow1" sourceRef="startevent1" targetRef="usertask1"/>
   <bpmn2:SequenceFlow id="flow2" sourceRef="scripttask1" targetRef="endevent1"/>
   <bpmn2:SequenceFlow id="flow3" sourceRef="usertask1" targetRef="exclusivegateway1"/>
-  <bpmn2:SequenceFlow id="flow4" sourceRef="exclusivegateway1" targetRef="scripttask1">
-    <conditionExpression body="${outputTransition == &quot;Approve&quot;}"/>
-  </bpmn2:SequenceFlow>
-  <bpmn2:SequenceFlow id="flow5" sourceRef="exclusivegateway1" targetRef="usertask2">
-    <conditionExpression body="${outputTransition == &quot;Reject&quot;}"/>
-  </bpmn2:SequenceFlow>
+  <bpmn2:SequenceFlow id="flow4" name="Approve" sourceRef="exclusivegateway1" targetRef="scripttask1"/>
+  <bpmn2:SequenceFlow id="flow5" name="Reject" sourceRef="exclusivegateway1" targetRef="usertask2"/>
   <bpmn2:SequenceFlow id="flow6" name="" sourceRef="usertask2" targetRef="usertask1"/>
-  <bpmn2:SequenceFlow id="flow7" sourceRef="exclusivegateway1" targetRef="scripttask2">
-    <conditionExpression body="${outputTransition == &quot;Deny&quot;}"/>
-  </bpmn2:SequenceFlow>
+  <bpmn2:SequenceFlow id="flow7" name="Deny" sourceRef="exclusivegateway1" targetRef="scripttask2"/>
   <bpmn2:SequenceFlow id="flow8" name="" sourceRef="scripttask2" targetRef="endevent1"/>
   <bpmn2:CandidateGroup group="#{liferayGroups.getGroups(execution, &quot;Site Administrator, Site Content Reviewer, Organization Administrator, Organization Content Reviewer, Administrator, Portal Content Reviewer&quot;)}"/>
 </xmi:XMI>
