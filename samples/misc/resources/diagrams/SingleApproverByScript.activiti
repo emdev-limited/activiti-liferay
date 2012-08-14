@@ -332,11 +332,6 @@
   <bpmn2:StartEvent id="startevent1" name="Start" outgoing="flow1"/>
   <bpmn2:UserTask id="usertask1" name="Review Asset" incoming="flow1 flow6" outgoing="flow3" candidateGroups="/18" formKey="" dueDate="">
     <documentation text=""/>
-    <formProperties id="outputTransition" name="outputTransition" type="enum" value="" required="true">
-      <formValues valueId="Approve" valueName="Approve"/>
-      <formValues valueId="Deny" valueName="Deny"/>
-      <formValues valueId="Reject" valueName="Reject"/>
-    </formProperties>
   </bpmn2:UserTask>
   <bpmn2:ExclusiveGateway id="exclusivegateway1" name="Exclusive Gateway" incoming="flow3" outgoing="flow4 flow5 flow7"/>
   <bpmn2:ScriptTask id="scripttask1" name="Change Status" incoming="flow4" outgoing="flow2" script="Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus(&quot;approved&quot;), workflowContext);" scriptFormat="LiferayJavaScript"/>

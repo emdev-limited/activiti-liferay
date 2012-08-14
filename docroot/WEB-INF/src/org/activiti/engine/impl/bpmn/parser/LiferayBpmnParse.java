@@ -1,5 +1,6 @@
 package org.activiti.engine.impl.bpmn.parser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,11 @@ import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.helper.ClassDelegate;
 import org.activiti.engine.impl.bpmn.listener.ExpressionExecutionListener;
 import org.activiti.engine.impl.el.UelExpressionCondition;
+import org.activiti.engine.impl.form.DefaultTaskFormHandler;
+import org.activiti.engine.impl.form.EnumFormType;
+import org.activiti.engine.impl.form.FormHandler;
+import org.activiti.engine.impl.form.FormPropertyHandler;
+import org.activiti.engine.impl.form.TaskFormHandler;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.impl.pvm.process.ScopeImpl;
@@ -28,8 +34,12 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 public class LiferayBpmnParse extends BpmnParse {
 	private static Log _log = LogFactoryUtil.getLog(LiferayBpmnParse.class);
 	
+	private static final String OUTPUT_TRANSITION = "outputTransition";
+	
 	protected Map<String,Element> userTaskElements = new HashMap<String,Element>();
 	protected Map<String,Element> exclusiveGatewayElements = new HashMap<String,Element>();
+	protected Map<String,Element> flowElements = new HashMap<String,Element>();
+	protected Map<String,Map<String, String>> outputTransitions = new HashMap<String,Map<String, String>>();
 
 	public LiferayBpmnParse(BpmnParser parser) { 
 		super(parser);
@@ -42,30 +52,48 @@ public class LiferayBpmnParse extends BpmnParse {
 	    activity.setActivityBehavior((LiferayMailActivityBehavior) ClassDelegate.instantiateDelegate(LiferayMailActivityBehavior.class, fieldDeclarations));
 	}
 	
-	/**
-	* Parses a userTask declaration.
-	*/
-	public ActivityImpl parseUserTask(Element userTaskElement, ScopeImpl scope) {
-		String id = userTaskElement.attribute("id");
-		if (id == null) {
-	        addError("Invalid property usage on line " + userTaskElement.getLine() + ": no id or name specified.", userTaskElement);
-	    }
-		userTaskElements.put(id, userTaskElement);
-		
-		return super.parseUserTask(userTaskElement, scope);
-	}
-	
-	/**
-	   * Parses an exclusive gateway declaration.
+	  /**
+	   * Parses the activities of a certain level in the process (process,
+	   * subprocess or another scope).
+	   * 
+	   * @param parentElement
+	   *          The 'parent' element that contains the activities (process,
+	   *          subprocess).
+	   * @param scopeElement
+	   *          The {@link ScopeImpl} to which the activities must be added.
+	   * @param postponedElements 
+	   * @param postProcessActivities 
 	   */
-	  public ActivityImpl parseExclusiveGateway(Element exclusiveGwElement, ScopeImpl scope) {
-		String id = exclusiveGwElement.attribute("id");
-		if (id == null) {
-		     addError("Invalid property usage on line " + exclusiveGwElement.getLine() + ": no id or name specified.", exclusiveGwElement);
+	public void parseActivities(Element parentElement, ScopeImpl scopeElement,
+			HashMap<String, Element> postponedElements) {
+		//We need this pre-itteration to collect all required elements before further processing
+		for (Element activityElement : parentElement.elements()) {
+			if (activityElement.getTagName().equals("exclusiveGateway")) {
+				String id = activityElement.attribute("id");
+				if (id == null) {
+				     addError("Invalid property usage on line " + activityElement.getLine() + ": no id or name specified.", activityElement);
+				}
+				exclusiveGatewayElements.put(id, activityElement);
+			} else if (activityElement.getTagName().equals("userTask")) {
+				String id = activityElement.attribute("id");
+				if (id == null) {
+				     addError("Invalid property usage on line " + activityElement.getLine() + ": no id or name specified.", activityElement);
+				}
+				userTaskElements.put(id, activityElement);
+		    }
 		}
-		exclusiveGatewayElements.put(id, exclusiveGwElement);
-		return super.parseExclusiveGateway(exclusiveGwElement, scope);
-	  }
+		//since flows handling happens after activities in the superclass - have to do it here
+		for (Element sequenceFlowElement : parentElement.elements("sequenceFlow")) {
+			String id = sequenceFlowElement.attribute("id");
+			String sourceRef = sequenceFlowElement.attribute("sourceRef");
+		    String destinationRef = sequenceFlowElement.attribute("targetRef");
+			if (userTaskElements.containsKey(sourceRef) && exclusiveGatewayElements.containsKey(destinationRef)) {
+	        	flowElements.put(id, sequenceFlowElement);
+	        }
+		}
+		super.parseActivities(parentElement, scopeElement, postponedElements);
+		
+	}
 	
 	/**
 	   * Parses all sequence flow of a scope.
@@ -121,7 +149,48 @@ public class LiferayBpmnParse extends BpmnParse {
 		    }
 	      } 
 	    }
+	    
+		// post process - handle form data for user tasks
+		for (Map.Entry<String, Element> flowElement : flowElements.entrySet()) {
+			String sourceRef = flowElement.getValue().attribute("sourceRef");
+			String destinationRef = flowElement.getValue().attribute(
+					"targetRef");
+			addOutputTransitionToTaskForm(userTaskElements.get(sourceRef),
+					exclusiveGatewayElements.get(destinationRef), scope);
+		}
 	  }
+	
+	protected void addOutputTransitionToTaskForm(Element userTaskElement, Element exclusiveGatewayelement, ScopeImpl scope) {
+		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) scope.getProcessDefinition();
+		String id = userTaskElement.attribute("id");
+		String gwId = exclusiveGatewayelement.attribute("id");
+		
+		TaskDefinition taskDefinition = processDefinition.getTaskDefinitions().get(id);
+		TaskFormHandler formHandler = taskDefinition.getTaskFormHandler();
+		if (formHandler instanceof DefaultTaskFormHandler) {
+			DefaultTaskFormHandler defTaskHandler = (DefaultTaskFormHandler) formHandler;
+			List<FormPropertyHandler> formPropertyHandlers = defTaskHandler.getFormPropertyHandlers();
+			for (FormPropertyHandler fpHandler : formPropertyHandlers) {
+				if (fpHandler.getId() != null && fpHandler.getId().equals(OUTPUT_TRANSITION)) {
+					return;
+				}
+			}
+			//create FormPropertyHandler
+			FormPropertyHandler formPropertyHandler = new FormPropertyHandler();
+			formPropertyHandler.setId(OUTPUT_TRANSITION);
+			formPropertyHandler.setName(OUTPUT_TRANSITION);
+			Map<String, String> outputNames = outputTransitions.get(gwId);
+			EnumFormType formType = new EnumFormType(outputNames);
+			formPropertyHandler.setType(formType);
+			formPropertyHandler.setRequired(true);
+			formPropertyHandler.setReadable(true);
+			formPropertyHandler.setWritable(true);
+			formPropertyHandler.setVariableName(null);
+			//
+			formPropertyHandlers.add(formPropertyHandler);
+		}
+		//TODO What else?
+	}
 	
 	/**
 	   * Parses a condition expression on a sequence flow.
@@ -155,6 +224,17 @@ public class LiferayBpmnParse extends BpmnParse {
 		    	Condition expressionCondition = new UelExpressionCondition(expressionManager.createExpression(expression));
 			    seqFlow.setProperty(PROPERTYNAME_CONDITION_TEXT, expression);
 			    seqFlow.setProperty(PROPERTYNAME_CONDITION, expressionCondition);
+			    //cache values
+			    Element exclusiveGateway = exclusiveGatewayElements.get(sourceRef);
+		    	String gwId = exclusiveGateway.attribute("id");
+		    	Map<String, String> transitionNames = null;
+		    	if (outputTransitions.containsKey(gwId)) {
+		    		transitionNames = outputTransitions.get(gwId);
+		    	} else {
+		    		transitionNames = new HashMap<String, String>();
+		    		outputTransitions.put(gwId, transitionNames);
+		    	}
+		    	transitionNames.put(name, name);
 		    }
 	    }
 	  }

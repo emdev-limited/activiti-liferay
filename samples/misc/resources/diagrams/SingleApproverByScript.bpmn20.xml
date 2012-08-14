@@ -2,15 +2,7 @@
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
   <process id="SingleApproverByScript" name="SingleApproverByScript">
     <startEvent id="startevent1" name="Start"></startEvent>
-    <userTask id="usertask1" name="Review Asset" activiti:candidateGroups="#{liferayGroups.getGroups(execution, &quot;Site Administrator, Site Content Reviewer, Organization Administrator, Organization Content Reviewer, Administrator, Portal Content Reviewer&quot;)}">
-      <extensionElements>
-        <activiti:formProperty id="outputTransition" name="outputTransition" type="enum" required="true">
-          <activiti:value id="Approve" name="Approve"></activiti:value>
-          <activiti:value id="Deny" name="Deny"></activiti:value>
-          <activiti:value id="Reject" name="Reject"></activiti:value>
-        </activiti:formProperty>
-      </extensionElements>
-    </userTask>
+    <userTask id="usertask1" name="Review Asset" activiti:candidateGroups="#{liferayGroups.getGroups(execution, &quot;Site Administrator, Site Content Reviewer, Organization Administrator, Organization Content Reviewer, Administrator, Portal Content Reviewer&quot;)}"></userTask>
     <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
     <scriptTask id="scripttask1" name="Change Status" scriptFormat="LiferayJavaScript">
       <script><![CDATA[Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus("approved"), workflowContext);]]></script>
