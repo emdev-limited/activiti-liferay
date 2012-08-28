@@ -20,6 +20,7 @@ import org.w3c.dom.NodeList;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import org.apache.commons.lang.StringUtils;
 
 /** This class is supposed to fix different issues we found in xml produced by signavio modeler
  * 
@@ -64,6 +65,19 @@ public class SignavioFixer {
             	if (node.getAttributes().getNamedItem("name") == null) {
             		_log.info("name attribute is missed in process tag, add it");
             		 element.setAttribute("name", processName);
+            		 // also set processName into id - to avoid multiple workflows definitions in the system
+            		 String oldProcessId = element.getAttribute("id"); 
+            		 element.setAttribute("id", processName);
+            		 
+            		 // now need also change ID for related bpmndi:BPMNPlane
+            		 NodeList nodes = doc.getElementsByTagName("bpmndi:BPMNPlane");
+            		 for (int i2=0; i2 < nodes.getLength(); i2++) {
+                     	 Node node2 = nodes.item(i);
+            			 Element element2 = (Element)node2;
+            			 if (StringUtils.equals(element2.getAttribute("bpmnElement"), oldProcessId)) {
+            				 element2.setAttribute("bpmnElement", processName);
+            			 }
+            		 }
             	}
             	//fix isExecutable="false"
             	element.setAttribute("isExecutable", "true");
