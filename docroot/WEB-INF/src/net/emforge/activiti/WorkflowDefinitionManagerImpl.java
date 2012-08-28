@@ -61,8 +61,8 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
             byte[] bytes = IOUtils.toByteArray(inputStream);
             
             // try to fix xml
-            //SignavioFixer fixer = new SignavioFixer(strTitle);
-            byte[] xmlBytes = bytes; //fixer.fixSignavioXml(bytes);
+            SignavioFixer fixer = new SignavioFixer(strTitle);
+            byte[] xmlBytes = fixer.fixSignavioXml(bytes);
             
             // deploy
             Deployment deployment = null;

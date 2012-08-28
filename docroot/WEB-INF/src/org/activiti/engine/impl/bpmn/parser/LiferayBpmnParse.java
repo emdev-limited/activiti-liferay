@@ -238,5 +238,13 @@ public class LiferayBpmnParse extends BpmnParse {
 		    }
 	    }
 	  }
+	  
+	  protected void parseHumanPerformerResourceAssignment(Element performerElement, TaskDefinition taskDefinition) {
+		  //do nothing cause we handle it in {@link SignavioFixer}
+	  }
+	  
+	  protected void parsePotentialOwnerResourceAssignment(Element performerElement, TaskDefinition taskDefinition) {
+		//do nothing cause we handle it in {@link SignavioFixer}
+	  }
 
 }
