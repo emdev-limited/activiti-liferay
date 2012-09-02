@@ -113,65 +113,25 @@ public class StartUpAction extends SimpleAction {
 			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SITE_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
 		}
 		
-		// Purchasing Content Reviewer
-		role = null;
 		try {
-			role = RoleLocalServiceUtil.getRole(companyId, PURCHASING_CONTENT_REVIEWER);
-		} catch (Exception ex) {}
-		
-		if (role == null) {
-			log.info("Create role: " + PURCHASING_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PURCHASING_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
-		}
-		
-		// Sales Content Reviewer
-		role = null;
-		try {
-			role = RoleLocalServiceUtil.getRole(companyId, SALES_CONTENT_REVIEWER);
-		} catch (Exception ex) {}
-		
-		if (role == null) {
-			log.info("Create role: " + SALES_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SALES_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
-		}
-		
-		AssetTag purchasingContentTag = null;
-		try  {
-			purchasingContentTag = AssetTagLocalServiceUtil.getTag(guestGroup.getGroupId(), TAG_PURCHASING_CONTENT);
-		} catch (Exception e) {}
-		
-		if (purchasingContentTag == null) {
-			purchasingContentTag = AssetTagLocalServiceUtil.addTag(adminUser.getUserId(), TAG_PURCHASING_CONTENT, new String [] {}, serviceContext);
-			purchasingContentTag.setGroupId(guestGroup.getGroupId());
-			AssetTagLocalServiceUtil.updateAssetTag(purchasingContentTag);
-		}
-		
-		AssetTag salesContentTag = null;
-		try  {
-			salesContentTag = AssetTagLocalServiceUtil.getTag(guestGroup.getGroupId(), TAG_SALES_CONTENT);
-		} catch (Exception e) {}
-		
-		if (salesContentTag == null) {
-			salesContentTag = AssetTagLocalServiceUtil.addTag(adminUser.getUserId(), TAG_SALES_CONTENT, new String [] {}, serviceContext);
-			salesContentTag.setGroupId(guestGroup.getGroupId());
-			AssetTagLocalServiceUtil.updateAssetTag(salesContentTag);
-		}
-		
-		// Deploy workflow definitions
-		int workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_SINGLE_APPROVER_BY_SCRIPT);
-		if(workflowDefinitionCount < 1) { 
-			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_SINGLE_APPROVER_BY_SCRIPT + ".bar");
-			if(resourceAsStream != null) {
-				WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_SINGLE_APPROVER_BY_SCRIPT, resourceAsStream);
+			// Deploy workflow definitions
+			int workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_SINGLE_APPROVER_BY_SCRIPT);
+			if(workflowDefinitionCount < 1) { 
+				InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_SINGLE_APPROVER_BY_SCRIPT + ".bar");
+				if(resourceAsStream != null) {
+					WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_SINGLE_APPROVER_BY_SCRIPT, resourceAsStream);
+				}
 			}
-		}
-		
-		workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_TAG_BASED_CONTENT_APPROVER);
-		if(workflowDefinitionCount < 1) { 
-			InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_TAG_BASED_CONTENT_APPROVER + ".bar");
-			if(resourceAsStream != null) {
-				WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_TAG_BASED_CONTENT_APPROVER, resourceAsStream);
+			
+			workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_TAG_BASED_CONTENT_APPROVER);
+			if(workflowDefinitionCount < 1) { 
+				InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_TAG_BASED_CONTENT_APPROVER + ".bar");
+				if(resourceAsStream != null) {
+					WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_TAG_BASED_CONTENT_APPROVER, resourceAsStream);
+				}
 			}
+		} catch (Exception ex) {
+			log.warn("Cannot deploy default workflows: " + ex.getMessage());
 		}
 	}
 	
