@@ -1,38 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/.svn/**|.svn/" kind="src" path="docroot/WEB-INF/src"/>
-	<classpathentry excluding="diagrams/" kind="src" path="samples/misc/resources"/>
-	<classpathentry kind="src" path="samples/tbca/java"/>
-	<classpathentry excluding="diagrams/" kind="src" path="samples/tbca/resources"/>
-	<classpathentry kind="src" path="/portal"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/portal/lib/development/activation.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/development/annotations.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/development/jsp-api.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/development/mail.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/development/servlet-api.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/global/portlet.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/aopalliance.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/commons-collections.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/commons-lang.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/log4j.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-aop.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-asm.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-beans.jar" sourcepath="C:/Users/oteichmann/.m2/repository/org/springframework/spring-beans/3.0.5.RELEASE/spring-beans-3.0.5.RELEASE-sources.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-context.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-core.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-expression.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-jdbc.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-transaction.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-web.jar" sourcepath="C:/Users/oteichmann/.m2/repository/org/springframework/spring-web/3.0.5.RELEASE/spring-web-3.0.5.RELEASE-sources.jar"/>
-	<classpathentry kind="lib" path="/portal/portal-service/portal-service.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/hibernate-jpa-2.0-api-1.0.0.Final.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/hibernate3.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/spring-orm.jar"/>
-	<classpathentry kind="lib" path="/portal/lib/portal/commons-io.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/groovy-1.7.5.jar"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-engine-5.9.jar" sourcepath="/activiti-engine"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/activiti-spring-5.9.jar" sourcepath="/activiti-spring"/>
-	<classpathentry kind="lib" path="docroot/WEB-INF/lib/mybatis-3.0.6.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources"/>
+	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>
