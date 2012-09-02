@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.0">
+	<deployment>
+		<dependencies>
+			<module name="com.liferay.portal"></module>
+			<module name="org.jboss.modules"></module>	
+			<!--
+			<module name="deployment.ROOT.war">
+				<imports>
+					<exclude path="/**" />
+				</imports>
+			</module>
+			-->			
+<!--			
+			<module name="javax.el.api"></module>
+			<module name="javax.servlet.api"></module>
+			<module name="javax.servlet.jsp.api"></module>
+-->
+		</dependencies>
+	</deployment>
+</jboss-deployment-structure>
