@@ -10,6 +10,7 @@ import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.ProcessInstanceExtensionImpl;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
+import net.emforge.activiti.spring.Initializable;
 
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.ProcessEngine;
@@ -23,8 +24,12 @@ import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -38,26 +43,42 @@ import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 
 @Service(value="workflowInstanceManager")
-public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
+public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager, ApplicationContextAware, Initializable  
+{
 	private static Log _log = LogFactoryUtil.getLog(WorkflowInstanceManagerImpl.class);
 	
-	@Autowired
+	ApplicationContext applicationContext;
+	
 	ProcessEngine processEngine;
-	@Autowired
+
 	RuntimeService runtimeService;
-	@Autowired
+
 	HistoryService historyService;
-	@Autowired
+
 	RepositoryService repositoryService;
 	
-	@Autowired
+
 	WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
-	@Autowired
+
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
-	@Autowired
+
 	IdMappingService idMappingService;
 	
+	public void init() {
+		processEngine = applicationContext.getBean("processEngine", ProcessEngine.class);
+		runtimeService = applicationContext.getBean("runtimeService", RuntimeService.class);
+		historyService = applicationContext.getBean("historyService", HistoryService.class);
+		repositoryService = applicationContext.getBean("repositoryService", RepositoryService.class);
+		
+		workflowDefinitionExtensionDao = applicationContext.getBean(WorkflowDefinitionExtensionDao.class);
+		workflowDefinitionExtensionDao.init();
+		processInstanceExtensionDao = applicationContext.getBean(ProcessInstanceExtensionDao.class);
+		processInstanceExtensionDao.init();
+		idMappingService = applicationContext.getBean("idMappingService", IdMappingService.class);
+	}	
+	
 	@Override
+	@Transactional
 	public void deleteWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
 		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		_log.info("Deleting process instance " + processInstanceId);
@@ -169,6 +190,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	}
 
 	@Override
+	@Transactional
 	public WorkflowInstance signalWorkflowInstance(long companyId, long userId,
 												   long workflowInstanceId, String transitionName,
 												   Map<String, Serializable> context) throws WorkflowException {
@@ -188,6 +210,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	}
 
 	@Override
+	@Transactional
 	public WorkflowInstance startWorkflowInstance(long companyId, long groupId, long userId, 
 												  String workflowDefinitionName, Integer workflowDefinitionVersion, String transitionName,
 												  Map<String, Serializable> workflowContext) throws WorkflowException {
@@ -213,6 +236,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 
 
 	@Override
+	@Transactional
 	public WorkflowInstance updateWorkflowContext(long companyId, long workflowInstanceId, Map<String, Serializable> workflowContext) throws WorkflowException {
 		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		
@@ -462,4 +486,12 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		
         return workflowContext;
 	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext ctx)
+			throws BeansException 
+	{
+		applicationContext = ctx;
+	
+	}	
 }

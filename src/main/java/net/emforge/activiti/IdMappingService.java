@@ -4,9 +4,13 @@ import net.emforge.activiti.dao.ProcessInstanceExtensionDao;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.ProcessInstanceExtensionImpl;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
+import net.emforge.activiti.spring.Initializable;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
@@ -25,7 +29,8 @@ import com.liferay.portal.service.UserLocalServiceUtil;
  *
  */
 @Service("idMappingService")
-public class IdMappingService {
+public class IdMappingService implements ApplicationContextAware, Initializable  
+{
 	private static Log _log = LogFactoryUtil.getLog(IdMappingService.class);
 
 	private static final String ACTIVITI_USER_NAME_STRATEGY="activiti.userName.strategy";
@@ -51,10 +56,18 @@ public class IdMappingService {
 		return useScreenName;
 	}
 	
-	@Autowired
+	ApplicationContext applicationContext;
+	
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
-	@Autowired
+
 	WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
+	
+	public void init() {
+		processInstanceExtensionDao = applicationContext.getBean(ProcessInstanceExtensionDao.class);
+		processInstanceExtensionDao.init();
+		workflowDefinitionExtensionDao = applicationContext.getBean(WorkflowDefinitionExtensionDao.class);
+		workflowDefinitionExtensionDao.init();
+	}	
 	
 	/** Get Long id for workflow definition id
 	 * Format of workflow instance id is 'to_do-1'
@@ -139,4 +152,12 @@ public class IdMappingService {
 			return Long.valueOf(screenName);
 		}
 	}
+	
+	public void setApplicationContext(ApplicationContext ctx)
+			throws BeansException 
+	{
+		applicationContext = ctx;
+		// TODO Auto-generated method stub
+		
+	}	
 }

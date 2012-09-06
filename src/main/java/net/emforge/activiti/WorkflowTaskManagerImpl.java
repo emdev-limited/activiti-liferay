@@ -17,6 +17,8 @@ import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
 import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
 import net.emforge.activiti.query.CustomTaskQuery;
 import net.emforge.activiti.query.CustomTaskQueryImpl;
+import net.emforge.activiti.spring.Initializable;
+import net.emforge.activiti.util.SpringUtils;
 
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
@@ -36,7 +38,10 @@ import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,30 +70,47 @@ import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 @Service("workflowTaskManager")
-public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
+public class WorkflowTaskManagerImpl implements WorkflowTaskManager,  ApplicationContextAware, Initializable   
+{
 	private static Log _log = LogFactoryUtil.getLog(WorkflowTaskManagerImpl.class);
+	
+	ApplicationContext applicationContext;
 
-	@Autowired
 	ProcessEngine processEngine;
-	@Autowired
+
 	RuntimeService runtimeService;
-	@Autowired
+	
 	IdentityService identityService;
-	@Autowired
+	
 	TaskService taskService;
-	@Autowired
+	
 	HistoryService historyService;
-	@Autowired 
+	 
 	RepositoryService repositoryService;
 	
-	@Autowired
+	
 	IdMappingService idMappingService;
-	@Autowired
+	
 	LiferayIdentityService liferayIdentityService;
-	@Autowired
+	
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
-	@Autowired
+	
 	WorkflowInstanceManagerImpl workflowInstanceManager;
+		
+	public void init() throws Exception {
+		processEngine = applicationContext.getBean("processEngine", ProcessEngine.class);
+		runtimeService = applicationContext.getBean("runtimeService", RuntimeService.class);
+		identityService = applicationContext.getBean("identityService", IdentityService.class);
+		taskService = applicationContext.getBean("taskService", TaskService.class);
+		historyService = applicationContext.getBean("historyService", HistoryService.class);
+		repositoryService = applicationContext.getBean("repositoryService", RepositoryService.class);
+		
+		idMappingService = applicationContext.getBean("idMappingService", IdMappingService.class);
+		liferayIdentityService = applicationContext.getBean("liferayIdentityService", LiferayIdentityService.class);
+		processInstanceExtensionDao = applicationContext.getBean(ProcessInstanceExtensionDao.class);
+		processInstanceExtensionDao.init();
+		workflowInstanceManager = SpringUtils.getTargetObject( applicationContext.getBean("workflowInstanceManager"), WorkflowInstanceManagerImpl.class);
+	}
 	
 	@Override
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
@@ -149,6 +171,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	}
 
 	@Override
+	@Transactional
 	public WorkflowTask completeWorkflowTask(long companyId, long userId, long workflowTaskId, 
 											 String transitionName, String comment,
 											 Map<String, Serializable> context) throws WorkflowException {
@@ -448,6 +471,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	}
 
 	@Override
+	@Transactional
 	public WorkflowTask updateDueDate(long companyId, long userId, long workflowTaskId, String comment, Date dueDate)
 			throws WorkflowException {
 		identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
@@ -947,4 +971,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		TaskServiceImpl serviceImpl = (TaskServiceImpl)taskService;
 	    return new CustomHistoricTaskInstanceQueryImpl(serviceImpl.getCommandExecutor());
 	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext ctx)
+			throws BeansException {
+		applicationContext = ctx;
+		
+	}	
 }

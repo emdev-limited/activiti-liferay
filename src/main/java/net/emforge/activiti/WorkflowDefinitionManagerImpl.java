@@ -9,6 +9,7 @@ import java.util.zip.ZipInputStream;
 import net.emforge.activiti.WorkflowDefinitionImpl;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
+import net.emforge.activiti.spring.Initializable;
 import net.emforge.activiti.util.SignavioFixer;
 
 import org.activiti.engine.ActivitiException;
@@ -17,8 +18,12 @@ import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -35,20 +40,30 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
  *
  */
 @Service(value="workflowDefinitionManager")
-public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager {
+public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager, ApplicationContextAware, Initializable  
+{
     private static Log _log = LogFactoryUtil.getLog(WorkflowDefinitionManagerImpl.class);
     
-    @Autowired
+//    @Autowired
     RepositoryService repositoryService;
-    @Autowired
+//    @Autowired
     WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
+
+    ApplicationContext applicationContext;
     
+  public void init() 
+  {
+  	repositoryService = applicationContext.getBean("repositoryService", RepositoryService.class);
+  	workflowDefinitionExtensionDao = applicationContext.getBean(WorkflowDefinitionExtensionDao.class);
+  	workflowDefinitionExtensionDao.init();
+  }    
     
     /** Deploy new workflow
      * 
      * TODO Currently we supporting only deployment of jpdl.xml - need add support for whole par deployment
      */
     @Override
+    @Transactional
     public WorkflowDefinition deployWorkflowDefinition(long companyId,
                                                        long userId, 
                                                        String title, 
@@ -242,6 +257,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
     }
 
     @Override
+    @Transactional
     public void undeployWorkflowDefinition(long companyId, long userId, String name, int version) throws WorkflowException {
         // TODO - Not sure it is supported
         // for now we will simple set process inactive
@@ -250,6 +266,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
     }
 
     @Override
+    @Transactional
     public WorkflowDefinition updateActive(long companyId, long userId, String name, 
                                            int version, boolean active) throws WorkflowException {
         WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
@@ -295,4 +312,10 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 			throws WorkflowException {
 		_log.info("Has been called validateWorkflowDefinition(...)");
 	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext ctx)
+			throws BeansException {
+		applicationContext = ctx;
+	}	
 }

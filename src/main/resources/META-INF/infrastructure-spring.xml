@@ -11,10 +11,11 @@
 						http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
 						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
 						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
-						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd"
+	default-lazy-init="true" default-autowire="no" >
 		
 	<bean id="dataSource"
-		class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+		class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy" lazy-init="true"  autowire="no">
 		<property name="targetDataSource">
 			<bean class="com.liferay.portal.kernel.util.InfrastructureUtil"
 				factory-method="getDataSource" />
@@ -22,7 +23,7 @@
 	</bean>
 
 	<bean id="transactionManager"
-		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager" lazy-init="true"  autowire="no">
 		<property name="sessionFactory" ref="sessionFactory" />
 		<property name="dataSource" ref="dataSource" />
 	</bean>	
@@ -30,7 +31,7 @@
 	<!-- Hbernate configuration - used for objects defined in activiti-web -->
 	<!-- TODO Find a way to use mybatis instead of hibernate to increase integration with activiti and reduce dependencies -->
 	<bean id="sessionFactory"
-		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean" lazy-init="true"  autowire="no">
 		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
 		<property name="dataSource" ref="dataSource" />
 		<property name="packagesToScan">
@@ -41,7 +42,7 @@
 	</bean>
 	
 	<!-- Activiti Configuration -->
-	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayProcessEngineConfiguration">
+	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayProcessEngineConfiguration" lazy-init="true"  autowire="no">
 		<property name="dataSource" ref="dataSource"/>
 		<property name="transactionManager" ref="transactionManager" />
 		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
@@ -53,6 +54,5 @@
 	    <!-- history configuration -->
 	    <property name="history" value="audit" />		
 	</bean>	
-	
-						
+					
 </beans>

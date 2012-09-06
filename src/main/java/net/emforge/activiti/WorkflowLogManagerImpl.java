@@ -9,11 +9,15 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import net.emforge.activiti.log.WorkflowLogEntry;
+import net.emforge.activiti.spring.Initializable;
 
 import org.activiti.engine.TaskService;
 import org.activiti.engine.impl.persistence.entity.CommentEntity;
 import org.activiti.engine.task.Comment;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
@@ -25,15 +29,20 @@ import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowLogManager;
 
 @Service("workflowLogManager")
-public class WorkflowLogManagerImpl implements WorkflowLogManager {
+public class WorkflowLogManagerImpl implements WorkflowLogManager, ApplicationContextAware, Initializable  
+{
 	private static Log _log = LogFactoryUtil.getLog(WorkflowLogManagerImpl.class);
 
-	@Autowired
+	ApplicationContext applicationContext;
+	
 	TaskService taskService;
 
-	@Autowired
 	IdMappingService idMappingService;
 
+	public void init() {
+		taskService = applicationContext.getBean("taskService", TaskService.class);
+		idMappingService = applicationContext.getBean("idMappingService", IdMappingService.class);
+	}	
 	
 	@Override
 	public int getWorkflowLogCountByWorkflowInstance(long companyId, long workflowInstanceId, 
@@ -129,5 +138,11 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 		return null;
 	}
 
-
+	@Override
+	public void setApplicationContext(ApplicationContext ctx)
+			throws BeansException 
+	{
+		applicationContext = ctx;
+	
+	}
 }
