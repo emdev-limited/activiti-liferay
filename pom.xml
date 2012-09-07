@@ -5,9 +5,21 @@
 	<artifactId>activiti-web</artifactId>
 	<version>6.1.0.11</version>
 	<packaging>war</packaging>
+
 	<build>
 		<finalName>activiti-web</finalName>
 		<plugins>
+			<plugin>
+				<groupId>com.liferay.maven.plugins</groupId>
+				<artifactId>liferay-maven-plugin</artifactId>
+				<version>${liferay.version}</version>
+				<configuration>
+					<autoDeployDir>${liferay.auto.deploy.dir}</autoDeployDir>
+					<liferayVersion>${liferay.version}</liferayVersion>
+					<pluginName>scm-portlet</pluginName>
+					<pluginType>portlet</pluginType>
+				</configuration>
+			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
