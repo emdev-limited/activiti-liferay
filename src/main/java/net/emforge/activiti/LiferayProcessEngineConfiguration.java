@@ -35,6 +35,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
  */
 public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfiguration {
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineConfiguration.class);
+	public static final String DEFAULT_MYBATIS_MAPPING_FILE = "activiti-liferay.ibatis.mem.conf.xml";
+     
 	
 	public LiferayProcessEngineConfiguration() {
 		//replace taskService with own implementation 
@@ -43,43 +45,15 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 	}
 	
 	@Override
+	protected InputStream getMyBatisXmlConfigurationSteam() {
+		return ReflectUtil.getResourceAsStream(DEFAULT_MYBATIS_MAPPING_FILE);
+	}
+	
+	@Override
 	public void initDatabaseType() {
 		// add mapping for HSQL Database - map it into H2 (should work)
 		databaseTypeMappings.setProperty("HSQL Database Engine","h2");
 		super.initDatabaseType();
-	}
-	
-	@Override
-	protected void initSqlSessionFactory() {
-		if (sqlSessionFactory == null) {
-			InputStream inputStream = null;
-			try {
-				// We load own configuration file
-				inputStream = ReflectUtil
-						.getResourceAsStream("activiti-liferay.ibatis.mem.conf.xml");
-				_log.info("Loaded custom ibatis configuration");
-				
-				// update the jdbc parameters to the configured ones...
-				Environment environment = new Environment("default",
-						transactionFactory, dataSource);
-				XMLConfigBuilder parser = new XMLConfigBuilder(inputStream);
-				Configuration configuration = parser.getConfiguration();
-				configuration.setEnvironment(environment);
-				configuration.getTypeHandlerRegistry().register(
-						VariableType.class, JdbcType.VARCHAR,
-						new IbatisVariableTypeHandler());
-				configuration = parser.parse();
-
-				sqlSessionFactory = new DefaultSqlSessionFactory(configuration);
-
-			} catch (Exception e) {
-				throw new ActivitiException(
-						"Error while building ibatis SqlSessionFactory: "
-								+ e.getMessage(), e);
-			} finally {
-				IoUtil.closeSilently(inputStream);
-			}
-		}
 	}
 	
 	@Override

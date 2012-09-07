@@ -6,6 +6,13 @@
 	<version>6.1.0.11</version>
 	<packaging>war</packaging>
 
+	<properties>
+		<liferay.version>6.1.1</liferay.version>
+		<spring.version>3.1.2.RELEASE</spring.version>
+		<activiti.version>5.10</activiti.version>
+	</properties>
+
+
 	<build>
 		<finalName>activiti-web</finalName>
 		<plugins>
@@ -57,12 +64,6 @@
 	    </profile>
   	</profiles>
   
-	<properties>
-		<liferay.version>6.1.0</liferay.version>
-		<spring.version>3.0.6.RELEASE</spring.version>
-		<activiti.version>5.9</activiti.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>javax.activation</groupId>
@@ -118,28 +119,18 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
-			<artifactId>spring-orm</artifactId>
+			<artifactId>spring-web</artifactId>
 			<version>${spring.version}</version>
-			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-core</artifactId>
-			<version>${spring.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-beans</artifactId>
-			<version>${spring.version}</version>
-			<scope>provided</scope>
-		</dependency>
+		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.10</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- Liferay dependencies -->
 		<dependency>
 			<groupId>com.liferay.portal</groupId>
 			<artifactId>util-java</artifactId>
@@ -158,6 +149,7 @@
 			<version>${liferay.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>

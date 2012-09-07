@@ -2,10 +2,9 @@ package net.emforge.activiti.identity;
 
 import java.util.List;
 
-import net.emforge.activiti.IdMappingService;
-
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.GroupQuery;
+import org.activiti.engine.impl.GroupQueryImpl;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.persistence.entity.GroupEntity;
 import org.activiti.engine.impl.persistence.entity.GroupManager;
@@ -52,13 +51,13 @@ public class LiferayGroupManagerSession extends GroupManager {
 	}
 	
 	@Override
-	public List<Group> findGroupByQueryCriteria(Object query, Page page) {
+	public List<Group> findGroupByQueryCriteria(GroupQueryImpl query, Page page) {
 		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
 
 	@Override
-	public long findGroupCountByQueryCriteria(Object query) {
+	public long findGroupCountByQueryCriteria(GroupQueryImpl query) {
 		_log.error("Method is not implemented"); // TODO
 		return -1;
 	}

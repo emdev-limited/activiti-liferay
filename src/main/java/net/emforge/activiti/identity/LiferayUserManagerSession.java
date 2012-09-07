@@ -6,6 +6,7 @@ import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.identity.UserQuery;
 import org.activiti.engine.impl.Page;
+import org.activiti.engine.impl.UserQueryImpl;
 import org.activiti.engine.impl.persistence.entity.IdentityInfoEntity;
 import org.activiti.engine.impl.persistence.entity.UserEntity;
 import org.activiti.engine.impl.persistence.entity.UserManager;
@@ -48,13 +49,13 @@ public class LiferayUserManagerSession extends UserManager {
 	}
 
 	@Override
-	public List<User> findUserByQueryCriteria(Object query, Page page) {
+	public List<User> findUserByQueryCriteria(UserQueryImpl query, Page page) {
 		_log.error("Method is not implemented"); // TODO
 		return null;
 	}
 
 	@Override
-	public long findUserCountByQueryCriteria(Object query) {
+	public long findUserCountByQueryCriteria(UserQueryImpl query) {
 		_log.error("Method is not implemented"); // TODO
 		return -1;
 	}

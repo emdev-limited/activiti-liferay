@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 
 import com.liferay.portal.kernel.bean.PortletBeanLocatorUtil;
@@ -115,16 +116,6 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	}
 
 	@Override
-	public String[] getBeanNamesForType(Class arg0) {
-		return applicationContext.getBeanNamesForType(arg0);
-	}
-
-	@Override
-	public String[] getBeanNamesForType(Class arg0, boolean arg1, boolean arg2) {
-		return applicationContext.getBeanNamesForType(arg0, arg1, arg2);
-	}
-
-	@Override
 	public <T> Map<String, T> getBeansOfType(Class<T> arg0) throws BeansException {
 		return applicationContext.getBeansOfType(arg0);
 	}
@@ -181,12 +172,6 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	}
 
 	@Override
-	public boolean isTypeMatch(String arg0, Class arg1)
-			throws NoSuchBeanDefinitionException {
-		return applicationContext.isTypeMatch(arg0, arg1);
-	}
-
-	@Override
 	public boolean containsLocalBean(String arg0) {
 		return applicationContext.containsLocalBean(arg0);
 	}
@@ -232,5 +217,25 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	@Override
 	public Resource getResource(String arg0) {
 		return applicationContext.getResource(arg0);
+	}
+
+	@Override
+	public Environment getEnvironment() {
+		return applicationContext.getEnvironment();
+	}
+
+	@Override
+	public String[] getBeanNamesForType(Class<?> arg0) {
+		return applicationContext.getBeanNamesForType(arg0);
+	}
+
+	@Override
+	public String[] getBeanNamesForType(Class<?> arg0, boolean arg1, boolean arg2) {
+		return applicationContext.getBeanNamesForType(arg0, arg1, arg2);
+	}
+
+	@Override
+	public boolean isTypeMatch(String arg0, Class<?> arg1) throws NoSuchBeanDefinitionException {
+		return applicationContext.isTypeMatch(arg0, arg1);
 	}
 }
