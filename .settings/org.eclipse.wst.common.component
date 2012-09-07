@@ -4,7 +4,12 @@
         <wb-resource deploy-path="/" source-path="/target/m2e-wtp/web-resources"/>
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/java"/>
+        <dependent-module archiveName="activiti-engine-5.9.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/activiti-engine/activiti-engine">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="activiti-spring-5.9.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/activiti-spring/activiti-spring">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="context-root" value="activiti-web"/>
         <property name="java-output-path" value="/activiti-web/build/classes"/>
     </wb-module>
