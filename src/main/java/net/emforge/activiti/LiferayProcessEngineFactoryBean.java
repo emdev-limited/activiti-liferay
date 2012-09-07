@@ -5,7 +5,6 @@ import java.util.Map;
 import net.emforge.activiti.identity.LiferayGroupManagerSessionFactory;
 import net.emforge.activiti.identity.LiferayUserManagerSessionFactory;
 import net.emforge.activiti.spring.ApplicationContextWrapper;
-import net.emforge.activiti.spring.Initializable;
 
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -26,25 +25,14 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
  * @author akakunin
  *
  */
-public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean
-	implements Initializable
-{
+public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineFactoryBean.class);
 	
+	@Autowired
 	LiferayGroupManagerSessionFactory liferayGroupManagerSessionFactory;
-	
-	public void init() {
-		liferayGroupManagerSessionFactory = applicationContext.getBean("liferayGroupManagerSessionFactory", LiferayGroupManagerSessionFactory.class);
-	}	
-	
-	public void checkInit() {
-		if (liferayGroupManagerSessionFactory == null)
-			init();
-	}
 	
 	@Override
 	public ProcessEngine getObject() throws Exception {
-		checkInit();
 		// set history level
 		processEngineConfiguration.setHistoryLevel(ProcessEngineConfigurationImpl.HISTORYLEVEL_FULL);
 		

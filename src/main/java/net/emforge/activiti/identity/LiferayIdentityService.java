@@ -4,17 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.emforge.activiti.IdMappingService;
-import net.emforge.activiti.spring.Initializable;
 
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.persistence.entity.UserEntity;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
@@ -26,17 +22,12 @@ import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 @Service("liferayIdentityService")
-public class LiferayIdentityService  implements ApplicationContextAware, Initializable  
-{
+public class LiferayIdentityService {
 	private static Log _log = LogFactoryUtil.getLog(LiferayIdentityService.class);
 
-	ApplicationContext applicationContext;
-	
+	@Autowired
 	IdMappingService idMappingService;
 
-	public void init() {
-		idMappingService = applicationContext.getBean("idMappingService", IdMappingService.class);
-	}	
 	// Groups
 	
 	public List<Group> findGroupsByUser(String userName) {
@@ -144,10 +135,4 @@ public class LiferayIdentityService  implements ApplicationContextAware, Initial
 		}
 	}
 
-	@Override
-	public void setApplicationContext(ApplicationContext ctx)
-			throws BeansException {
-		applicationContext = ctx;
-		
-	}	
 }

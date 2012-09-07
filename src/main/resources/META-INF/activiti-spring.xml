@@ -11,16 +11,15 @@
 						http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
 						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
 						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
-						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd"
-	default-lazy-init="true" default-autowire="no" >
+						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
 	
 	<!-- TODO Ask Irina why it is required -->
-	<bean id="applicationContextProvider" class="net.emforge.activiti.spring.ApplicationContextProvider" lazy-init="false" />
+	<bean id="applicationContextProvider" class="net.emforge.activiti.spring.ApplicationContextProvider"/>
 	<context:component-scan base-package="net.emforge.activiti"/>
 
 	<tx:annotation-driven transaction-manager="transactionManager" />
 
-	<bean id="sharedTransactionTemplate" class="org.springframework.transaction.support.TransactionTemplate" lazy-init="true"  autowire="no">
+	<bean id="sharedTransactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
 		<property name="transactionManager" ref="transactionManager" />
 	</bean>
 
@@ -31,42 +30,33 @@
 	<task:scheduler id="scheduler" pool-size="10"/>
 	<task:executor id="executor" pool-size="5"/ -->	
 	
-	<bean id="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil" class="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil" lazy-init="true"  autowire="no">
+	<bean id="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil" class="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil">
 		<property name="workflowComparatorFactory">
 			<bean class="net.emforge.activiti.comparator.WorkflowComparatorFactoryImpl" />
 		</property>
 	</bean>
 	
-	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean" lazy-init="true"  autowire="no">
+	<bean id="processEngine" class="net.emforge.activiti.LiferayProcessEngineFactoryBean">
 		<property name="processEngineConfiguration" ref="processEngineConfiguration" />
 	</bean>
 		
-	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" lazy-init="true"  autowire="no" />
-	<bean id="runtimeService" factory-bean="processEngine" factory-method="getRuntimeService" lazy-init="true"  autowire="no" />
-	<bean id="taskService" factory-bean="processEngine" factory-method="getTaskService" lazy-init="true"  autowire="no" />
-	<bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService" lazy-init="true"  autowire="no" />
-	<bean id="managementService" factory-bean="processEngine" factory-method="getManagementService" lazy-init="true"  autowire="no" />
-	<bean id="identityService" factory-bean="processEngine" factory-method="getIdentityService"  lazy-init="true"  autowire="no"/>
+	<bean id="repositoryService" factory-bean="processEngine" factory-method="getRepositoryService" />
+	<bean id="runtimeService" factory-bean="processEngine" factory-method="getRuntimeService" />
+	<bean id="taskService" factory-bean="processEngine" factory-method="getTaskService" />
+	<bean id="historyService" factory-bean="processEngine" factory-method="getHistoryService" />
+	<bean id="managementService" factory-bean="processEngine" factory-method="getManagementService" />
+	<bean id="identityService" factory-bean="processEngine" factory-method="getIdentityService" />
 
 
 	<!--  I was not able to access custom properties defined in portal.properties via PropUtils.get()
 		so, added them into spring
 	  -->
 	<bean
-		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" lazy-init="true"  autowire="no">
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
 				<value>classpath:portal.properties</value>
 			</list>
 		</property>
 	</bean> 
-	
-	<bean class="net.emforge.activiti.dao.WorkflowDefinitionExtensionDao" autowire="no">
-		<property name="sessionFactory" ref="sessionFactory"></property>
-	</bean>
-	<bean class="net.emforge.activiti.dao.ProcessInstanceExtensionDao" autowire="no">
-		<property name="sessionFactory" ref="sessionFactory"></property>
-	</bean>	
-	<bean id="workflowInstanceManager" class="net.emforge.activiti.WorkflowInstanceManagerImpl" lazy-init="true" autowire="no">
-	</bean>			
 </beans>

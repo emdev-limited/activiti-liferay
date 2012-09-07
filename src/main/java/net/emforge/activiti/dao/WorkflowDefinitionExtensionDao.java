@@ -3,17 +3,13 @@ package net.emforge.activiti.dao;
 import java.util.List;
 
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
-import net.emforge.activiti.spring.Initializable;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.orm.hibernate3.HibernateTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -24,18 +20,9 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
  * @author akakunin
  *
  */
-//@Repository
-public class WorkflowDefinitionExtensionDao extends HibernateTemplate 
-	implements ApplicationContextAware, Initializable
-{
-	ApplicationContext applicationContext;
-	
-	public void init() {
-		SessionFactory sessionFactory = (SessionFactory) applicationContext.getBean("sessionFactory");
-		setHibernateSessionFactory(sessionFactory);
-	}	
-	
-//    @Autowired
+@Repository
+public class WorkflowDefinitionExtensionDao extends HibernateTemplate {
+    @Autowired
     public void setHibernateSessionFactory(SessionFactory sessionFactory) {
     	setSessionFactory(sessionFactory);
     }
@@ -138,11 +125,4 @@ public class WorkflowDefinitionExtensionDao extends HibernateTemplate
 			return null;
 		}
 	}
-	
-	@Override
-	public void setApplicationContext(ApplicationContext ctx)
-			throws BeansException {
-		applicationContext = ctx;
-		
-	}	
 }

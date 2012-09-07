@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
@@ -38,9 +34,6 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import net.emforge.activiti.StartUpAction;
-import net.emforge.activiti.spring.ApplicationContextProvider;
-import net.emforge.activiti.spring.Initializable;
-import net.emforge.activiti.util.SpringUtils;
 
 /** 
  * Startup action called after deployment of Activiti Workflow plugin. Initial settings get configured in Liferay. 
@@ -49,9 +42,7 @@ import net.emforge.activiti.util.SpringUtils;
  * @author Oliver Teichmann, PRODYNA AG
  *
  */
-public class StartUpAction extends SimpleAction implements ApplicationContextAware 
-{
-	ApplicationContext applicationContext;
+public class StartUpAction extends SimpleAction {
 	
 	private static Log log = LogFactoryUtil.getLog(StartUpAction.class);
 	
@@ -62,45 +53,7 @@ public class StartUpAction extends SimpleAction implements ApplicationContextAwa
 	public void run(String[] ids) throws ActionException {
 		log.info("Activiti StartUp Action");
 		
-		applicationContext = ApplicationContextProvider.getApplicationContext();		
-		
 		try {
-			// init and wire lazy beans
-			
-			initBean("transactionManager");
-			initBean("dataSource");
-			initBean("sharedTransactionTemplate");
-			initBean("sessionFactory");
-			initBean("com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil");
-			initBean("processEngineConfiguration");
-			initBean("processEngine");
-			initBean("repositoryService");
-			initBean("runtimeService");
-			initBean("taskService");
-			initBean("historyService");
-			initBean("managementService");
-			initBean("identityService");
-			initBean("org.springframework.beans.factory.config.PropertyPlaceholderConfigurer");
-			
-			initBean("workflowDefinitionManager");
-			initBean("idMappingService");
-			initBean("workflowInstanceManager", WorkflowInstanceManagerImpl.class);
-			initBean("workflowEngineManager");
-			initBean("workflowTaskManager");
-			initBean("workflowLogManager");
-			initBean("liferayService");
-			initBean("liferayIdentityService");
-			initBean("liferayGroupManagerSessionFactory");
-			initBean("liferayGroupManagerSession");
-
-			initBean("messageListener.workflow_definition");
-			initBean("messageListener.workflow_engine");
-			initBean("messageListener.workflow_instance");
-			initBean("messageListener.workflow_log");
-			initBean("messageListener.workflow_task");
-			initBean("messagingConfigurator");
-			
-			
 			for (String companyId : ids) {
 				doRun(GetterUtil.getLong(companyId));
 			}
@@ -110,19 +63,6 @@ public class StartUpAction extends SimpleAction implements ApplicationContextAwa
 		}
 
 	}
-	
-	private void initBean(String beanName) throws Exception {
-		Object aobj = applicationContext.getBean(beanName);
-		if (aobj instanceof Initializable)
-			((Initializable) aobj).init();
-	}	
-	
-	private void initBean(String beanName, Class cls) throws Exception {
-		Object aobj = applicationContext.getBean(beanName);
-		Object aobj1 = SpringUtils.getTargetObject(aobj, cls);
-		if (aobj instanceof Initializable)
-			((Initializable) aobj).init();
-	}		
 
 	private void doRun(long companyId) throws Exception {
 		log.info("Updating company " + companyId);
@@ -211,13 +151,6 @@ public class StartUpAction extends SimpleAction implements ApplicationContextAwa
 		} else {
 			return null;
 		}
-	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext ctx)
-			throws BeansException {
-		applicationContext = ctx;
-		
 	}
 	
 }

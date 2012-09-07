@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 import net.emforge.activiti.entity.ProcessInstanceExtensionImpl;
-import net.emforge.activiti.spring.Initializable;
 
 import org.hibernate.HibernateException;
 import org.hibernate.SQLQuery;
@@ -14,10 +13,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.HibernateTemplate;
 import org.springframework.stereotype.Repository;
@@ -29,20 +25,11 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
 
-//@Repository
-public class ProcessInstanceExtensionDao extends HibernateTemplate
-	implements ApplicationContextAware, Initializable
-{
+@Repository
+public class ProcessInstanceExtensionDao extends HibernateTemplate {
 	private static Log _log = LogFactoryUtil.getLog(ProcessInstanceExtensionDao.class);
-	
-	ApplicationContext applicationContext;
-	
-	public void init() {
-		SessionFactory sessionFactory = (SessionFactory) applicationContext.getBean("sessionFactory");
-		setHibernateSessionFactory(sessionFactory);
-	}	
 
-//	@Autowired
+	@Autowired
     public void setHibernateSessionFactory(SessionFactory sessionFactory) {
     	setSessionFactory(sessionFactory);
     }
@@ -198,11 +185,5 @@ public class ProcessInstanceExtensionDao extends HibernateTemplate
 
 			criteria.addOrder(order);
 		}
-	}	
-	
-	public void setApplicationContext(ApplicationContext ctx)
-			throws BeansException {
-		applicationContext = ctx;
-		
 	}	
 }

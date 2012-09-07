@@ -9,25 +9,25 @@
 >
 	<!-- Listeners -->
 
-	<bean id="messageListener.workflow_definition" class="net.emforge.activiti.messaging.MessageListener" lazy-init="true"  autowire="no">
+	<bean id="messageListener.workflow_definition" class="net.emforge.activiti.messaging.MessageListener">
 		<property name="manager" ref="workflowDefinitionManager"/>
 	</bean>
-	<bean id="messageListener.workflow_engine" class="net.emforge.activiti.messaging.MessageListener" lazy-init="true"  autowire="no">
+	<bean id="messageListener.workflow_engine" class="net.emforge.activiti.messaging.MessageListener">
 		<property name="manager" ref="workflowEngineManager"/>
 	</bean>
-	<bean id="messageListener.workflow_instance" class="net.emforge.activiti.messaging.MessageListener" lazy-init="true"  autowire="no">
+	<bean id="messageListener.workflow_instance" class="net.emforge.activiti.messaging.MessageListener">
 		<property name="manager" ref="workflowInstanceManager"/>
 	</bean>
-	<bean id="messageListener.workflow_log" class="net.emforge.activiti.messaging.MessageListener" lazy-init="true"  autowire="no">
+	<bean id="messageListener.workflow_log" class="net.emforge.activiti.messaging.MessageListener">
 		<property name="manager" ref="workflowLogManager"/>
 	</bean>
-	<bean id="messageListener.workflow_task" class="net.emforge.activiti.messaging.MessageListener" lazy-init="true"  autowire="no">
+	<bean id="messageListener.workflow_task" class="net.emforge.activiti.messaging.MessageListener">
 		<property name="manager" ref="workflowTaskManager"/>
 	</bean>
 
 	<!-- Configurator -->
 
-	<bean id="messagingConfigurator" class="com.liferay.portal.kernel.messaging.config.PluginMessagingConfigurator" lazy-init="true"  autowire="no">
+	<bean id="messagingConfigurator" class="com.liferay.portal.kernel.messaging.config.PluginMessagingConfigurator">
 		<property name="messageListeners">
 			<map key-type="java.lang.String" value-type="java.util.List">
 				<entry key="liferay/workflow_definition">

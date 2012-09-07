@@ -5,11 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 /**
- * ApplicationContextProvider provides access to spring application context from 
- * non-spring classes. If your class is not described as spring bean, spring component 
- * or spring service, you can retrieve spring context:
- * 
- *   ApplicationContext context = ApplicationContextProvider.getApplicationContext(); 
+ * TODO - Clarify with Irina why it is required
  * 
  * @author akakunin
  *
