@@ -8,20 +8,11 @@ import java.util.List;
 import net.emforge.activiti.engine.impl.LiferayTaskServiceImpl;
 import net.emforge.activiti.hook.LiferayBpmnParser;
 
-import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
 import org.activiti.engine.impl.bpmn.parser.BpmnParser;
-import org.activiti.engine.impl.db.IbatisVariableTypeHandler;
 import org.activiti.engine.impl.persistence.deploy.Deployer;
-import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.impl.util.ReflectUtil;
-import org.activiti.engine.impl.variable.VariableType;
 import org.activiti.spring.SpringProcessEngineConfiguration;
-import org.apache.ibatis.builder.xml.XMLConfigBuilder;
-import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
-import org.apache.ibatis.type.JdbcType;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -64,7 +55,8 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 		bpmnDeployer.setExpressionManager(expressionManager);
 		bpmnDeployer.setIdGenerator(idGenerator);
 		BpmnParser bpmnParser = new LiferayBpmnParser(expressionManager);
-
+		_log.debug("Used own Liferay BPMN Parser");
+		
 		if (preParseListeners != null) {
 			bpmnParser.getParseListeners().addAll(preParseListeners);
 		}
