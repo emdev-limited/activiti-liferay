@@ -32,7 +32,7 @@ import org.activiti.engine.repository.ProcessDefinition;
  * @author Alexey Kakunin
  */
 @Entity
-@Table(name = "ACT_PROCESSDEFINITIONEXTENSION_LIFERAY")
+@Table(name = "ACT_PDE_LIFERAY")
 public class WorkflowDefinitionExtensionImpl {
 	public WorkflowDefinitionExtensionImpl() {
 	}
@@ -64,7 +64,7 @@ public class WorkflowDefinitionExtensionImpl {
 	}
 
     @Id
-    @Column(name = "workflow_definition_extension_id")
+    @Column(name = "wde_id")
     @GeneratedValue(strategy = GenerationType.AUTO)
 	public long getWorkflowDefinitionExtensionId() {
 		return this.workflowDefinitionExtensionId;

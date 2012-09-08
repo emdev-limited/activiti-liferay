@@ -52,7 +52,7 @@ public class ProcessInstanceExtensionDao extends HibernateTemplate {
 			@Override
 	        public Integer doInHibernate(Session session) throws HibernateException, SQLException {
 	
-	        	String queryStr = "SELECT count(*) FROM ACT_PROCESSINSTANCEEXTENSION_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
+	        	String queryStr = "SELECT count(*) FROM ACT_PIE_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
 	        	if (companyId != 0l) {
 	    			queryStr += " and PI.company_id = :companyId";
 	    		}
@@ -108,7 +108,7 @@ public class ProcessInstanceExtensionDao extends HibernateTemplate {
 			@Override
 	        public List<ProcessInstanceExtensionImpl> doInHibernate(Session session) throws HibernateException, SQLException {
 	
-	        	String queryStr = "SELECT PI.* FROM ACT_PROCESSINSTANCEEXTENSION_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
+	        	String queryStr = "SELECT PI.* FROM ACT_PIE_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
 	        	if (companyId != 0l) {
 	    			queryStr += " and PI.company_id = :companyId";
 	    		}

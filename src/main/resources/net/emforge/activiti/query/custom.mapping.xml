@@ -120,7 +120,7 @@
   <sql id="customSearchHistoricTaskInstanceSql">
     from ACT_HI_TASKINST HTI
  	<if test="entryClassName != null">
-   	  inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on HTI.PROC_INST_ID_ = APL.process_instance_id
+   	  inner join ACT_PIE_LIFERAY APL on HTI.PROC_INST_ID_ = APL.process_instance_id
     </if>	
     <where>
       HTI.END_TIME_ is not null

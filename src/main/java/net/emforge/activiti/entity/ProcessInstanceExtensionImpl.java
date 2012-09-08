@@ -5,17 +5,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "ACT_PROCESSINSTANCEEXTENSION_LIFERAY")
+@Table(name = "ACT_PIE_LIFERAY")
 public class ProcessInstanceExtensionImpl {
 	public ProcessInstanceExtensionImpl() {
 	}
 	
     @Id
-    @Column(name = "process_instance_extension_id")
+    @Column(name = "pie_id")
     @GeneratedValue(strategy = GenerationType.AUTO)
 	public long getId() {
 		return id;
