@@ -200,4 +200,31 @@
 			<url>https://maven.alfresco.com/nexus/content/repositories/public/</url>
 		</repository>
 	</repositories>
+	
+	<distributionManagement>
+  		<repository>
+    		<id>emdev-public</id>
+    		<name>EmDev Public</name>
+    		<url>http://build.emdev.ru/nexus/content/repositories/emdev-public</url>
+    		<layout>default</layout>
+  		</repository>
+  		<snapshotRepository>
+    		<id>snapshots</id>
+    		<name>Snapshots</name>
+    		<url>http://build.emdev.ru/nexus/content/repositories/snapshots/</url>
+    		<layout>default</layout>
+  		</snapshotRepository>
+	</distributionManagement>
+	
+	<ciManagement>
+		<system>jenkins</system>
+		<url>http://build.emdev.ru/jenkins/job/activiti-web/</url>
+	</ciManagement>
+	<scm>
+		<url>http://svn.emforge.net/svnroot/activiti-liferay/trunk/activiti-web</url>
+	</scm>
+	<organization>
+		<name>EmDev Limited</name>
+		<url>http://www.emdev.ru</url>
+	</organization>
 </project>
