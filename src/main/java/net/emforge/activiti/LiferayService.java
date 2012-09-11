@@ -125,10 +125,10 @@ public class LiferayService {
 			FileEntry fEntry = DLAppLocalServiceUtil.addFileEntry(destOwnerId, 
 																  targetFolder.getRepositoryId(), 
 															  	  targetFolder.getFolderId(),
-															  	  toCopy.getName(), 
+															  	  toCopy.getTitle(), 
 																  contentType, 
-																  toCopy.getName(),//use initial fileName
-																  toCopy.getName(), 
+																  toCopy.getTitle(),//use initial fileName
+																  toCopy.getDescription(), 
 																  "", 				//? changeLog
 																  file, serviceContext);
 		} catch (Exception e) {
