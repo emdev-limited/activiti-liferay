@@ -2,6 +2,7 @@ package net.emforge.activiti.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.text.Normalizer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,24 +21,25 @@ import org.w3c.dom.NodeList;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import org.apache.commons.lang.StringUtils;
+
 
 /** This class is supposed to fix different issues we found in xml produced by signavio modeler
- * 
+ *
  * @author akakunin
  *
  */
 public class SignavioFixer {
 	private static Log _log = LogFactoryUtil.getLog(SignavioFixer.class);
-	
+
 	String processName;
-	
+    private String SID_PREFIX = "sid-";
+
 	public SignavioFixer(String processName) {
-		this.processName = processName;
+		this.processName = normalize(processName);
 	}
-	
+
 	/** fix xml produced by signavio
-	 * 
+	 *
 	 * @param sourceBytes
 	 * @return
 	 */
@@ -48,16 +50,16 @@ public class SignavioFixer {
 
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            
+
             Document doc = builder.parse(bais);
             //set activiti NS
             Element definitions = doc.getDocumentElement();
             definitions.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:activiti", "http://activiti.org/bpmn");
 //            definitions.setAttribute("targetNamespace", "http://www.activiti.org/test");
-            
-            
+
+
             NodeList processes = doc.getElementsByTagName("process");
-            
+
             // add process name
             for (int i=0; i < processes.getLength(); i++) {
             	Node node = processes.item(i);
@@ -66,28 +68,26 @@ public class SignavioFixer {
             		_log.info("name attribute is missed in process tag, add it");
             		 element.setAttribute("name", processName);
             		 // also set processName into id - to avoid multiple workflows definitions in the system
-            		 String oldProcessId = element.getAttribute("id"); 
-            		 element.setAttribute("id", processName);
-            		 
-            		 // now need also change ID for related bpmndi:BPMNPlane
-            		 NodeList nodes = doc.getElementsByTagName("bpmndi:BPMNPlane");
-            		 for (int i2=0; i2 < nodes.getLength(); i2++) {
-                     	 Node node2 = nodes.item(i);
-            			 Element element2 = (Element)node2;
-            			 if (StringUtils.equals(element2.getAttribute("bpmnElement"), oldProcessId)) {
-            				 element2.setAttribute("bpmnElement", processName);
-            			 }
-            		 }
-            	}
+            		 String oldProcessId = element.getAttribute("id");
+                    if (oldProcessId.startsWith(SID_PREFIX)){
+            		     element.setAttribute("id", processName);
+                     // now need also change ID for related bpmndi:BPMNPlane
+                     replaceSid(doc,"bpmndi:BPMNPlane","bpmnElement",oldProcessId,processName);
+            		}
+                }
             	//fix isExecutable="false"
             	element.setAttribute("isExecutable", "true");
             }
 
             // remove resourceRef attribute
-            String[] tagNames = new String[] {"performer", "humanPerformer", "potentialOwner"};
+            String[] tagNames = new String[] {"performer", "humanPerformer", "potentialOwner","endEvent"};
             for (String tagName : tagNames) {
-            	NodeList nodes = doc.getElementsByTagName(tagName);
-            	for (int i=0; i < nodes.getLength(); i++) {
+                if (tagName.equals("endEvent")){
+                    processEndEvent(doc);
+                    continue;
+                }
+                NodeList nodes = doc.getElementsByTagName(tagName);
+                for (int i=0; i < nodes.getLength(); i++) {
                 	Node node = nodes.item(i);
                 	if (node.getAttributes().getNamedItem("resourceRef") != null) {
                 		_log.info("found resouceRef attribute - remove it");
@@ -120,19 +120,19 @@ public class SignavioFixer {
                      		}
                      	}
                 	}
-                	
+
                 }
             }
-            
+
             Result result = new StreamResult(baos);
 
             // Write the DOM document to the file
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
             Source source = new DOMSource(doc);
             xformer.transform(source, result);
-            
 
-			
+
+
 			return baos.toByteArray();
 		} catch (Exception ex) {
 			_log.debug("Cannot fix xml", ex);
@@ -140,4 +140,53 @@ public class SignavioFixer {
 			return null;
 		}
 	}
+
+    /**
+     * Replaces endEvent signavio id with normalized name
+     * @param doc
+     */
+    private void processEndEvent(Document doc){
+        NodeList nodes = doc.getElementsByTagName("endEvent");
+        for (int i=0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            Element element = (Element)node;
+            String oldEndEventId = element.getAttribute("id");
+            if (oldEndEventId.startsWith(SID_PREFIX)){
+                 String endEventName = element.getAttribute("name");
+                 endEventName = normalize(endEventName);
+                 element.setAttribute("name",endEventName);
+                 element.setAttribute("id",endEventName);
+                 replaceSid(doc,"sequenceFlow","targetRef",oldEndEventId,endEventName);
+                 replaceSid(doc,"bpmndi:BPMNShape","bpmnElement",oldEndEventId,endEventName);
+            }
+        }
+    }
+
+    /**
+     * Replaces signavio generated id with normalized name
+     * @param doc  xml document
+     * @param tagName
+     * @param attribute
+     * @param oldId id which we want to replace
+     * @param newId new normalized name
+     */
+    private void replaceSid(Document doc,String tagName,String attribute,String oldId, String newId){
+        NodeList nodeList = doc.getElementsByTagName(tagName);
+        for (int j=0; j < nodeList.getLength(); j++) {
+            Node node = nodeList.item(j);
+            Element element = (Element)node;
+            if (StringUtils.equals(element.getAttribute(attribute), oldId)) {
+                element.setAttribute(attribute, newId);
+            }
+        }
+    }
+
+    /**
+     * normalize name
+     * @return normalized name
+     */
+    private String normalize(String name){
+        name = name.replaceAll("[^a-zA-Zа-яА-Я0-9]++","");
+        return Normalizer.normalize(name, Normalizer.Form.NFD);
+    }
 }
