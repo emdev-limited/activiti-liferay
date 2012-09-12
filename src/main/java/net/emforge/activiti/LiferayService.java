@@ -64,6 +64,8 @@ public class LiferayService {
 	}
 	
 	public void copyFileToTargetGroup(long classPK, long ownerId, long destOwnerId, String targetOrgFriendlyUrl, String destinationFolder, boolean remove) {
+		_log.info("Copy file " + classPK + " to group " + targetOrgFriendlyUrl + " and destination folder " + destinationFolder);
+		
 		DLFileEntry toCopy = null;
 		DLFileVersion version = null;
 		InputStream is = null;
@@ -131,6 +133,8 @@ public class LiferayService {
 																  toCopy.getDescription(), 
 																  "", 				//? changeLog
 																  file, serviceContext);
+			
+			_log.info("File " + file.getName() + " copied");
 		} catch (Exception e) {
 			_log.error(String.format("Error while copying file from group [%s] and path [%s] to [%s]", 
 					toCopy != null ? toCopy.getGroupId() : "null file", 
