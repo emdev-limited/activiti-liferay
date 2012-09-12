@@ -60,24 +60,28 @@ public class SignavioFixer {
 
             NodeList processes = doc.getElementsByTagName("process");
 
-            // add process name
-            for (int i=0; i < processes.getLength(); i++) {
-            	Node node = processes.item(i);
-            	Element element = (Element)node;
-            	if (node.getAttributes().getNamedItem("name") == null) {
-            		_log.info("name attribute is missed in process tag, add it");
-            		 element.setAttribute("name", processName);
-            		 // also set processName into id - to avoid multiple workflows definitions in the system
-            		 String oldProcessId = element.getAttribute("id");
-                    if (oldProcessId.startsWith(SID_PREFIX)){
-            		     element.setAttribute("id", processName);
-                     // now need also change ID for related bpmndi:BPMNPlane
-                     replaceSid(doc,"bpmndi:BPMNPlane","bpmnElement",oldProcessId,processName);
-            		}
-                }
-            	//fix isExecutable="false"
-            	element.setAttribute("isExecutable", "true");
-            }
+			// add process name
+			for (int i = 0; i < processes.getLength(); i++) {
+				Node node = processes.item(i);
+				Element element = (Element) node;
+				if (node.getAttributes().getNamedItem("name") == null) {
+					_log.info("name attribute is missed in process tag, add process name: "
+							+ processName);
+
+					element.setAttribute("name", processName);
+					// also set processName into id - to avoid multiple
+					// workflows definitions in the system
+					String oldProcessId = element.getAttribute("id");
+					if (oldProcessId.startsWith(SID_PREFIX)) {
+						_log.info("Replace process id with : " + processName);
+						element.setAttribute("id", processName);
+						// now need also change ID for related bpmndi:BPMNPlane
+						replaceSid(doc, "bpmndi:BPMNPlane", "bpmnElement", oldProcessId, processName);
+					}
+				}
+				// fix isExecutable="false"
+				element.setAttribute("isExecutable", "true");
+			}
 
             // remove resourceRef attribute
             String[] tagNames = new String[] {"performer", "humanPerformer", "potentialOwner","endEvent"};
@@ -145,17 +149,22 @@ public class SignavioFixer {
      * Replaces endEvent signavio id with normalized name
      * @param doc
      */
-    private void processEndEvent(Document doc){
+    private void processEndEvent(Document doc) {
         NodeList nodes = doc.getElementsByTagName("endEvent");
+        
         for (int i=0; i < nodes.getLength(); i++) {
             Node node = nodes.item(i);
             Element element = (Element)node;
             String oldEndEventId = element.getAttribute("id");
-            if (oldEndEventId.startsWith(SID_PREFIX)){
+            
+            if (oldEndEventId.startsWith(SID_PREFIX)) {
                  String endEventName = element.getAttribute("name");
                  endEventName = normalize(endEventName);
-                 element.setAttribute("name",endEventName);
+                 
+                 _log.info("End Event " + oldEndEventId + " replaced to " + endEventName);
+                 //element.setAttribute("name",endEventName);
                  element.setAttribute("id",endEventName);
+                 
                  replaceSid(doc,"sequenceFlow","targetRef",oldEndEventId,endEventName);
                  replaceSid(doc,"bpmndi:BPMNShape","bpmnElement",oldEndEventId,endEventName);
             }
@@ -186,7 +195,7 @@ public class SignavioFixer {
      * @return normalized name
      */
     private String normalize(String name){
-        name = name.replaceAll("[^a-zA-Zа-яА-Я0-9]++","");
+        name = name.replaceAll("[^a-zA-Z\\u0410-\\u042F\\u0430-\\u044F0-9]+","");
         return Normalizer.normalize(name, Normalizer.Form.NFD);
     }
 }
