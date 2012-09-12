@@ -3,6 +3,9 @@ package net.emforge.activiti;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -12,23 +15,25 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CompanyConstants;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFileEntryConstants;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
-import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.model.DLSyncConstants;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
@@ -63,6 +68,17 @@ public class LiferayService {
 		return null;
 	}
 	
+	/** Copy file from one folder to another. This method is temporary here - we need it for making some demos. Later we will move it into proper location
+	 * 
+	 * TODO - Move it into correct place.
+	 * 
+	 * @param classPK
+	 * @param ownerId
+	 * @param destOwnerId
+	 * @param targetOrgFriendlyUrl
+	 * @param destinationFolder
+	 * @param remove
+	 */
 	public void copyFileToTargetGroup(long classPK, long ownerId, long destOwnerId, String targetOrgFriendlyUrl, String destinationFolder, boolean remove) {
 		_log.info("Copy file " + classPK + " to group " + targetOrgFriendlyUrl + " and destination folder " + destinationFolder);
 		
@@ -122,9 +138,11 @@ public class LiferayService {
 				DLFileEntryLocalServiceUtil.deleteDLFileEntry(toCopy);
 			}
 			
+			serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
+			
 			File file = FileUtil.createTempFile(bytes);
 			String contentType = MimeTypesUtil.getContentType(toCopy.getName());
-			DLFileEntryLocalServiceUtil.addFileEntry(destOwnerId, 
+			DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(destOwnerId, 
 													 targetFolder.getGroupId(), 
 													 targetFolder.getRepositoryId(), 
 												  	  targetFolder.getFolderId(),
@@ -136,12 +154,36 @@ public class LiferayService {
 													  toCopy.getFileEntryTypeId(), toCopy.getFieldsMap(toCopy.getFileVersion().getFileVersionId()), 
 													  file, is, toCopy.getSize(), serviceContext);
 			
+			DLFileEntryLocalServiceUtil.addFileEntryResources(
+					dlFileEntry, true, true);
+			
+			DLFileVersion dlFileVersion = dlFileEntry.getFileVersion();
+			AssetEntryLocalServiceUtil.updateEntry(
+					destOwnerId, dlFileEntry.getGroupId(),
+					DLFileEntryConstants.getClassName(),
+					dlFileEntry.getFileEntryId(), dlFileEntry.getUuid(),
+					dlFileEntry.getFileEntryTypeId(), new long[] {}, new String[] {}, false, null,
+					null, null, null, dlFileEntry.getMimeType(), dlFileEntry.getTitle(),
+					dlFileEntry.getDescription(), null, null, null, 0, 0, null,
+					false);
+
+			Map<String, Serializable> workflowContext =
+					new HashMap<String, Serializable>();
+
+			workflowContext.put("event", DLSyncConstants.EVENT_ADD);
+
+			WorkflowHandlerRegistryUtil.startWorkflowInstance(
+				dlFileVersion.getCompanyId(), dlFileVersion.getGroupId(),
+				destOwnerId, DLFileEntryConstants.getClassName(),
+				dlFileVersion.getFileVersionId(), dlFileVersion, serviceContext,
+				workflowContext);
+
 			
 			_log.info("File " + toCopy.getTitle() + " copied");
 		} catch (Exception e) {
 			_log.error(String.format("Error while copying file from group [%s] and path [%s] to [%s]", 
 					toCopy != null ? toCopy.getGroupId() : "null file", 
-							targetOrgFriendlyUrl,targetGroup != null? targetGroup.getGroupId() : "null target group"));
+							targetOrgFriendlyUrl,targetGroup != null? targetGroup.getGroupId() : "null target group"), e);
 		} finally {
 			if (is != null) {
 				try {
