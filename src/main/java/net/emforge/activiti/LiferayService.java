@@ -124,17 +124,20 @@ public class LiferayService {
 			
 			File file = FileUtil.createTempFile(bytes);
 			String contentType = MimeTypesUtil.getContentType(toCopy.getName());
-			FileEntry fEntry = DLAppLocalServiceUtil.addFileEntry(destOwnerId, 
-																  targetFolder.getRepositoryId(), 
-															  	  targetFolder.getFolderId(),
-															  	  toCopy.getTitle(), 
-																  contentType, 
-																  toCopy.getTitle(),//use initial fileName
-																  toCopy.getDescription(), 
-																  "", 				//? changeLog
-																  file, serviceContext);
+			DLFileEntryLocalServiceUtil.addFileEntry(destOwnerId, 
+													 targetFolder.getGroupId(), 
+													 targetFolder.getRepositoryId(), 
+												  	  targetFolder.getFolderId(),
+												  	  toCopy.getTitle(), 
+													  contentType, 
+													  toCopy.getTitle(),
+													  toCopy.getDescription(), 
+													  "", // changelog
+													  toCopy.getFileEntryTypeId(), toCopy.getFieldsMap(toCopy.getFileVersion().getFileVersionId()), 
+													  file, is, toCopy.getSize(), serviceContext);
 			
-			_log.info("File " + file.getName() + " copied");
+			
+			_log.info("File " + toCopy.getTitle() + " copied");
 		} catch (Exception e) {
 			_log.error(String.format("Error while copying file from group [%s] and path [%s] to [%s]", 
 					toCopy != null ? toCopy.getGroupId() : "null file", 
