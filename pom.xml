@@ -10,6 +10,8 @@
 		<liferay.version>6.1.1</liferay.version>
 		<spring.version>3.1.2.RELEASE</spring.version>
 		<activiti.version>5.10</activiti.version>
+		
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 
@@ -29,6 +31,7 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<encoding>UTF-8</encoding>
 					<source>1.6</source>
 					<target>1.6</target>
 				</configuration>
