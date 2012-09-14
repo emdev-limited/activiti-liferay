@@ -176,8 +176,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	 * added by Maxx
 	 */
 	@Override
-	public WorkflowDefinition getLatestKaleoDefinition(long companyId,
-			String name) throws WorkflowException {
+	public WorkflowDefinition getLatestKaleoDefinition(long companyId, String name) throws WorkflowException {
 		 
 		//return last (active) workflow definition
 		return getWorkflowDefinition(companyId, name, 0);
@@ -186,9 +185,26 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
     @Override
     public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
         _log.info("try to get workflow definition, name: " + name + " , version " + version);
+        
+        WorkflowDefinitionExtensionImpl def = getWorkflowDefinitionExt(companyId, name, version);
+        if (def == null) {
+        	return null;
+        } else {
+        	return new WorkflowDefinitionImpl(def);
+        }
+    }
+
+    /** This method not implemnted basic interface but still public since used from servlet
+     * 
+     * @param companyId
+     * @param name
+     * @param version
+     * @return
+     */
+    public WorkflowDefinitionExtensionImpl getWorkflowDefinitionExt(long companyId, String name, int version) {
         if (version != 0) {
             WorkflowDefinitionExtensionImpl def = workflowDefinitionExtensionDao.find(companyId, name, version);
-            return new WorkflowDefinitionImpl(def);
+            return def;
         } else {
             // return last (active) workflow definition
             List<WorkflowDefinitionExtensionImpl> defs = workflowDefinitionExtensionDao.find(companyId, name, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
@@ -200,10 +216,11 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
                 _log.warn("More then 1 active workflow definition found for name: " + name);
             }
             
-            return new WorkflowDefinitionImpl(defs.get(0));
+            return defs.get(0);
         }
     }
-
+    
+    
     @Override
     public int getWorkflowDefinitionCount(long companyId) throws WorkflowException {
         return workflowDefinitionExtensionDao.count(companyId, null, null).intValue();

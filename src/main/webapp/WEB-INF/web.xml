@@ -5,6 +5,19 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>/WEB-INF/classes/META-INF/*-spring.xml</param-value>
 	</context-param>
+	
+	<servlet>
+		<display-name>Image</display-name>
+		<servlet-name>Image</servlet-name>
+		<servlet-class>net.emforge.activiti.servlet.ImageServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Image</servlet-name>
+		<url-pattern>
+            /image
+        </url-pattern>
+	</servlet-mapping>
+	
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
