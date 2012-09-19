@@ -69,6 +69,12 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
     
     PvmProcessInstance subProcessInstance = execution.createSubProcessInstance(processDefinition);
     
+    // copy ALL context variables
+    for (String varName : execution.getVariableNames()) {
+    	Object value = execution.getVariable(varName);
+    	subProcessInstance.setVariable(varName, value);
+    }
+    
     // copy process variables
     for (AbstractDataAssociation dataInputAssociation : dataInputAssociations) {
       Object value = null;
@@ -87,6 +93,12 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
   public void completing(DelegateExecution execution, DelegateExecution subProcessInstance) throws Exception {
     // only data.  no control flow available on this execution.
 
+	// copy ALL varibles from subprocess
+    for (String varName : subProcessInstance.getVariableNames()) {
+    	Object value = subProcessInstance.getVariable(varName);
+    	execution.setVariable(varName, value);
+    }
+	    
     // copy process variables
     for (AbstractDataAssociation dataOutputAssociation : dataOutputAssociations) {
       Object value = null;
