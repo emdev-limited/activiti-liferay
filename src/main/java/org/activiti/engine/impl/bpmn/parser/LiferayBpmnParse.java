@@ -1,6 +1,5 @@
 package org.activiti.engine.impl.bpmn.parser;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,13 +10,11 @@ import org.activiti.engine.delegate.ExecutionListener;
 import org.activiti.engine.impl.Condition;
 import org.activiti.engine.impl.bpmn.behavior.EventBasedGatewayActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateCatchEventActivitiBehaviour;
-import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.helper.ClassDelegate;
 import org.activiti.engine.impl.bpmn.listener.ExpressionExecutionListener;
 import org.activiti.engine.impl.el.UelExpressionCondition;
 import org.activiti.engine.impl.form.DefaultTaskFormHandler;
 import org.activiti.engine.impl.form.EnumFormType;
-import org.activiti.engine.impl.form.FormHandler;
 import org.activiti.engine.impl.form.FormPropertyHandler;
 import org.activiti.engine.impl.form.TaskFormHandler;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
@@ -26,7 +23,6 @@ import org.activiti.engine.impl.pvm.process.ScopeImpl;
 import org.activiti.engine.impl.pvm.process.TransitionImpl;
 import org.activiti.engine.impl.task.TaskDefinition;
 import org.activiti.engine.impl.util.xml.Element;
-import org.apache.commons.lang.StringUtils;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;

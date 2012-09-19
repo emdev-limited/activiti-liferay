@@ -107,12 +107,7 @@ public class SignavioFixer {
                      			Element usrTaskElement = (Element) userTask;
                      			if (StringUtils.isNotEmpty(formalExpressionVal)) {
                      				if (tagName.equals("humanPerformer")) {
-                             			//handle assignee - should be activiti:assignee="#{userId}"
-                     					if (formalExpressionVal.startsWith("#{") && formalExpressionVal.endsWith("}")) {
-                     						usrTaskElement.setAttribute("activiti:assignee", formalExpressionVal);
-                     					} else {
-                     						usrTaskElement.setAttribute("activiti:assignee", "#{" + formalExpressionVal + "}");
-                     					}
+                     					usrTaskElement.setAttribute("activiti:assignee", formalExpressionVal);
                              		} else if (tagName.equals("potentialOwner")) {
                              			//handle candidate groups - should be activiti:candidateGroups="#{liferayGroups.getGroups(execution, &quot;Role1, Role2&quot;)}"
                              			String attrValue = String.format("#{liferayGroups.getGroups(execution, \" %s \")}", formalExpressionVal);
