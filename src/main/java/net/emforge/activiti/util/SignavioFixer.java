@@ -155,10 +155,12 @@ public class SignavioFixer {
         for (int i=0; i < nodes.getLength(); i++) {
             Node node = nodes.item(i);
             Element element = (Element)node;
-            String oldEndEventId = element.getAttribute("id");
             
-            if (oldEndEventId.startsWith(SID_PREFIX)) {
-                 String endEventName = element.getAttribute("name");
+            String oldEndEventId = element.getAttribute("id");
+            String endEventName = element.getAttribute("name");
+            
+            if (oldEndEventId.startsWith(SID_PREFIX) && StringUtils.isNotBlank(endEventName)) {
+                 
                  endEventName = normalize(endEventName);
                  
                  _log.info("End Event " + oldEndEventId + " replaced to " + endEventName);
