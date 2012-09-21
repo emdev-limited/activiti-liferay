@@ -3,7 +3,6 @@ package net.emforge.activiti;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,6 @@ import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
-import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
@@ -58,11 +56,6 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.security.permission.PermissionThreadLocal;
-import com.liferay.portal.service.UserLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -499,7 +492,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));;
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
         		// add conditions
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
@@ -748,7 +741,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return result;
 	}
 
-	/** Convert jBPM Task to Liferay WorkflowTask
+	/** Convert Activiti Task to Liferay WorkflowTask
 	 * 
 	 * @param task
 	 * @return
