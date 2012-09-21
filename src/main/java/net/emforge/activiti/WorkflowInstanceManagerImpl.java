@@ -18,7 +18,6 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
@@ -47,11 +46,12 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	RuntimeService runtimeService;
 	@Autowired
 	HistoryService historyService;
-	@Autowired
-	RepositoryService repositoryService;
 	
 	@Autowired
 	WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
+	@Autowired
+	WorkflowDefinitionManagerImpl workflowDefinitionManager;
+	
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
@@ -385,7 +385,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	}
 
 	private WorkflowInstance getHistoryWorkflowInstance(HistoricProcessInstance historyPI) {
-		ProcessDefinition procDef = repositoryService.createProcessDefinitionQuery().processDefinitionId(historyPI.getProcessDefinitionId()).singleResult();
+		ProcessDefinition procDef =  workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
         
         DefaultWorkflowInstance inst = new DefaultWorkflowInstance();
         
@@ -414,9 +414,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		
 		workflowInstance.setWorkflowInstanceId(processInstance.getId());
 		
-		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.processDefinitionId(historyPI.getProcessDefinitionId());
-        ProcessDefinition processDef = processDefinitionQuery.singleResult();
+        ProcessDefinition processDef =  workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
         
 		workflowInstance.setWorkflowDefinitionName(processDef.getName());
 		workflowInstance.setWorkflowDefinitionVersion(processDef.getVersion());

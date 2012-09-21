@@ -1,12 +1,15 @@
 package net.emforge.activiti;
 
+import groovy.transform.Synchronized;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipInputStream;
 
-import net.emforge.activiti.WorkflowDefinitionImpl;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
 import net.emforge.activiti.util.SignavioFixer;
@@ -43,6 +46,10 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
     @Autowired
     WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
     
+    /** Cache for ProcessDefinitions
+     * TODO - think - probably to use some of Spring Caching features
+     */
+    private Map<String, ProcessDefinition> processDefMap = new HashMap<String, ProcessDefinition>();
     
     /** Deploy new workflow
      * 
@@ -311,5 +318,28 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	public void validateWorkflowDefinition(InputStream inputStream)
 			throws WorkflowException {
 		_log.info("Has been called validateWorkflowDefinition(...)");
+	}
+	
+	/** Get process definition with using cache
+	 * 
+	 * @param definitionId
+	 * @return
+	 */
+	@Synchronized
+	public ProcessDefinition getProcessDefinition(String definitionId) {
+		// check in cache
+		ProcessDefinition processDef = processDefMap.get(definitionId);
+		
+		if (processDef == null) {
+			// not found
+			ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+	        processDefinitionQuery.processDefinitionId(definitionId);
+			processDef =  processDefinitionQuery.singleResult();
+			
+			// put into cache
+			processDefMap.put(definitionId, processDef);
+		}
+		
+		return processDef;
 	}
 }

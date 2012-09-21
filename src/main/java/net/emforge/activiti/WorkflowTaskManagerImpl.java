@@ -20,7 +20,6 @@ import net.emforge.activiti.query.CustomTaskQueryImpl;
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
 import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.form.FormProperty;
@@ -29,7 +28,6 @@ import org.activiti.engine.history.HistoricActivityInstanceQuery;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.TaskServiceImpl;
 import org.activiti.engine.repository.ProcessDefinition;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
@@ -71,8 +69,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	TaskService taskService;
 	@Autowired
 	HistoryService historyService;
-	@Autowired 
-	RepositoryService repositoryService;
 	
 	@Autowired
 	IdMappingService idMappingService;
@@ -82,6 +78,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
 	WorkflowInstanceManagerImpl workflowInstanceManager;
+	@Autowired
+	WorkflowDefinitionManagerImpl workflowDefinitionManager;
 	
 	@Override
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
@@ -751,9 +749,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		String processInstanceId = task.getProcessInstanceId();
 		
-		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.processDefinitionId(task.getProcessDefinitionId());
-		ProcessDefinition processDef =  processDefinitionQuery.singleResult();
+		ProcessDefinition processDef = workflowDefinitionManager.getProcessDefinition(task.getProcessDefinitionId());
 		
 		// TODO setAsynchronous(!task.isBlocking());
 		// TODO setCompletionDate(taskInstance.getEnd());
@@ -849,9 +845,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 					
 		// get process def from activity
 		String processDefId = task.getProcessDefinitionId();
-		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.processDefinitionId(processDefId);
-		ProcessDefinition processDef =  processDefinitionQuery.singleResult();
+		ProcessDefinition processDef =  workflowDefinitionManager.getProcessDefinition(processDefId);
 		workflowTask.setWorkflowDefinitionId(idMappingService.getLiferayWorkflowDefinitionId(processDefId));
 		workflowTask.setWorkflowDefinitionName(processDef.getName());
 		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
