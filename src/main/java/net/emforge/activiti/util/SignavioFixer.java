@@ -69,16 +69,18 @@ public class SignavioFixer {
 							+ processName);
 
 					element.setAttribute("name", processName);
-					// also set processName into id - to avoid multiple
-					// workflows definitions in the system
-					String oldProcessId = element.getAttribute("id");
-					if (oldProcessId.startsWith(SID_PREFIX)) {
-						_log.info("Replace process id with : " + processName);
-						element.setAttribute("id", processName);
-						// now need also change ID for related bpmndi:BPMNPlane
-						replaceSid(doc, "bpmndi:BPMNPlane", "bpmnElement", oldProcessId, processName);
-					}
 				}
+				
+				// also set processName into id - to avoid multiple
+				// workflows definitions in the system
+				String oldProcessId = element.getAttribute("id");
+				if (oldProcessId.startsWith(SID_PREFIX)) {
+					_log.info("Replace process id with : " + processName);
+					element.setAttribute("id", processName);
+					// now need also change ID for related bpmndi:BPMNPlane
+					replaceSid(doc, "bpmndi:BPMNPlane", "bpmnElement", oldProcessId, processName);
+				}
+				
 				// fix isExecutable="false"
 				element.setAttribute("isExecutable", "true");
 			}
