@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
@@ -779,10 +780,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
 
-		long companyId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "companyId"));
-		/*
-		long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
-		*/
 		
 		String assignee = task.getAssignee();
 		if (assignee != null && !"null".equals(assignee)) { // TODO check why we have this "null" string
@@ -804,6 +801,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 				// for completed tasks it will simple produce exception - ignore it
 			}
 			
+			long companyId = GetterUtil.getLong((String)vars.get(WorkflowConstants.CONTEXT_COMPANY_ID));
+
 			for (IdentityLink participation : participations) {
 				if (StringUtils.isNotEmpty(participation.getGroupId())) {
 					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
