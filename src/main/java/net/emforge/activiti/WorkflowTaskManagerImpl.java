@@ -750,10 +750,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
 		String processInstanceId = task.getProcessInstanceId();
-		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 		
 		ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
-        processDefinitionQuery.processDefinitionId(processInstance.getProcessDefinitionId());
+        processDefinitionQuery.processDefinitionId(task.getProcessDefinitionId());
 		ProcessDefinition processDef =  processDefinitionQuery.singleResult();
 		
 		// TODO setAsynchronous(!task.isBlocking());
@@ -776,6 +775,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		if (liferayProcessInstanceId == null) {
 			// subprocess - they do not have liferay process instance - lets try to use original id
 			// lets try to create it
+			ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
 			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
 			
