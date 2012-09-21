@@ -58,7 +58,9 @@ public class LiferayGroupsUtil {
 				if (StringUtils.isNotBlank(group)) {
 					Role role = RoleLocalServiceUtil.getRole(companyId, group);
 					
-					if (RoleConstants.TYPE_REGULAR != role.getType()) {
+					if (RoleConstants.TYPE_REGULAR == role.getType()) {
+						group = String.valueOf(companyId) + "/" +  group;
+					} else {
 						// use groupId as prefix
 						group = String.valueOf(groupId) + "/" + group;
 					}

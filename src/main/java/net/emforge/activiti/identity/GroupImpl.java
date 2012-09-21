@@ -21,7 +21,7 @@ public class GroupImpl extends GroupEntity {
 	 * @param role
 	 */
 	public GroupImpl(Role role) {
-		id = role.getName();
+		id = role.getCompanyId() + "/" +  role.getName();
 		name = role.getName();
 		type = "regular";
 	}
