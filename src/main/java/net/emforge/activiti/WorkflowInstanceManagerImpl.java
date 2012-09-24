@@ -15,8 +15,10 @@ import org.activiti.engine.HistoryService;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
-import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.pvm.PvmActivity;
+import org.activiti.engine.impl.pvm.ReadOnlyProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -56,7 +58,9 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
 	@Autowired
 	IdMappingService idMappingService;
-	
+    @Autowired
+    RepositoryService repositoryService;
+
 	@Override
 	public void deleteWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
 		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
@@ -308,10 +312,8 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	}
 
 	public DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) throws WorkflowException {
-		RepositoryService repositoryService = this.processEngine.getRepositoryService();
-		
         HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
-        ProcessDefinition procDef = repositoryService.createProcessDefinitionQuery().processDefinitionId(historyPI.getProcessDefinitionId()).singleResult();
+        ProcessDefinition procDef = workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
         
         DefaultWorkflowInstance inst = new DefaultWorkflowInstance();
         
@@ -326,20 +328,20 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
         	// so - we will not have active activities here.
         	_log.debug("Error during getting active activities", ex);
         }
-        
-		// activities contains internal ids - need to be converted into names
+
+        // activities contains internal ids - need to be converted into names
 		List<String> activityNames = new ArrayList<String>(activities.size());
+        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
 		
 		for (String activiti: activities) {
-			List<HistoricActivityInstance> histActs = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstance.getProcessInstanceId()).activityId(activiti).list();
-			if (histActs.size() > 0) {
-				activityNames.add(histActs.get(0).getActivityName());
-			}
+			PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
+			if (findActivity != null)
+				activityNames.add(findActivity.getProperty("name").toString());
 		}
 		inst.setState(StringUtils.join(activityNames, ","));
 
         // copy variables
-        
+
         Map<String, Serializable> workflowContext = null;
         try {
         	Map<String, Object> vars = runtimeService.getVariables(processInstance.getId());
@@ -380,7 +382,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		}
 		
 		inst.setWorkflowInstanceId(id);
-		
+
 		return inst;
 	}
 
@@ -426,12 +428,12 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			List<String> activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
 			// activities contains internal ids - need to be converted into names
 			List<String> activityNames = new ArrayList<String>(activities.size());
+	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(processDef.getId());
 			
 			for (String activiti: activities) {
-				List<HistoricActivityInstance> histActs = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstance.getProcessInstanceId()).activityId(activiti).list();
-				if (histActs.size() > 0) {
-					activityNames.add(histActs.get(0).getActivityName());
-				}
+				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
+				if (findActivity != null)
+					activityNames.add(findActivity.getProperty("name").toString());
 			}
 			workflowInstance.setState(StringUtils.join(activityNames, ","));
 		
