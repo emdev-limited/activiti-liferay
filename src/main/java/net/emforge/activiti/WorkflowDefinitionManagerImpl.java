@@ -100,11 +100,13 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
             if (deployment == null) {
                 if (activitiException != null) {
                     _log.error("Unable to deploy worfklow definition", activitiException);
+                    throw new WorkflowException("Cannot deploy definition: " + activitiException.getMessage());
                 } else {
                     _log.error("No workflows found");
+                    throw new WorkflowException("Cannot deploy definition");
                 }
                 
-                throw new WorkflowException("Cannot deploy definition");
+                
             }
 
             ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
@@ -118,11 +120,13 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
             if (processDefs.size() == 0) {
                 if (activitiException != null) {
                     _log.error("Unable to deploy worfklow definition", activitiException);
+                    throw new WorkflowException("No process definitions found:"  + activitiException.getMessage());
                 } else {
                     _log.error("No workflows found");
+                    throw new WorkflowException("No process definitions found");
                 }
 
-                throw new WorkflowException("No process definitions found");
+                
             }
             
             for (ProcessDefinition processDef : processDefs) {
@@ -140,6 +144,8 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
             } else {
             	return null;
             }
+        } catch (WorkflowException ex) {
+            throw ex;
         } catch (Exception ex) {
             _log.error("Cannot deploy definition", ex);
             throw new WorkflowException("Cannot deploy definition", ex);
