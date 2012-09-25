@@ -5,11 +5,13 @@
 <mapper namespace="org.activiti.persistence">
   <!--  Task Search -->
   <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="taskResultMap">
+  	${limitBefore}
     select distinct T.*
     <include refid="customSearchTasksSql"/>
     <if test="orderBy != null">
       order by ${orderBy}
     </if>
+    ${limitAfter}
   </select>
   
   <!-- TASK RESULTMAP (This is taken from Task.xml) -->
@@ -84,11 +86,13 @@
 
   <!--  Historic Task Search -->
   <select id="customSearchHistoricTaskInstance" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultMap="historicTaskInstanceResultMap">
+    ${limitBefore}
     select *
     <include refid="customSearchHistoricTaskInstanceSql"/>
     <if test="orderBy != null">
       order by ${orderBy}
     </if>
+    ${limitAfter}
   </select>
   
   <!-- HISTORIC TASK INSTANCE RESULT MAP -->
