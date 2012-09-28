@@ -56,7 +56,15 @@ public class ImageServlet extends HttpServlet {
 		Integer workflowVersion = GetterUtil.getInteger(request.getParameter("version"), 0);
 		Long workflowTaskId = GetterUtil.getLong(request.getParameter("taskId"), 0l);
 		Long processId = GetterUtil.getLong(request.getParameter("processId"), 0l);
-
+		Long workflowInstanceId = GetterUtil.getLong(request.getParameter("workflowInstanceId"), 0l);
+		if (processId == 0 && workflowInstanceId != 0) {
+			// get application context
+			ApplicationContext applicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
+			// get beans
+			IdMappingService idMappingService = (IdMappingService)applicationContext.getBean("idMappingService");
+			processId = GetterUtil.getLong(idMappingService.getActivitiProcessInstanceId(workflowInstanceId), 0l);
+		}
+		
 		InputStream is = null;
 		if (workflowTaskId > 0l) {
 			is = getTaskImage(workflowTaskId);

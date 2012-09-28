@@ -61,7 +61,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("intermediateSignalCatch", new ActivityDrawInstruction() {
       
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingSignalEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
     
@@ -85,7 +85,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("errorEndEvent", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawErrorEndEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawErrorEndEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
     
@@ -192,12 +192,21 @@ public class ProcessDiagramGenerator {
         processDiagramCreator.drawParallelGateway(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
+    
+    // event gateway
+    activityDrawInstructions.put("eventBasedGateway", new ActivityDrawInstruction() {
+
+      public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
+        processDiagramCreator.drawEventBasedGateway(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+      }
+    });
+
 
     // Boundary timer
     activityDrawInstructions.put("boundaryTimer", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingTimerEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
 
@@ -213,7 +222,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("boundarySignal", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingSignalEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
 
@@ -221,7 +230,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("intermediateTimer", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingTimerEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
 
@@ -451,3 +460,4 @@ public class ProcessDiagramGenerator {
   }
 
 }
+ 

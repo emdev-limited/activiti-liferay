@@ -116,7 +116,16 @@ public class LiferayBpmnParse extends BpmnParse {
 	      } else if (destinationActivity == null) {
 	        addError("Invalid destination '" + destinationRef + "' of sequence flow '" + id + "'", sequenceFlowElement);
 	      } else if(sourceActivity.getActivityBehavior() instanceof EventBasedGatewayActivityBehavior) {     
-	        // ignore
+	    	  TransitionImpl transition = sourceActivity.createOutgoingTransition(id);
+		      sequenceFlows.put(id, transition);
+		      transition.setProperty("name", sequenceFlowElement.attribute("name"));
+		      transition.setProperty("documentation", parseDocumentation(sequenceFlowElement));
+		      transition.setDestination(destinationActivity);
+		      parseExecutionListenersOnTransition(sequenceFlowElement, transition);
+
+		      for (BpmnParseListener parseListener : parseListeners) {
+		        parseListener.parseSequenceFlow(sequenceFlowElement, scope, transition);
+		      }
 	      } else if(destinationActivity.getActivityBehavior() instanceof IntermediateCatchEventActivitiBehaviour
 	              && (destinationActivity.getParentActivity() != null)
 	              && (destinationActivity.getParentActivity().getActivityBehavior() instanceof EventBasedGatewayActivityBehavior)) {

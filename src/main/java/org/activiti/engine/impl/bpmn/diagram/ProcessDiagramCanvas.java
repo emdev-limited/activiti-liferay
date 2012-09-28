@@ -26,6 +26,7 @@ import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -213,6 +214,11 @@ public class ProcessDiagramCanvas {
     g.setStroke(originalStroke);
   }
 
+  public void drawErrorEndEvent(String name, int x, int y, int width, int height) {
+	drawErrorEndEvent(x, y, width, height);
+	drawLabel(name, x, y, width, height);
+  }
+  
   public void drawErrorEndEvent(int x, int y, int width, int height) {
     drawNoneEndEvent(x, y, width, height);
     g.drawImage(ERROR_THROW_IMAGE, x + 3, y + 3, width - 6, height - 6, null);
@@ -243,14 +249,28 @@ public class ProcessDiagramCanvas {
     g.drawImage(image, innerCircleX, innerCircleY, innerCircleWidth, innerCircleHeight, null);
   }
 
+  public void drawCatchingTimerEvent(String name, int x, int y, int width, int height) {
+	  drawCatchingTimerEvent(x, y, width, height);
+	  drawLabel(name, x, y, width, height);
+  }
+
   public void drawCatchingTimerEvent(int x, int y, int width, int height) {
     drawCatchingEvent(x, y, width, height, TIMER_IMAGE);
   }
 
+  public void drawCatchingErroEvent(String name, int x, int y, int width, int height) {
+    drawCatchingErroEvent(x, y, width, height);
+    drawLabel(name, x, y, width, height);
+  }
+  
   public void drawCatchingErroEvent(int x, int y, int width, int height) {
     drawCatchingEvent(x, y, width, height, ERROR_CATCH_IMAGE);
   }
   
+  public void drawCatchingSignalEvent(String name, int x, int y, int width, int height) {
+	  drawCatchingSignalEvent(x, y, width, height);
+	  drawLabel(name, x, y, width, height);
+  }
   public void drawCatchingSignalEvent(int x, int y, int width, int height) {
     drawCatchingEvent(x, y, width, height, SIGNAL_CATCH_IMAGE);
   }
@@ -553,6 +573,36 @@ public class ProcessDiagramCanvas {
     g.draw(circle);
     g.setStroke(orginalStroke);
   }
+  
+  public void drawEventBasedGateway(int x, int y, int width, int height) {
+	    // rhombus
+	    drawGateway(x, y, width, height);
+
+	    int diameter = width / 2;
+
+	    // rombus inside rhombus
+	    Stroke orginalStroke = g.getStroke();
+	    g.setStroke(GATEWAY_TYPE_STROKE);
+	    
+	    
+	    // draw GeneralPath (polygon)
+	    int n=5;
+	    double angle = 2*Math.PI/n;
+	    int x1Points[]= new int[n];
+	    int y1Points[]= new int[n];
+        //GeneralPath polygon = new GeneralPath(GeneralPath.WIND_EVEN_ODD, x1Points.length);
+        //polygon.moveTo(x1Points[0], y1Points[0]);
+        for ( int index = 0; index < n; index++ ) {
+        	double v = index*angle - Math.PI/2;
+        	x1Points[index] = x + (int)Math.round(width/2) + (int)Math.round((width/4)*Math.cos(v));
+        	y1Points[index] = y + (int)Math.round(height/2) + (int)Math.round((height/4)*Math.sin(v));
+            //polygon.lineTo(x1Points[index], y1Points[index]);
+        };
+        //polygon.closePath();
+ 
+        g.drawPolygon(x1Points, y1Points, n);
+	    g.setStroke(orginalStroke);
+	  }
 
   public void drawMultiInstanceMarker(boolean sequential, int x, int y, int width, int height) {
     int rectangleWidth = MARKER_WIDTH;
@@ -590,4 +640,24 @@ public class ProcessDiagramCanvas {
     g.setStroke(originalStroke);
   }
 
+  public void drawLabel(String name, int x, int y, int width, int height){
+		// text
+	    if (name != null) {
+	    	Paint originalPaint = g.getPaint();
+	    	Font originalFont = g.getFont();
+	    	
+	    	g.setPaint(new Color(112, 146, 190));
+	    	Font font = new Font("Arial", Font.ITALIC, 10);
+	        g.setFont(font);
+	      //String text = fitTextToWidth(name, width);
+	      int textX = x + width - fontMetrics.stringWidth(name)/2;
+	      int textY = y + height + fontMetrics.getHeight();
+	      g.drawString(name, textX, textY);
+	      
+	      	// restore originals
+	      	g.setFont(originalFont);
+	      	g.setPaint(originalPaint);
+	    }
+  }
 }
+ 
