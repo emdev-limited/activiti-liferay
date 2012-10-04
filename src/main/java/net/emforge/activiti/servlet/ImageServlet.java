@@ -15,12 +15,18 @@ import net.emforge.activiti.IdMappingService;
 import net.emforge.activiti.WorkflowDefinitionManagerImpl;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
 
+import org.activiti.engine.HistoryService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.bpmn.diagram.ProcessDiagramGenerator;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.pvm.PvmTransition;
+import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.apache.commons.io.IOUtils;
@@ -124,6 +130,7 @@ public class ImageServlet extends HttpServlet {
 		IdMappingService idMappingService = (IdMappingService)applicationContext.getBean(IdMappingService.class);
 		RuntimeService runtimeService = (RuntimeService)applicationContext.getBean(RuntimeService.class);
 		RepositoryService repositoryService = (RepositoryService)applicationContext.getBean(RepositoryService.class);
+		HistoryService historyService = (HistoryService)applicationContext.getBean(HistoryService.class);
 		_log.debug("Get app context and beans");
 		
 		String procId = idMappingService.getActivitiProcessInstanceId(processInstanceId);
@@ -132,15 +139,57 @@ public class ImageServlet extends HttpServlet {
 		}
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(procId).singleResult();
 		
+		if (inst == null){
+			_log.error("Process instance " + procId + " not found");
+			return null;
+		}
 	    ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(inst.getProcessDefinitionId());
 
 	    if (processDefinition != null && processDefinition.isGraphicalNotationDefined()) {
-	    	return ProcessDiagramGenerator.generateDiagram(processDefinition, "png", runtimeService.getActiveActivityIds(inst.getId()));
+	    	List<String> highLightedActivities = runtimeService.getActiveActivityIds(inst.getId());
+	    	
+	    	List<String> highLightedFlows = getHighLightedFlows(historyService, processDefinition, procId, highLightedActivities);
+		    _log.info("> procId:" + procId + ", flows: " + highLightedFlows);
+		    
+		    return ProcessDiagramGenerator.generateDiagram(processDefinition, "png", highLightedActivities, highLightedFlows);
 	    } 
 	    
-		return null;
+	    return null;
 	}
 	
+	private List<String> getHighLightedFlows(HistoryService historyService, ProcessDefinitionEntity processDefinition, String procId, List<String> highLightedActivities) {
+		List<String> highLightedFlows = new ArrayList<String>();
+		List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery().processInstanceId(procId).orderByHistoricActivityInstanceStartTime().asc()/*.orderByActivityId().asc()*/.list();
+	    //_log.info("--->procId: " + procId);
+	    List<String> historicActivityInstanceList = new ArrayList<String>();
+	    for (HistoricActivityInstance hai : historicActivityInstances) {
+			//_log.info("id: " + hai.getId() + ", ActivityId:" + hai.getActivityId() + ", ActivityName:" + hai.getActivityName());
+			historicActivityInstanceList.add(hai.getActivityId());
+		}
+	    
+	    // add current activities to list
+	    historicActivityInstanceList.addAll(highLightedActivities);
+	 
+	    // activities and their sequence-flows
+	    for (ActivityImpl activity : processDefinition.getActivities()) {
+	      int index = historicActivityInstanceList.indexOf(activity.getId());
+	      
+	      if (index >=0 && index+1 < historicActivityInstanceList.size()) {
+	    	  //_log.info("* actId:" + activity.getId() + ", transitions: " + activity.getOutgoingTransitions());
+	    	  List<PvmTransition> pvmTransitionList = activity.getOutgoingTransitions();
+	    	  for (PvmTransition pvmTransition: pvmTransitionList) {
+	    		  String destinationFlowId = pvmTransition.getDestination().getId();
+	    		  //_log.info("- destinationFlowId: " + destinationFlowId + ", + " + historicActivityInstanceList.get(index+1));
+	    		  if (destinationFlowId.equals(historicActivityInstanceList.get(index+1))) {
+	    			  //_log.info("> actId:" + activity.getId() + ", flow: " + destinationFlowId);
+	    			  highLightedFlows.add(pvmTransition.getId());
+	    		  }
+	    	  }
+	      }
+	    }
+	    return highLightedFlows;
+	}
+
 	protected InputStream getWorkflowImage(Long companyId, String workflowName, Integer workflowVersion) {
 		String defId = null;
 		
