@@ -25,8 +25,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -72,7 +72,8 @@ public class ProcessDiagramCanvas {
   protected static Stroke END_EVENT_STROKE = new BasicStroke(3.0f);
   protected static Stroke MULTI_INSTANCE_STROKE = new BasicStroke(1.3f);
   protected static Stroke EVENT_SUBPROCESS_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 1.0f }, 0.0f);
-
+  protected static Stroke HIGHLIGHT_FLOW_STROKE = new BasicStroke(2.0f);
+  
   // icons
   protected static int ICON_SIZE = 16;
   protected static Image USERTASK_IMAGE;
@@ -280,19 +281,136 @@ public class ProcessDiagramCanvas {
   }
 
   public void drawSequenceflow(int srcX, int srcY, int targetX, int targetY, boolean conditional) {
-    Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
+	  drawSequenceflow(srcX, srcY, targetX, targetY, conditional, false);
+  }
+  public void drawSequenceflow(int srcX, int srcY, int targetX, int targetY, boolean conditional, boolean highLighted) {
+	Paint originalPaint = g.getPaint();
+	if (highLighted)
+		g.setPaint(HIGHLIGHT_COLOR);
+    
+	Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
     g.draw(line);
     drawArrowHead(line);
-
+    
+    if (highLighted)
+		g.setPaint(originalPaint);
+    
     if (conditional) {
       drawConditionalSequenceFlowIndicator(line);
     }
   }
-
+  
+  public void drawSequenceflow(int[] xPoints, int[] yPoints, boolean conditional, boolean highLighted) {
+	  Paint originalPaint = g.getPaint();
+	  Stroke originalStroke = g.getStroke();
+	  
+	  if (highLighted) {
+		g.setPaint(HIGHLIGHT_COLOR);
+		g.setStroke(HIGHLIGHT_FLOW_STROKE);
+	  }
+	  
+	  int a = 15;
+	  Integer nextSrcX=null, nextSrcY=null;
+	  for(int i=1; i<xPoints.length; i++) {
+		  Integer srcX = xPoints[i-1], srcY = yPoints[i-1];
+		    
+		  Integer targetX = xPoints[i], targetY = yPoints[i];
+		  
+		  if (nextSrcX != null && nextSrcY !=null) {
+				srcX = nextSrcX;
+				srcY = nextSrcY;
+			}
+		  
+		  if (i < xPoints.length-1) {
+		    Integer cx = targetX, cy = targetY;
+		    
+		    
+		 // pivot point of prev line
+ 			Integer AB = targetY - srcY,
+ 					OB = targetX - srcX;
+ 			double 	AO = Math.sqrt(Math.pow(AB, 2) + Math.pow(OB, 2)),
+ 					ED = AB * a / AO,
+ 					OD = OB * a / AO;
+ 			targetX = (int) (targetX - OD);
+ 			targetY = (int) (targetY - ED);
+ 			if (AO <= a) {
+ 				OD = OB;
+ 				ED = AB;
+ 				targetX = srcX;
+ 				targetY = srcY;
+ 			}
+ 			
+ 		
+ 			Integer nextTargetX = xPoints[i+1], nextTargetY = yPoints[i+1];
+ 			
+ 		// pivot point of next line
+					AB = cy - nextTargetY;
+					OB = cx - nextTargetX;
+					AO = Math.sqrt(Math.pow(AB, 2) + Math.pow(OB, 2));
+					ED = AB * a / AO;
+					OD = OB * a / AO;
+					nextSrcX = (int) (cx - OD);
+					nextSrcY = (int) (cy - ED);
+			if (AO <= a) {
+ 				OD = OB;
+ 				ED = AB;
+ 				nextSrcX = nextTargetX;
+ 				nextSrcY = nextTargetY;
+ 			}
+			
+			double 	dx0 = (cx - targetX) / 3,
+					dy0 = (cy - targetY) / 3,
+					ax = cx - dx0,
+					ay = cy - dy0,
+					
+					dx1 = (cx - nextSrcX) / 3,
+					dy1 = (cy - nextSrcY) / 3,
+					bx = cx - dx1,
+					by = cy - dy1,
+					
+					zx=nextSrcX, zy=nextSrcY;
+			
+			  // add curve
+			  CubicCurve2D c = new CubicCurve2D.Double();
+			  c.setCurve(targetX, targetY, ax, ay, bx, by, zx, zy);
+			  g.draw(c);
+		  }
+		  
+		// add line
+		  Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
+		  g.draw(line);
+		  
+		  if (i == xPoints.length-1) {
+			  Line2D.Double lineDouble = new Line2D.Double(srcX, srcY, targetX, targetY);
+			    g.draw(lineDouble);
+			    drawArrowHead(lineDouble);
+		  }
+	  }
+	  
+	  if (conditional) {
+		  Line2D.Double line = new Line2D.Double(xPoints[0], yPoints[0], xPoints[1], yPoints[1]);
+		  drawConditionalSequenceFlowIndicator(line);
+	  }
+	  
+	  g.setPaint(originalPaint);
+	  g.setStroke(originalStroke);
+  }
+  
   public void drawSequenceflowWithoutArrow(int srcX, int srcY, int targetX, int targetY, boolean conditional) {
+	  drawSequenceflowWithoutArrow(srcX, srcY, targetX, targetY, conditional, false);
+  }
+  
+  public void drawSequenceflowWithoutArrow(int srcX, int srcY, int targetX, int targetY, boolean conditional, boolean highLighted) {
+	Paint originalPaint = g.getPaint();
+	if (highLighted)
+		g.setPaint(HIGHLIGHT_COLOR);
+		
     Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
     g.draw(line);
 
+    if (highLighted)
+		g.setPaint(originalPaint);
+    
     if (conditional) {
       drawConditionalSequenceFlowIndicator(line);
     }
@@ -578,27 +696,18 @@ public class ProcessDiagramCanvas {
 	    // rhombus
 	    drawGateway(x, y, width, height);
 
-	    int diameter = width / 2;
-
 	    // rombus inside rhombus
 	    Stroke orginalStroke = g.getStroke();
 	    g.setStroke(GATEWAY_TYPE_STROKE);
-	    
-	    
-	    // draw GeneralPath (polygon)
 	    int n=5;
 	    double angle = 2*Math.PI/n;
 	    int x1Points[]= new int[n];
 	    int y1Points[]= new int[n];
-        //GeneralPath polygon = new GeneralPath(GeneralPath.WIND_EVEN_ODD, x1Points.length);
-        //polygon.moveTo(x1Points[0], y1Points[0]);
         for ( int index = 0; index < n; index++ ) {
         	double v = index*angle - Math.PI/2;
         	x1Points[index] = x + (int)Math.round(width/2) + (int)Math.round((width/4)*Math.cos(v));
         	y1Points[index] = y + (int)Math.round(height/2) + (int)Math.round((height/4)*Math.sin(v));
-            //polygon.lineTo(x1Points[index], y1Points[index]);
         };
-        //polygon.closePath();
  
         g.drawPolygon(x1Points, y1Points, n);
 	    g.setStroke(orginalStroke);
