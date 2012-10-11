@@ -382,10 +382,20 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		}
 		
 		inst.setWorkflowInstanceId(id);
+		
+		//get children for it if any..
+		List<ProcessInstance> children = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getProcessInstanceId()).list();
+		if (children != null && !children.isEmpty()) {
+			List<WorkflowInstance> childrenInst = new ArrayList<WorkflowInstance>();
+			for (ProcessInstance procInst : children) {
+				childrenInst.add(getWorkflowInstance(procInst, null, null));
+			}
+			inst.getChildrenWorkflowInstances().addAll(childrenInst);
+		}
 
 		return inst;
 	}
-
+	
 	private WorkflowInstance getHistoryWorkflowInstance(HistoricProcessInstance historyPI) {
 		ProcessDefinition procDef =  workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
         
