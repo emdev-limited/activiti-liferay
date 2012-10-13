@@ -34,6 +34,7 @@ import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,10 +78,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	LiferayIdentityService liferayIdentityService;
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
+	
 	@Autowired
-	WorkflowInstanceManagerImpl workflowInstanceManager;
+	WorkflowInstanceManagerExt workflowInstanceManager;
+	
 	@Autowired
-	WorkflowDefinitionManagerImpl workflowDefinitionManager;
+	WorkflowDefinitionManagerExt workflowDefinitionManager;
 	
 	@Override
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
@@ -285,6 +288,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return 0;
 	}
 
+	@Transactional
 	@Override
 	public int getWorkflowTaskCountByRole(long companyId, long roleId,
 			Boolean completed) throws WorkflowException {
@@ -292,12 +296,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return 0;
 	}
 
+	@Transactional
 	@Override
 	public int getWorkflowTaskCountByUser(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
 		return searchCount(companyId, userId, null, completed, false);
 	}
 
+	@Transactional	
 	@Override
 	public int getWorkflowTaskCountByUserRoles(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
@@ -407,6 +413,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         }
 	}
 
+	@Transactional	
 	@Override
 	public int searchCount(long companyId, long userId, String keywords,
 			Boolean completed, Boolean searchByUserRoles)
@@ -439,6 +446,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         }
 	}
 
+	@Transactional	
 	@Override
 	public WorkflowTask updateDueDate(long companyId, long userId, long workflowTaskId, String comment, Date dueDate)
 			throws WorkflowException {
@@ -479,6 +487,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	/**
 	 * parameter Long[] assetPrimaryKey added by Maxx
 	 */
+	@Transactional
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
 			String taskName, String assetType, Long[] assetPrimaryKey, Date dueDateGT, Date dueDateLT,
@@ -574,6 +583,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	/**
 	 * added by Maxx
 	 */
+	@Transactional
 	@Override
 	public List<WorkflowTask> search(
 			long companyId, long userId, String keywords, String[] assetTypes,
@@ -592,6 +602,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	/**
 	 * parameter Long[] assetPrimaryKey added by Maxx
 	 */
+	@Transactional
 	@Override
 	public int searchCount(long companyId, long userId, String taskName,
 			String assetType, Long[] assetPrimaryKey, Date dueDateGT, Date dueDateLT,
@@ -651,6 +662,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	/**
 	 * added by Maxx
 	 */
+	@Transactional
 	@Override
 	public int searchCount(
 			long companyId, long userId, String keywords, String[] assetTypes,
@@ -665,6 +677,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return count;
 	}
 
+	@Transactional	
 	@Override
 	public int getWorkflowTaskCountByWorkflowInstance(long companyId, Long userId, long workflowInstanceId, Boolean completed) throws WorkflowException {
 		if (completed) {
@@ -679,6 +692,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 	}
 
+	@Transactional
 	@Override
 	public List<WorkflowTask> getWorkflowTasksByWorkflowInstance(long companyId, Long userId, long workflowInstanceId,
 																 Boolean completed, int start, int end,
@@ -774,6 +788,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			// lets try to create it
 			ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
+			
 			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
 			
 			//throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
@@ -844,6 +859,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 					
 		// get process def from activity
 		String processDefId = task.getProcessDefinitionId();
+		
 		ProcessDefinition processDef =  workflowDefinitionManager.getProcessDefinition(processDefId);
 		workflowTask.setWorkflowDefinitionId(idMappingService.getLiferayWorkflowDefinitionId(processDefId));
 		workflowTask.setWorkflowDefinitionName(processDef.getName());

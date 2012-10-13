@@ -1,19 +1,21 @@
 package net.emforge.activiti;
 
 import static net.emforge.activiti.constants.RoleConstants.APPROVER_ROLE_DESCRIPTION;
-import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.PURCHASING_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.SALES_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.TagConstants.TAG_PURCHASING_CONTENT;
-import static net.emforge.activiti.constants.TagConstants.TAG_SALES_CONTENT;
+import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import javax.servlet.ServletContext;
+
+import net.emforge.activiti.spring.ContextLoaderListener;
+
+import org.springframework.web.context.ContextLoader;
 
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
@@ -31,9 +33,6 @@ import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portlet.asset.model.AssetTag;
-import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
-import net.emforge.activiti.StartUpAction;
 
 /** 
  * Startup action called after deployment of Activiti Workflow plugin. Initial settings get configured in Liferay. 
@@ -43,15 +42,16 @@ import net.emforge.activiti.StartUpAction;
  *
  */
 public class StartUpAction extends SimpleAction {
-	
 	private static Log log = LogFactoryUtil.getLog(StartUpAction.class);
 	
 	private static final String PROCDEF_SINGLE_APPROVER_BY_SCRIPT = "SingleApproverByScript";
 	private static final String PROCDEF_TAG_BASED_CONTENT_APPROVER = "TagBasedContentApproval";
 	
 	@Override
-	public void run(String[] ids) throws ActionException {
+	public void run(String[] ids) throws ActionException 
+	{
 		log.info("Activiti StartUp Action");
+		initContext();		
 		
 		try {
 			for (String companyId : ids) {
@@ -63,11 +63,30 @@ public class StartUpAction extends SimpleAction {
 		}
 
 	}
+	
+	/**
+	 * Plugin starts in different ways:
+	 * 1. We deploying plugin to running JBoss instance. In this case StartupAction runs at first, and then web application context starts.
+	 * 2. We starts JBoss with deployed plugin. In this case web application context runs at first, and then StartupAction runs.   
+	 * 
+	 * However, in both cases spring context must be initialized from StartupAction 
+	 */
+	private void initContext() {
+		ServletContext sctx = null;
+		ContextLoader ctxLoader = new ContextLoader();
+		if (sctx == null)
+			sctx = ContextLoaderListener.getInitServletContext();
+		if (sctx == null)
+			ContextLoaderListener.setIsInitialized(false);
+		else {
+			ContextLoaderListener.setIsInitialized(true);
+			ctxLoader.initWebApplicationContext(sctx);
+		}		
+	}
 
 	private void doRun(long companyId) throws Exception {
 		log.info("Updating company " + companyId);
 		User adminUser = getAdminUser(companyId);
-		Group guestGroup = getGuestGroup(companyId);
 		
 		// create service context
 		ServiceContext serviceContext = new ServiceContext();
@@ -152,5 +171,4 @@ public class StartUpAction extends SimpleAction {
 			return null;
 		}
 	}
-	
 }

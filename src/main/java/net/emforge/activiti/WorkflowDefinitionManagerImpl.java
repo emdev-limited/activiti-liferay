@@ -22,6 +22,7 @@ import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -37,12 +38,13 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
  * @author akakunin
  *
  */
-@Service(value="workflowDefinitionManager")
-public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager {
+@Service("workflowDefinitionManager")
+public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManagerExt {
     private static Log _log = LogFactoryUtil.getLog(WorkflowDefinitionManagerImpl.class);
     
     @Autowired
     RepositoryService repositoryService;
+    
     @Autowired
     WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
     
@@ -271,6 +273,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
         return getWorkflowDefinitions(defs);
     }
 
+    @Transactional    
     @Override
     public void undeployWorkflowDefinition(long companyId, long userId, String name, int version) throws WorkflowException {
         // TODO - Not sure it is supported
@@ -279,6 +282,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 
     }
 
+    @Transactional    
     @Override
     public WorkflowDefinition updateActive(long companyId, long userId, String name, 
                                            int version, boolean active) throws WorkflowException {
@@ -290,6 +294,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
         return new WorkflowDefinitionImpl(def);
     }
 
+    @Transactional    
     @Override
     public WorkflowDefinition updateTitle(long companyId, long userId, String name, int version, 
                                           String title) throws WorkflowException {
@@ -331,6 +336,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	 * @param definitionId
 	 * @return
 	 */
+	@Override
 	@Synchronized
 	public ProcessDefinition getProcessDefinition(String definitionId) {
 		// check in cache

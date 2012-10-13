@@ -26,6 +26,7 @@ import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -38,30 +39,36 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 
-@Service(value="workflowInstanceManager")
-public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
+@Service("workflowInstanceManager")
+public class WorkflowInstanceManagerImpl implements WorkflowInstanceManagerExt {
 	private static Log _log = LogFactoryUtil.getLog(WorkflowInstanceManagerImpl.class);
 	
 	@Autowired
 	ProcessEngine processEngine;
+	
 	@Autowired
 	RuntimeService runtimeService;
+	
 	@Autowired
 	HistoryService historyService;
 	
 	@Autowired
 	WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao;
+	
 	@Autowired
-	WorkflowDefinitionManagerImpl workflowDefinitionManager;
+	WorkflowDefinitionManagerExt workflowDefinitionManager;
 	
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
+	
 	@Autowired
 	IdMappingService idMappingService;
     @Autowired
     RepositoryService repositoryService;
 
-	@Override
+	
+    @Transactional	
+    @Override
 	public void deleteWorkflowInstance(long companyId, long workflowInstanceId) throws WorkflowException {
 		String processInstanceId = idMappingService.getActivitiProcessInstanceId(workflowInstanceId);
 		_log.info("Deleting process instance " + processInstanceId);
@@ -172,6 +179,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		return result;
 	}
 
+	@Transactional	
 	@Override
 	public WorkflowInstance signalWorkflowInstance(long companyId, long userId,
 												   long workflowInstanceId, String transitionName,
@@ -191,6 +199,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		return null;
 	}
 
+	@Transactional	
 	@Override
 	public WorkflowInstance startWorkflowInstance(long companyId, long groupId, long userId, 
 												  String workflowDefinitionName, Integer workflowDefinitionVersion, String transitionName,
@@ -214,7 +223,6 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		
         return inst;
 	}
-
 
 	@Override
 	public WorkflowInstance updateWorkflowContext(long companyId, long workflowInstanceId, Map<String, Serializable> workflowContext) throws WorkflowException {
@@ -311,6 +319,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		return result;
 	}
 
+	@Override
 	public DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) throws WorkflowException {
         HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
         ProcessDefinition procDef = workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
@@ -382,7 +391,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		}
 		
 		inst.setWorkflowInstanceId(id);
-		
+
 		//get children for it if any..
 		List<ProcessInstance> children = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getProcessInstanceId()).list();
 		if (children != null && !children.isEmpty()) {

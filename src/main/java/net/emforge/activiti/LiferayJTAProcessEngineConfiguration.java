@@ -1,18 +1,24 @@
 package net.emforge.activiti;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import javax.transaction.TransactionManager;
 
-import net.emforge.activiti.LiferayProcessEngineConfiguration;
+import net.emforge.activiti.engine.impl.LiferayTaskServiceImpl;
+import net.emforge.activiti.hook.LiferayBpmnParser;
 
+import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
+import org.activiti.engine.impl.bpmn.parser.BpmnParser;
 import org.activiti.engine.impl.cfg.JtaProcessEngineConfiguration;
 import org.activiti.engine.impl.interceptor.CommandContextInterceptor;
 import org.activiti.engine.impl.interceptor.CommandInterceptor;
 import org.activiti.engine.impl.interceptor.JtaTransactionInterceptor;
 import org.activiti.engine.impl.interceptor.LogInterceptor;
+import org.activiti.engine.impl.persistence.deploy.Deployer;
+import org.activiti.engine.impl.util.ReflectUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -28,6 +34,16 @@ public class LiferayJTAProcessEngineConfiguration extends LiferayProcessEngineCo
 	private static Log _log = LogFactoryUtil.getLog(LiferayJTAProcessEngineConfiguration.class);
 
 	TransactionManager tm;
+
+	public static final String DEFAULT_MYBATIS_MAPPING_FILE = "activiti-liferay.ibatis.mem.conf.xml";
+	
+	public LiferayJTAProcessEngineConfiguration() {
+		super();
+	}
+	
+	protected InputStream getMyBatisXmlConfigurationSteam() {
+		return ReflectUtil.getResourceAsStream(DEFAULT_MYBATIS_MAPPING_FILE);
+	}
 	
 	@Override
 	protected Collection<? extends CommandInterceptor> getDefaultCommandInterceptorsTxRequired() {
@@ -50,7 +66,7 @@ public class LiferayJTAProcessEngineConfiguration extends LiferayProcessEngineCo
 	public TransactionManager getJtaTransactionManager() {
 		return tm;
 	}
-
+	
 	public void setJtaTransactionManager(TransactionManager tm) {
 		this.tm = tm;
 	}
