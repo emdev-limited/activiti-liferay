@@ -19,6 +19,6 @@
 	</servlet-mapping>
 	
 	<listener>
-		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+		<listener-class>net.emforge.activiti.spring.ContextLoaderListener</listener-class>
 	</listener>
 </web-app>

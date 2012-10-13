@@ -14,7 +14,8 @@
 						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
 		
 	<bean id="dataSource"
-		class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+		class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy" >
+		<property name="defaultAutoCommit" value="false"/>
 		<property name="targetDataSource">
 			<bean class="com.liferay.portal.kernel.util.InfrastructureUtil"
 				factory-method="getDataSource" />
@@ -29,7 +30,7 @@
 	<!-- Hbernate configuration - used for objects defined in activiti-web -->
 	<!-- TODO Find a way to use mybatis instead of hibernate to increase integration with activiti and reduce dependencies -->
 	<bean id="sessionFactory"
-		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean" >
 		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
 		<property name="dataSource" ref="dataSource" />
 		<property name="packagesToScan">
@@ -44,9 +45,9 @@
 	</bean>
 	
 	<!-- Activiti Configuration -->
-	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayJTAProcessEngineConfiguration">
-		<property name="dataSource" ref="dataSource"/>
-		<property name="jtaTransactionManager" >
+	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayJTAProcessEngineConfiguration" >
+		<property name="dataSource" ref="dataSource"/> 
+		<property name="transactionManager" >
 			<bean factory-bean="transactionManager" factory-method="getTransactionManager" /> 		
 		</property>
 		<property name="transactionsExternallyManaged" value="true" />
