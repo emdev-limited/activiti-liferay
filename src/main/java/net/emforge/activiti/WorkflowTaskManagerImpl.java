@@ -226,7 +226,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return result;
 	}	
 
-	@Transactional
 	@Override
 	public long[] getPooledActorsIds(long companyId, long workflowTaskId) throws WorkflowException {
 		String taskId = String.valueOf(workflowTaskId);
