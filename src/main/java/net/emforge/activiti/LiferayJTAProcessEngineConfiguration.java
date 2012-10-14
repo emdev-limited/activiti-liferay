@@ -13,12 +13,14 @@ import net.emforge.activiti.hook.LiferayBpmnParser;
 import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
 import org.activiti.engine.impl.bpmn.parser.BpmnParser;
 import org.activiti.engine.impl.cfg.JtaProcessEngineConfiguration;
+import org.activiti.engine.impl.cfg.jta.JtaTransactionContextFactory;
 import org.activiti.engine.impl.interceptor.CommandContextInterceptor;
 import org.activiti.engine.impl.interceptor.CommandInterceptor;
 import org.activiti.engine.impl.interceptor.JtaTransactionInterceptor;
 import org.activiti.engine.impl.interceptor.LogInterceptor;
 import org.activiti.engine.impl.persistence.deploy.Deployer;
 import org.activiti.engine.impl.util.ReflectUtil;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -33,42 +35,75 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 public class LiferayJTAProcessEngineConfiguration extends LiferayProcessEngineConfiguration {
 	private static Log _log = LogFactoryUtil.getLog(LiferayJTAProcessEngineConfiguration.class);
 
-	TransactionManager tm;
-
-	public static final String DEFAULT_MYBATIS_MAPPING_FILE = "activiti-liferay.ibatis.mem.conf.xml";
+	protected TransactionManager jtaTransactionManager;
 	
 	public LiferayJTAProcessEngineConfiguration() {
 		super();
 	}
 	
-	protected InputStream getMyBatisXmlConfigurationSteam() {
-		return ReflectUtil.getResourceAsStream(DEFAULT_MYBATIS_MAPPING_FILE);
-	}
-	
+	  @Override
+	  protected Collection< ? extends CommandInterceptor> getDefaultCommandInterceptorsTxRequired() {
+	    List<CommandInterceptor> defaultCommandInterceptorsTxRequired = new ArrayList<CommandInterceptor>();
+	    defaultCommandInterceptorsTxRequired.add(new LogInterceptor());
+	    defaultCommandInterceptorsTxRequired.add(new JtaTransactionInterceptor(getJtaTransactionManager(), false));
+	    defaultCommandInterceptorsTxRequired.add(new CommandContextInterceptor(commandContextFactory, this));
+	    return defaultCommandInterceptorsTxRequired;
+	  }
+
+	  @Override
+	  protected Collection< ? extends CommandInterceptor> getDefaultCommandInterceptorsTxRequiresNew() {
+	    List<CommandInterceptor> defaultCommandInterceptorsTxRequiresNew = new ArrayList<CommandInterceptor>();
+	    defaultCommandInterceptorsTxRequiresNew.add(new LogInterceptor());
+	    defaultCommandInterceptorsTxRequiresNew.add(new JtaTransactionInterceptor(getJtaTransactionManager(), true));
+	    defaultCommandInterceptorsTxRequiresNew.add(new CommandContextInterceptor(commandContextFactory, this));
+	    return defaultCommandInterceptorsTxRequiresNew;
+	  }
+	  
+	  @Override
+	  protected void initTransactionContextFactory() {
+	    if(transactionContextFactory == null) {
+	      transactionContextFactory = new JtaTransactionContextFactory(getJtaTransactionManager());
+	    }
+	  }
+
+	  protected TransactionManager getJtaTransactionManager() 
+	  {
+		  if (jtaTransactionManager == null) {
+			  if (transactionManager instanceof TransactionManager)
+				  return (TransactionManager) transactionManager;
+			  else
+				  return null;
+		  } else
+			  return jtaTransactionManager;
+	  }
+	  
+	  public void setJtaTransactionManager(TransactionManager tm) 
+	  {
+		  jtaTransactionManager = tm;
+		  if (tm instanceof PlatformTransactionManager)
+			  transactionManager = (PlatformTransactionManager) tm;
+		  else
+			  transactionManager = null;
+	  }
+
 	@Override
-	protected Collection<? extends CommandInterceptor> getDefaultCommandInterceptorsTxRequired() {
-		List<CommandInterceptor> defaultCommandInterceptorsTxRequired = new ArrayList<CommandInterceptor>();
-		defaultCommandInterceptorsTxRequired.add(new LogInterceptor());
-		defaultCommandInterceptorsTxRequired.add(new JtaTransactionInterceptor(tm, false));
-		defaultCommandInterceptorsTxRequired.add(new CommandContextInterceptor(commandContextFactory, this));
-		return defaultCommandInterceptorsTxRequired;
+	public PlatformTransactionManager getTransactionManager() 
+	{
+		if (transactionManager == null) {
+			if (jtaTransactionManager != null && jtaTransactionManager instanceof PlatformTransactionManager)
+				return (PlatformTransactionManager) jtaTransactionManager;
+			else
+				return null;
+		} else
+			return super.getTransactionManager();
 	}
 
 	@Override
-	protected Collection<? extends CommandInterceptor> getDefaultCommandInterceptorsTxRequiresNew() {
-		List<CommandInterceptor> defaultCommandInterceptorsTxRequiresNew = new ArrayList<CommandInterceptor>();
-		defaultCommandInterceptorsTxRequiresNew.add(new LogInterceptor());
-		defaultCommandInterceptorsTxRequiresNew.add(new JtaTransactionInterceptor(tm, true));
-		defaultCommandInterceptorsTxRequiresNew.add(new CommandContextInterceptor(commandContextFactory, this));
-		return defaultCommandInterceptorsTxRequiresNew;
+	public void setTransactionManager(	PlatformTransactionManager tm) 
+	{
+		super.setTransactionManager(tm);
+		if (tm instanceof TransactionManager)
+			jtaTransactionManager = (TransactionManager) tm;
 	}
-	
-	public TransactionManager getJtaTransactionManager() {
-		return tm;
-	}
-	
-	public void setJtaTransactionManager(TransactionManager tm) {
-		this.tm = tm;
-	}
-
+	  
 }

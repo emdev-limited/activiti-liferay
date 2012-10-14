@@ -143,6 +143,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 	}
 
+	@Transactional
 	@Override
 	public WorkflowTask completeWorkflowTask(long companyId, long userId, long workflowTaskId, 
 											 String transitionName, String comment,
@@ -190,6 +191,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
+	@Transactional
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<String> getNextTransitionNames(long companyId, long userId, long workflowTaskId) throws WorkflowException {
@@ -224,6 +226,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return result;
 	}	
 
+	@Transactional
 	@Override
 	public long[] getPooledActorsIds(long companyId, long workflowTaskId) throws WorkflowException {
 		String taskId = String.valueOf(workflowTaskId);
@@ -326,12 +329,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return null;
 	}
 
+	@Transactional
 	@Override
 	public List<WorkflowTask> getWorkflowTasksByUser(long companyId, long userId, Boolean completed, int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
 		return search(companyId, userId, null, completed, false,
 				start, end, orderByComparator);
 	}
 
+	@Transactional
 	@Override
 	public List<WorkflowTask> getWorkflowTasksByUserRoles(long companyId, long userId, Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
@@ -739,6 +744,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	 * @param list
 	 * @return
 	 */
+	@Transactional
 	private List<WorkflowTask> getWorkflowTasks(List<Task> list) {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
 		
@@ -759,6 +765,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	 * @param task
 	 * @return
 	 */
+	@Transactional
 	private WorkflowTask getWorkflowTask(Task task) throws WorkflowException {
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		

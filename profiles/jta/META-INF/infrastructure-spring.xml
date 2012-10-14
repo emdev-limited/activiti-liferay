@@ -47,8 +47,8 @@
 	<!-- Activiti Configuration -->
 	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayJTAProcessEngineConfiguration" >
 		<property name="dataSource" ref="dataSource"/> 
-		<property name="transactionManager" >
-			<bean factory-bean="transactionManager" factory-method="getTransactionManager" /> 		
+		<property name="jtaTransactionManager" >
+			<bean factory-bean="transactionManager" factory-method="getTransactionManager" /> 
 		</property>
 		<property name="transactionsExternallyManaged" value="true" />
 		
