@@ -74,11 +74,12 @@ public class StartUpAction extends SimpleAction {
 	private void initContext() {
 		ServletContext sctx = null;
 		ContextLoader ctxLoader = new ContextLoader();
-		if (sctx == null)
-			sctx = ContextLoaderListener.getInitServletContext();
-		if (sctx == null)
+		
+		sctx = ContextLoaderListener.getInitServletContext();
+		
+		if (sctx == null) {
 			ContextLoaderListener.setIsInitialized(false);
-		else {
+		} else if (!ContextLoaderListener.isInitialized()) {
 			ContextLoaderListener.setIsInitialized(true);
 			ctxLoader.initWebApplicationContext(sctx);
 		}		

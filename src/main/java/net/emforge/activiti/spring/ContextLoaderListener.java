@@ -21,4 +21,8 @@ public class ContextLoaderListener extends org.springframework.web.context.Conte
 	public static void setIsInitialized(boolean bInitz) {
 		isInitialized = bInitz;
 	}
+
+	public static boolean isInitialized() {
+		return isInitialized;
+	}
 }
