@@ -18,8 +18,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
+import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 
 /** This class is responsible for converting group roles into groups with format groupId/roleName
@@ -44,11 +46,24 @@ public class LiferayGroupsUtil {
 	 * @param groups The list of group names.
 	 * @return A list of Liferay roles.
 	 */
-	public Collection<String> getGroupsFromList(DelegateExecution execution, Collection<String> groups) {
+	public Collection<String> getGroupsFromList(DelegateExecution execution, Collection<String> groups, String groupFriendlyUrl) {
 		_log.info("Convert groups : " + groups);
-		
+		//check if friendly url is not null then use it to find group 
+		//else pick group up from the execution
 		long companyId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
-		long groupId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
+		long groupId = 0;
+		if (StringUtils.isNotEmpty(groupFriendlyUrl)) {
+			try {
+				Group group = GroupLocalServiceUtil.getFriendlyURLGroup(companyId, groupFriendlyUrl);
+				groupId = group.getGroupId();
+			} catch (Exception e) {
+				_log.warn(String.format("Could not get group by friendly url = [%s]. Using from execution instead", groupFriendlyUrl));
+				//use common way
+				groupId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
+			}
+		} else {
+			groupId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
+		}
 		
 		List<String> resultGroupList = new ArrayList<String>(groups.size());
 		
@@ -76,6 +91,16 @@ public class LiferayGroupsUtil {
 		String result = StringUtils.join(resultGroupList, ",");
 		_log.info("Converted to " + result);
 		return resultGroupList;
+	}
+	
+	/**
+	 * Convert a list of group names into correct format.
+	 * @param execution The current process execution.
+	 * @param groups The list of group names.
+	 * @return A list of Liferay roles.
+	 */
+	public Collection<String> getGroupsFromList(DelegateExecution execution, Collection<String> groups) {
+		return getGroupsFromList(execution, groups, null);
 	}
 	
 	/**

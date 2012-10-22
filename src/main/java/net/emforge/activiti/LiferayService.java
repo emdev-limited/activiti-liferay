@@ -4,28 +4,46 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portlet.asset.NoSuchVocabularyException;
+import com.liferay.portlet.asset.model.AssetCategory;
+import com.liferay.portlet.asset.model.AssetTag;
+import com.liferay.portlet.asset.model.AssetVocabulary;
+import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
+import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
+import com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -66,6 +84,134 @@ public class LiferayService {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Check if user has group or global role named {@param roleName}
+	 * @param companyId
+	 * @param userId
+	 * @param groupId
+	 * @param roleName
+	 * @return
+	 */
+	public boolean isUserInRole(long companyId, long userId, long groupId, String roleName) {
+		try {
+			Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
+			if (role != null) {
+				List<Role> roles = getUserUnitRoles(userId, groupId);
+				roles.addAll(getUserGlobalRoles(userId));
+				if (roles.contains(role)) {
+					return true;
+				}
+			}
+		} catch (Exception e) {
+			_log.error(String.format("Failed to retrieve user roles for user id = [%s]", userId),e);
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected static List<Role> getUserGlobalRoles(long userId) throws SystemException, PortalException {
+		List<Role> roles = new ArrayList<Role>();
+		List<Role> allRoles = RoleLocalServiceUtil.getUserRoles(userId);
+		for (Role role : allRoles) {
+			if (role.getType() == RoleConstants.TYPE_REGULAR) {
+				roles.add(role);
+			}
+		}
+		return roles == null ? Collections.EMPTY_LIST : roles;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected static List<Role> getUserUnitRoles(long userId, long groupId) throws SystemException, PortalException {
+		List<Role> roles = new ArrayList<Role>();
+		List<UserGroupRole> ugrList = UserGroupRoleLocalServiceUtil.getUserGroupRoles(userId, groupId);
+		for (UserGroupRole ugr : ugrList) {
+			roles.add(ugr.getRole());
+		}
+		return roles == null ? Collections.EMPTY_LIST : roles;
+	}
+	
+	/**
+	 * Check if asset has category named {@param catName}
+	 * 
+	 * @param groupId
+	 * @param classNameId
+	 * @param classPK
+	 * @param vocabularyName
+	 * @param catName
+	 * @param locale
+	 * @return
+	 */
+	public boolean hasAssetCategory(long groupId, long classNameId, long classPK, String vocabularyName, String catTitle, String languageId) {
+		try {
+			AssetVocabulary vocab = null;
+			try {
+				if (StringUtils.isNotEmpty(vocabularyName)) {
+					vocab = AssetVocabularyLocalServiceUtil.getGroupVocabulary(groupId, vocabularyName);
+				}
+			} catch (NoSuchVocabularyException e) {
+				_log.warn(String.format("Failed to retrieve AssetVocabulary for groupId = [%s] and name = [%s]", groupId, vocabularyName),e);
+			}
+			//if vocabulary is null then just get all possible cats for the given className-classPK
+			List<AssetCategory> cats = new ArrayList<AssetCategory>();
+			cats.addAll(AssetCategoryLocalServiceUtil.getCategories(classNameId, classPK));
+			if (vocab != null) {
+				//extract all cats from this vocabulary that relate to className-classPK
+				List<AssetCategory> vocCats = AssetCategoryLocalServiceUtil.getVocabularyCategories(vocab.getVocabularyId(), 
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+				List<AssetCategory> vocExtractedCats = new ArrayList<AssetCategory>();
+				if (vocCats != null) {
+					for (AssetCategory vocCat : vocCats) {
+						if (cats.contains(vocCat)) {
+							vocExtractedCats.add(vocCat);
+						}
+					}
+				}
+				cats = new ArrayList<AssetCategory>();
+				cats.addAll(vocExtractedCats);
+			}
+			if (cats != null && !cats.isEmpty()) {
+				Locale locale = LocaleUtil.fromLanguageId(languageId);
+				for (AssetCategory cat : cats) {
+					Map<Locale, String> titleMap = cat.getTitleMap();
+					String title = titleMap.get(locale);
+					if (StringUtils.isNotEmpty(title)) {
+						if (catTitle.equalsIgnoreCase(title)) {
+							return true;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			_log.error(String.format("Failed to check hasAssetCategory"),e);
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if asset has tag named {@param tagName}
+	 * 
+	 * @param classNameId
+	 * @param classPK
+	 * @param tagName
+	 * @return
+	 */
+	public boolean hasAssetTag(long classNameId, long classPK, String tagName) {
+		try {
+			List<AssetTag> tags = AssetTagLocalServiceUtil.getTags(classNameId, classPK);
+			if (tags != null && !tags.isEmpty()) {
+				for (AssetTag tag : tags) {
+					if (tag.getName().equalsIgnoreCase(tagName)) {
+						return true;
+					}
+				}
+			}
+		} catch (SystemException e) {
+			_log.error(String.format("Failed to check tags for classNameId = [%s], " +
+					"classPK = [%s] and tagName = [%s]", classNameId, classPK, tagName), e);
+		}
+		return false;
 	}
 	
 	/** Copy file from one folder to another. This method is temporary here - we need it for making some demos. Later we will move it into proper location
