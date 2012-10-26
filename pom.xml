@@ -10,6 +10,7 @@
 		<liferay.version>6.1.1</liferay.version>
 		<spring.version>3.1.2.RELEASE</spring.version>
 		<activiti.version>5.10</activiti.version>
+		<webXmlPath>src/main/webapp/WEB-INF/web.xml</webXmlPath>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -19,6 +20,7 @@
 			<id>6.1.0</id>
 			<properties>
 				<liferay.version>6.1.0</liferay.version>
+				<webXmlPath>profiles/6.1.0/WEB-INF/web.xml</webXmlPath>
 			</properties>
 		</profile>
 		
@@ -69,6 +71,13 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
+			<plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-war-plugin</artifactId>
+	            <configuration>
+	                <webXml>${webXmlPath}</webXml>
+	            </configuration>
+        	</plugin>
 		</plugins>
 	</build>
 
@@ -200,6 +209,53 @@
 			<version>6.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- REST dependencies -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet</artifactId>
+			<version>2.0.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.servlet</artifactId>
+			<version>2.0.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.jackson</artifactId>
+			<version>2.0.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.fileupload</artifactId>
+			<version>2.0.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.fileupload</artifactId>
+			<version>2.0.14</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-core-asl</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+		<dependency>
+      		<groupId>commons-fileupload</groupId>
+      		<artifactId>commons-fileupload</artifactId>
+      		<version>1.2.2</version>
+    	</dependency>
 	</dependencies>
 
 	<repositories>
