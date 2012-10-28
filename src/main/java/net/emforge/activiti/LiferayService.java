@@ -26,17 +26,18 @@ import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroupRole;
+import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portlet.asset.NoSuchVocabularyException;
 import com.liferay.portlet.asset.model.AssetCategory;
 import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.model.AssetVocabulary;
@@ -55,6 +56,8 @@ import com.liferay.portlet.documentlibrary.model.DLSyncConstants;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
+import com.liferay.portlet.journal.model.JournalArticle;
+import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 
 /** It is temporary solution to call some required login from activiti process.
  * The thing is - then I've tried to use liferayIdentityService from activiti process I've got NPE
@@ -143,19 +146,42 @@ public class LiferayService {
 	 * @param locale
 	 * @return
 	 */
-	public boolean hasAssetCategory(long groupId, long classNameId, long classPK, String vocabularyName, String catTitle, String languageId) {
+	public boolean hasAssetCategory(long groupId, String className, long classPK, String vocabularyTitle, String catTitle, String languageId) {
 		try {
-			AssetVocabulary vocab = null;
+			Locale locale = LocaleUtil.fromLanguageId(languageId);
+			
+			// check - is groupId - group id or companyId?
 			try {
-				if (StringUtils.isNotEmpty(vocabularyName)) {
-					vocab = AssetVocabularyLocalServiceUtil.getGroupVocabulary(groupId, vocabularyName);
-				}
-			} catch (NoSuchVocabularyException e) {
-				_log.warn(String.format("Failed to retrieve AssetVocabulary for groupId = [%s] and name = [%s]", groupId, vocabularyName),e);
+				GroupLocalServiceUtil.getGroup(groupId);
+			} catch (Exception ex) {
+				// group not found - lets try to get by companyId
+				Company company = CompanyLocalServiceUtil.getCompany(groupId);
+				// use it's group id
+				groupId = company.getGroup().getGroupId();
 			}
+			
+			// special processing for journalArticle - id is passed - but resourcePrimKey should be used
+			if (className.equals(JournalArticle.class.getName())) {
+				JournalArticle journalArticle = JournalArticleLocalServiceUtil.getArticle(classPK);
+				classPK = journalArticle.getResourcePrimKey();
+			}
+			
+			AssetVocabulary vocab = null;
+			if (StringUtils.isNotEmpty(vocabularyTitle)) {
+				// get vocabulary by title
+				List<AssetVocabulary> vocabs = AssetVocabularyLocalServiceUtil.getGroupVocabularies(groupId);
+				for (AssetVocabulary curVocab : vocabs) {
+					String title = curVocab.getTitle(locale);
+					if (StringUtils.equalsIgnoreCase(vocabularyTitle, title)) {
+						vocab = curVocab;
+						break;
+					}
+				}
+			}
+				
 			//if vocabulary is null then just get all possible cats for the given className-classPK
 			List<AssetCategory> cats = new ArrayList<AssetCategory>();
-			cats.addAll(AssetCategoryLocalServiceUtil.getCategories(classNameId, classPK));
+			cats.addAll(AssetCategoryLocalServiceUtil.getCategories(className, classPK));
 			if (vocab != null) {
 				//extract all cats from this vocabulary that relate to className-classPK
 				List<AssetCategory> vocCats = AssetCategoryLocalServiceUtil.getVocabularyCategories(vocab.getVocabularyId(), 
@@ -168,18 +194,16 @@ public class LiferayService {
 						}
 					}
 				}
+				
 				cats = new ArrayList<AssetCategory>();
 				cats.addAll(vocExtractedCats);
 			}
+			
 			if (cats != null && !cats.isEmpty()) {
-				Locale locale = LocaleUtil.fromLanguageId(languageId);
 				for (AssetCategory cat : cats) {
-					Map<Locale, String> titleMap = cat.getTitleMap();
-					String title = titleMap.get(locale);
-					if (StringUtils.isNotEmpty(title)) {
-						if (catTitle.equalsIgnoreCase(title)) {
-							return true;
-						}
+					String title = cat.getTitle(locale);
+					if (StringUtils.equalsIgnoreCase(catTitle, title)) {
+						return true;
 					}
 				}
 			}

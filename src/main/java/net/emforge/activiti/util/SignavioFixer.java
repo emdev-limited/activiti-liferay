@@ -104,8 +104,13 @@ public class SignavioFixer {
                      		_log.info(String.format("found userTask [%s] to improve", userTask.getAttributes().getNamedItem("name")));
                      		NodeList expressions = element.getElementsByTagName("formalExpression");
                      		if (expressions != null && expressions.item(0) != null) {
+                     			
                      			Element formalExpression = (Element) expressions.item(0);
-                     			String formalExpressionVal = formalExpression.getLastChild().getNodeValue();
+                     			String formalExpressionVal = null;
+                     			if (formalExpression.getLastChild() != null) {
+                     				formalExpressionVal = formalExpression.getLastChild().getNodeValue();
+                     			}
+                     			
                      			Element usrTaskElement = (Element) userTask;
                      			if (StringUtils.isNotEmpty(formalExpressionVal)) {
                      				if (tagName.equals("humanPerformer")) {
@@ -136,7 +141,7 @@ public class SignavioFixer {
 
 			return baos.toByteArray();
 		} catch (Exception ex) {
-			_log.debug("Cannot fix xml", ex);
+			_log.info("Cannot fix xml", ex);
 			_log.info("Cannot fix xml: " + ex.getMessage());
 			return null;
 		}

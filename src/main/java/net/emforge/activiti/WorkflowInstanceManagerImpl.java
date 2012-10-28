@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.workflow.DefaultWorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
-import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 
 @Service("workflowInstanceManager")
 public class WorkflowInstanceManagerImpl implements WorkflowInstanceManagerExt {
@@ -219,9 +218,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManagerExt {
 		
         ProcessInstance processInstance = runtimeService.startProcessInstanceById(def.getProcessDefinitionId(), vars);
         
-        DefaultWorkflowInstance inst = getWorkflowInstance(processInstance, userId, workflowContext);
-		
-        return inst;
+        try {
+	        DefaultWorkflowInstance inst = getWorkflowInstance(processInstance, userId, workflowContext);
+			
+	        return inst;
+        } catch (Exception ex) {
+        	// it may happens we cannot get workflow instance since it is already completed - just ignore this error and return null
+        	_log.debug("Cannot get workflow instance: " + ex.getMessage());
+        	return null;
+        }
 	}
 
 	@Override
@@ -321,53 +326,75 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManagerExt {
 
 	@Override
 	public DefaultWorkflowInstance getWorkflowInstance(Execution processInstance, Long userId, Map<String, Serializable> currentWorkflowContext) throws WorkflowException {
-        HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
+		return getWorkflowInstance(processInstance.getId(), userId, currentWorkflowContext);
+	}
+	
+	
+	public DefaultWorkflowInstance getWorkflowInstance(String executionId, Long userId, Map<String, Serializable> currentWorkflowContext) throws WorkflowException {
+        HistoricProcessInstance historyPI =  historyService.createHistoricProcessInstanceQuery().processInstanceId(executionId).singleResult();
         ProcessDefinition procDef = workflowDefinitionManager.getProcessDefinition(historyPI.getProcessDefinitionId());
         
         DefaultWorkflowInstance inst = new DefaultWorkflowInstance();
         
         inst.setEndDate(historyPI.getEndTime());
         inst.setStartDate(historyPI.getStartTime());
+		inst.setWorkflowDefinitionName(procDef.getName());
+		inst.setWorkflowDefinitionVersion(procDef.getVersion());
 
-        List<String> activities = new ArrayList<String>();
+        // get activities and variables only in case process is active
+        boolean activeProcess = true;
         try {
-        	activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
+        	Execution execution = runtimeService.createExecutionQuery().executionId(executionId).singleResult();
+        	if (execution == null) {
+        		activeProcess = false;
+        	}
         } catch (Exception ex) {
-        	// in case then process has no user tasks - process may be finished just after it is started
-        	// so - we will not have active activities here.
-        	_log.debug("Error during getting active activities", ex);
+        	activeProcess = false;
         }
-
-        // activities contains internal ids - need to be converted into names
-		List<String> activityNames = new ArrayList<String>(activities.size());
-        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
-		
-		for (String activiti: activities) {
-			PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
-			if (findActivity != null)
-				activityNames.add(findActivity.getProperty("name").toString());
-		}
-		inst.setState(StringUtils.join(activityNames, ","));
-
-        // copy variables
-
+        
+        if (activeProcess) {
+	        List<String> activities = new ArrayList<String>();
+	        try {
+	        	activities = runtimeService.getActiveActivityIds(executionId);
+	        } catch (Exception ex) {
+	        	// in case then process has no user tasks - process may be finished just after it is started
+	        	// so - we will not have active activities here.
+	        	_log.debug("Error during getting active activities", ex);
+	        }
+	
+	        // activities contains internal ids - need to be converted into names
+			List<String> activityNames = new ArrayList<String>(activities.size());
+	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
+			
+			for (String activiti: activities) {
+				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
+				if (findActivity != null)
+					activityNames.add(findActivity.getProperty("name").toString());
+			}
+			inst.setState(StringUtils.join(activityNames, ","));
+        }
+        
         Map<String, Serializable> workflowContext = null;
-        try {
-        	Map<String, Object> vars = runtimeService.getVariables(processInstance.getId());
-        	workflowContext = convertFromVars(vars);
-        } catch (Exception ex) {
-        	// in case then process has no user tasks - process may be finished just after it is started
-        	// so - we will not have active activities here.
-        	_log.debug("Error during getting context vars", ex);
+        
+        // copy variables
+        if (activeProcess) {
+	        try {
+	        	Map<String, Object> vars = runtimeService.getVariables(executionId);
+	        	workflowContext = convertFromVars(vars);
+	        } catch (Exception ex) {
+	        	// in case then process has no user tasks - process may be finished just after it is started
+	        	// so - we will not have active activities here.
+	        	_log.debug("Error during getting context vars", ex);
+	        	workflowContext = currentWorkflowContext;
+	        }
+        } else {
+        	// process is not active - so, lets use initial currentWorkflowContext
         	workflowContext = currentWorkflowContext;
         }
         
 		inst.setWorkflowContext(workflowContext);
-
-		inst.setWorkflowDefinitionName(procDef.getName());
-		inst.setWorkflowDefinitionVersion(procDef.getVersion());
-		
-		Long id = idMappingService.getLiferayProcessInstanceId(processInstance.getId());
+    
+		Long id = idMappingService.getLiferayProcessInstanceId(executionId);
 		if (id == null) {
 			// not exists in DB - create new
 			if (workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID) == null ||
@@ -383,25 +410,27 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManagerExt {
 			procInstImpl.setUserId(userId != null ? userId : 0l);
 			procInstImpl.setClassName((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
 			procInstImpl.setClassPK(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
-			procInstImpl.setProcessInstanceId(processInstance.getId());
+			procInstImpl.setProcessInstanceId(executionId);
 			
 			id = (Long)processInstanceExtensionDao.save(procInstImpl);
 			
-			_log.info("Stored new process instance ext " + processInstance.getId() + " -> " + id);
+			_log.info("Stored new process instance ext " + executionId + " -> " + id);
 		}
-		
+			
 		inst.setWorkflowInstanceId(id);
-
-		//get children for it if any..
-		List<ProcessInstance> children = runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstance.getProcessInstanceId()).list();
-		if (children != null && !children.isEmpty()) {
-			List<WorkflowInstance> childrenInst = new ArrayList<WorkflowInstance>();
-			for (ProcessInstance procInst : children) {
-				childrenInst.add(getWorkflowInstance(procInst, null, null));
+	
+		if (activeProcess) {
+			//get children for it if any..
+			List<ProcessInstance> children = runtimeService.createProcessInstanceQuery().superProcessInstanceId(executionId).list();
+			if (children != null && !children.isEmpty()) {
+				List<WorkflowInstance> childrenInst = new ArrayList<WorkflowInstance>();
+				for (ProcessInstance procInst : children) {
+					childrenInst.add(getWorkflowInstance(procInst, null, null));
+				}
+				inst.getChildrenWorkflowInstances().addAll(childrenInst);
 			}
-			inst.getChildrenWorkflowInstances().addAll(childrenInst);
-		}
-
+        }
+        
 		return inst;
 	}
 	
