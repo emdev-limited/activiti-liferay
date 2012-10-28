@@ -237,11 +237,6 @@
 			<version>2.0.14</version>
 		</dependency>
 		<dependency>
-			<groupId>org.restlet.jee</groupId>
-			<artifactId>org.restlet.ext.fileupload</artifactId>
-			<version>2.0.14</version>
-		</dependency>
-		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-core-asl</artifactId>
 			<version>1.4.3</version>
@@ -263,6 +258,11 @@
 			<id>alfresco</id>
 			<name>alfresco</name>
 			<url>https://maven.alfresco.com/nexus/content/repositories/public/</url>
+		</repository>
+		<repository>  
+   			<id>maven-restlet</id>  
+   			<name>Public online Restlet repository</name>  
+   			<url>http://maven.restlet.org</url>  
 		</repository>
 	</repositories>
 	
