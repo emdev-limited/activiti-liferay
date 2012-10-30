@@ -89,50 +89,6 @@ public class StartUpAction extends SimpleAction {
 		log.info("Updating company " + companyId);
 		User adminUser = getAdminUser(companyId);
 		
-		// create service context
-		ServiceContext serviceContext = new ServiceContext();
-		serviceContext.setCompanyId(companyId);
-		serviceContext.setUserId(adminUser.getUserId());
-		serviceContext.setAddGuestPermissions(true);
-		
-		// check and create required roles
-		
-		// Portal Content Reviewer
-		Role role = null;
-		try {
-			role = RoleLocalServiceUtil.getRole(companyId, PORTAL_CONTENT_REVIEWER);
-		} catch (Exception ex) {}
-		
-		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
-		descriptionMap.put(LocaleUtil.getDefault(), APPROVER_ROLE_DESCRIPTION);
-		
-		if (role == null) {
-			log.info("Create role: " + PORTAL_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, PORTAL_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_REGULAR);
-		}
-		
-		// Organization Content Reviewer
-		role = null;
-		try {
-			role = RoleLocalServiceUtil.getRole(companyId, ORGANIZATION_CONTENT_REVIEWER);
-		} catch (Exception ex) {}
-		
-		if (role == null) {
-			log.info("Create role: " + ORGANIZATION_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, ORGANIZATION_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_ORGANIZATION);
-		}
-		
-		// Site Content Reviewer
-		role = null;
-		try {
-			role = RoleLocalServiceUtil.getRole(companyId, SITE_CONTENT_REVIEWER);
-		} catch (Exception ex) {}
-		
-		if (role == null) {
-			log.info("Create role: " + SITE_CONTENT_REVIEWER);
-			RoleLocalServiceUtil.addRole(adminUser.getUserId(), companyId, SITE_CONTENT_REVIEWER, null, descriptionMap, RoleConstants.TYPE_SITE);
-		}
-		
 		try {
 			// Deploy workflow definitions
 			int workflowDefinitionCount = WorkflowDefinitionManagerUtil.getWorkflowDefinitionCount(companyId, PROCDEF_SINGLE_APPROVER_BY_SCRIPT);

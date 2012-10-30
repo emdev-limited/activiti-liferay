@@ -7,9 +7,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -84,6 +86,46 @@ public class LiferayService {
 			}
 		} catch (Exception ex) {
 			_log.warn("Cannot get User Email", ex);
+		}
+		
+		return null;
+	}
+
+	/** Returns coma-separated list of emails to be sent for specified group
+	 * 
+	 * @param groupOrCompanyId
+	 * @param roleName
+	 * @return
+	 */
+	public String getRoleEmails(Long companyId, Long groupId, String roleName) {
+		_log.debug("Get Role Emails for role: " + roleName);
+		
+		try {
+			Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
+			List<User> users = new ArrayList<User>();
+			
+			if (role.getType() == RoleConstants.TYPE_REGULAR) {
+				// regular (system wide role)
+				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
+			} else {
+				// group specific role
+				for (UserGroupRole userGroupRole : 
+						UserGroupRoleLocalServiceUtil.getUserGroupRolesByGroupAndRole(groupId, role.getRoleId())) {
+					users.add(userGroupRole.getUser());
+				}
+			}
+			
+			Set<String> emails = new HashSet<String>();
+			for (User user : users) {
+				emails.add(user.getEmailAddress());
+			}
+			
+			String result = StringUtils.join(emails, ",");
+			
+			_log.debug("Group Emails: " + result);
+			return result;
+		} catch (Exception ex) {
+			_log.warn("Cannot get Group Email", ex);
 		}
 		
 		return null;
