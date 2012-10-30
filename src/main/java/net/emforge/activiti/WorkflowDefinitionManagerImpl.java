@@ -79,7 +79,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManagerE
             if (xmlBytes != null) {
                 try {
                     ByteArrayInputStream bais = new ByteArrayInputStream(xmlBytes);
-                    deployment = repositoryService.createDeployment().addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
+                    deployment = repositoryService.createDeployment().name(strTitle + ".bpmn20.xml").addInputStream(strTitle + ".bpmn20.xml", bais).deploy();
                 } catch (ActivitiException ae) {
                     //save exception
                     activitiException = ae;

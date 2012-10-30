@@ -23,6 +23,7 @@ import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.impl.ProcessEngineInfoImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -33,11 +34,15 @@ import org.springframework.stereotype.Component;
 public class ActivitiUtil {
 	
   private static ProcessEngine instance;
+  
+  private static ProcessEngineInfo instanceInfo;
+  
   @Autowired
   ProcessEngine processEngine;
   
   public void init() throws Exception {
 	  instance = processEngine;
+	  instanceInfo = new ProcessEngineInfoImpl(instance.getName(), null, null);
   }
 
 /**
@@ -46,7 +51,7 @@ public class ActivitiUtil {
    * @return The process engine info
    */
   public static ProcessEngineInfo getProcessEngineInfo() {
-    return ProcessEngines.getProcessEngineInfo(instance.getName());
+	return instanceInfo;
   }
 
   /**
