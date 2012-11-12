@@ -12,22 +12,20 @@ import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.task.Task;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-
 /** Implements additional queries we need to Activiti <-> Liferay integration
  * 
  * @author akakunin
  *
  */
 public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> implements CustomTaskQuery {
-	
-	private static Log _log = LogFactoryUtil.getLog(CustomTaskQueryImpl.class);
 
 	protected String candidateUser;
 	protected String assignee;
 	protected String nameLike;
 	protected String entryClassName;
+	protected List<String> entryClassNames;
+	protected Long groupId;
+	protected Long companyId;
 	
 	protected boolean orderByDueDate;
 	
@@ -40,6 +38,12 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	}
 	
 	public CustomTaskQuery taskCandidateUser(String userId) {
+		try {
+			if (Long.parseLong(userId) <= 0) 
+				return this;
+		} catch (Exception e) {
+			return this;
+		}
 		this.candidateUser = userId;
 		return this;
 	}
@@ -54,8 +58,29 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 		return this;
 	}
 	
+	public CustomTaskQuery taskEntryClassNames(List<String> entryClassNames) {
+		this.entryClassNames = entryClassNames;
+		return this;
+	}
+	
 	public CustomTaskQuery taskAssignee(String assignee) {
+		try {
+			if (Long.parseLong(assignee) <= 0) 
+				return this;
+		} catch (Exception e) {
+			return this;
+		}
 		this.assignee = assignee;
+		return this;
+	}
+	
+	public CustomTaskQuery taskGroupId(Long groupId) {
+		this.groupId = groupId;
+		return this;
+	}
+	
+	public CustomTaskQuery taskCompanyId(Long companyId) {
+		this.companyId = companyId;
 		return this;
 	}
 	
@@ -93,7 +118,6 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	    
 	    for (Group group : groups) {
 	    	groupIds.add(group.getId());
-	    	_log.debug("Candidate role added: " + group.getId());
 	    }
 	    
 	    return groupIds;
@@ -115,7 +139,20 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 		return entryClassName;
 	}
 	
+	public List<String> getEntryClassNames() {
+		return entryClassNames;
+	}
+	
+	public Long getGroupId() {
+		return groupId;
+	}
+	
+	public Long getCompanyId() {
+		return companyId;
+	}
+	
 	public boolean isOrderByDueDate() {
 		return orderByDueDate;
 	}
+
 }

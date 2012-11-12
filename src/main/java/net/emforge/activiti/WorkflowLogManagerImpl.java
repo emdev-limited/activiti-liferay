@@ -2,7 +2,6 @@ package net.emforge.activiti;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowException;
@@ -100,7 +100,8 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 				
 				DefaultWorkflowLog log = new DefaultWorkflowLog();
 				
-				log.setUserId(Long.valueOf(commentEntity.getUserId()));
+				//log.setUserId(Long.valueOf(commentEntity.getUserId()));
+				log.setUserId(GetterUtil.getLong(commentEntity.getUserId()));
 				log.setCreateDate(commentEntity.getTime());
 				log.setWorkflowLogId(Long.valueOf(commentEntity.getId()));
 				

@@ -89,26 +89,32 @@ public class CallActivityBehavior extends AbstractBpmnActivityBehavior implement
     ProcessInstanceExtensionImpl procInstImpl = new ProcessInstanceExtensionImpl();
     for (String varName : execution.getVariableNames()) {
     	Object value = execution.getVariable(varName);
-    	subProcessInstance.setVariable(varName, value);
     	
     	//Set Variables to procInstImpl
     	if (varName.equals(WorkflowConstants.CONTEXT_COMPANY_ID)) {
     		procInstImpl.setCompanyId(Long.valueOf((String)value));
+    		subProcessInstance.setVariable(varName, value);
     	}
     	if (varName.equals(WorkflowConstants.CONTEXT_USER_ID)) {
     		procInstImpl.setUserId(Long.valueOf((String)value));
+    		subProcessInstance.setVariable(varName, value);
     	}
     	if (varName.equals(WorkflowConstants.CONTEXT_GROUP_ID)) {
     		procInstImpl.setGroupId(Long.valueOf((String)value));
+    		subProcessInstance.setVariable(varName, value);
     	}
     	if (varName.equals(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME)) {
     		procInstImpl.setClassName((String)value);
+    		subProcessInstance.setVariable(varName, value);
     	}
     	if (varName.equals(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)) {
     		procInstImpl.setClassPK(Long.valueOf((String)value));
+    		subProcessInstance.setVariable(varName, value);
+    	}
+    	if (varName.equals(WorkflowConstants.CONTEXT_SERVICE_CONTEXT)) {
+    		subProcessInstance.setVariable(varName, value);
     	}
     }
-    
     // copy process variables
     for (AbstractDataAssociation dataInputAssociation : dataInputAssociations) {
       Object value = null;

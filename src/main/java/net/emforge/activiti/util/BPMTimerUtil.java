@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.DateUtil;
 /**
  * See {@link http://en.wikipedia.org/wiki/ISO_8601#Durations}
  * @author fav
@@ -14,10 +15,29 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
  */
 
 @Service("bpmTimer")
-public class BpmTimerUtil {
+public class BPMTimerUtil {
 	
-	private static Log _log = LogFactoryUtil.getLog(BpmTimerUtil.class);
+	private static Log _log = LogFactoryUtil.getLog("BPMTIMER");
 	
+	public static Date ddmmyy(String strDate) {
+		Date date = DateUtil.newDate();
+		_log.warn("Method is partialy implemented and returns current date: " + date);
+		return date;
+	}
+	
+	/*public static Date ddmmyy(String strDate) {
+		String[] dateElements = StringUtil.split(strDate, '.');
+		
+		if(dateElements.length == 3) {
+			if(dateElements[0] < 2000) {
+				
+			}
+		}
+		DateFormatFactoryUtil.getSimpleDateFormat("pattern").
+		DateUtil.newDate()dateElements;
+		return new Date();
+	}
+	*/
 	public static Date adjust(String offset, Date from) {
 		//Incoming param should looks like +PT10H, so we need to parse it,
 		//decide whether add value or subtract value and find out appropriate unit. Then

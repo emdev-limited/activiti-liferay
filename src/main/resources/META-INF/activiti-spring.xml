@@ -14,21 +14,23 @@
 	default-init-method="afterPropertiesSet"						
 	>
 	
-	<context:component-scan base-package="net.emforge.activiti"/>
-	<context:component-scan base-package="org.activiti.rest.api"/>
-
-	<tx:annotation-driven transaction-manager="transactionManager" />
-
-	<bean id="sharedTransactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
-		<property name="transactionManager" ref="transactionManager" />
-	</bean>
-
-
 	<!--  TODO - Think - probably we can use Liferay Executor -->
 	<!-- task:annotation-driven executor="executor" scheduler="scheduler"/>
 		
 	<task:scheduler id="scheduler" pool-size="10"/>
 	<task:executor id="executor" pool-size="5"/ -->	
+	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayProcessEngineConfiguration">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="transactionManager" ref="transactionManager" />
+		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
+		<property name="databaseSchemaUpdate" value="true" />
+		
+	    <!-- job executor configurations -->
+	    <property name="jobExecutorActivate" value="true" />
+	    
+	    <!-- history configuration -->
+	    <property name="history" value="audit" />		
+	</bean>	
 	
 	<bean id="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil" class="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil">
 		<property name="workflowComparatorFactory">

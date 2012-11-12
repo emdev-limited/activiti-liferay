@@ -166,6 +166,73 @@ public class ProcessInstanceExtensionDao extends HibernateTemplate {
 	    });
 	}
 	
+	public List<ProcessInstanceExtensionImpl> find(final long companyId, final Long userId, final String[] assetClassNames, final Boolean completed,
+			final int start, final int end, final OrderByComparator orderByComparator) {
+		return execute(new HibernateCallback<List<ProcessInstanceExtensionImpl>>() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public List<ProcessInstanceExtensionImpl> doInHibernate(Session session) throws HibernateException, SQLException {
+
+				String queryStr = "SELECT PI.* FROM ACT_PIE_LIFERAY PI, ACT_HI_PROCINST HI where PI.process_instance_id = HI.proc_inst_id_";
+				if (companyId != 0l) {
+					queryStr += " and PI.company_id = :companyId";
+				}
+
+				if (userId != null) {
+					queryStr += " and PI.user_id = :userId";
+				}
+
+				if (Validator.isNotNull(assetClassNames)) {
+					queryStr += " and (";
+					for (int i = 0; i < assetClassNames.length; ++i) {
+						if (i != 0) {
+							queryStr += " or";
+						}
+						queryStr += " PI.class_name like :assetClassName_" + i;
+					}
+					queryStr += " )";
+				}
+
+				if (completed != null) {
+					if (completed) {
+						queryStr += " and HI.end_time_ is not null";
+					} else {
+						queryStr += " and HI.end_time_ is null";
+					}
+				}
+
+				final SQLQuery query = session.createSQLQuery(queryStr);
+
+				if (companyId != 0l) {
+					query.setLong("companyId", companyId);
+				}
+
+				if (userId != null) {
+					query.setLong("userId", userId);
+				}
+
+				if (Validator.isNotNull(assetClassNames)) {
+					for (int i = 0; i < assetClassNames.length; ++i) {
+						query.setString("assetClassName_" + i, assetClassNames[i]);
+					}
+					
+				}
+
+				if (QueryUtil.ALL_POS != start && QueryUtil.ALL_POS != end) {
+					query.setFirstResult(start);
+					query.setMaxResults(end - start);
+				}
+				if (orderByComparator != null) {
+					// TODO Support order By
+				}
+
+				query.addEntity(ProcessInstanceExtensionImpl.class);
+
+				return (List<ProcessInstanceExtensionImpl>) query.list();
+			}
+		});
+	}
+	
 	protected void addOrder(DetachedCriteria criteria, OrderByComparator orderByComparator) {
 		if (orderByComparator == null) {
 			return;

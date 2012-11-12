@@ -23,6 +23,7 @@ import org.activiti.engine.task.Task;
 import org.activiti.rest.api.ActivitiUtil;
 import org.activiti.rest.api.RequestUtil;
 import org.activiti.rest.api.SecuredResource;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.restlet.representation.Representation;
@@ -110,6 +111,13 @@ public class TaskResource extends SecuredResource {
       if(taskJSON.path("assignee") != null && taskJSON.path("assignee").getTextValue() != null) {
         assignee = taskJSON.path("assignee").getTextValue();
         task.setAssignee(assignee);
+      }
+      
+      String agentId = null;
+      //if assignee user sent - use it by priority...
+      if(taskJSON.path("agentId") != null && taskJSON.path("agentId").getTextValue() != null && StringUtils.isEmpty(assignee)) {
+    	agentId = taskJSON.path("agentId").getTextValue();
+    	ActivitiUtil.getTaskService().addCandidateUser(taskId, agentId);
       }
       
       String owner = null;

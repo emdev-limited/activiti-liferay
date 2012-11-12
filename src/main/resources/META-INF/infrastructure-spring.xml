@@ -12,6 +12,12 @@
 						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
 						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
 						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+						
+						
+	<context:component-scan base-package="net.emforge.activiti"/>
+	<context:component-scan base-package="org.activiti.rest.api"/>
+	
+	<bean id="applicationContextProvider" class="net.emforge.activiti.spring.ApplicationContextProvider"/>				
 		
 	<bean id="dataSource"
 		class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
@@ -20,12 +26,18 @@
 				factory-method="getDataSource" />
 		</property>
 	</bean>
-
+	
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
 	<bean id="transactionManager"
 		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
 		<property name="sessionFactory" ref="sessionFactory" />
 		<property name="dataSource" ref="dataSource" />
 	</bean>	
+
+	<bean id="sharedTransactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
 
 	<!-- Hbernate configuration - used for objects defined in activiti-web -->
 	<!-- TODO Find a way to use mybatis instead of hibernate to increase integration with activiti and reduce dependencies -->
@@ -39,20 +51,4 @@
 			</list>
 		</property>
 	</bean>
-	
-	<!-- Activiti Configuration -->
-	<bean id="processEngineConfiguration" class="net.emforge.activiti.LiferayProcessEngineConfiguration">
-		<property name="dataSource" ref="dataSource"/>
-		<property name="transactionManager" ref="transactionManager" />
-		<!-- TODO Need combination of create-if-necessary & check-version strategies -->
-		<property name="databaseSchemaUpdate" value="true" />
-		
-	    <!-- job executor configurations -->
-	    <property name="jobExecutorActivate" value="true" />
-	    
-	    <!-- history configuration -->
-	    <property name="history" value="audit" />		
-	</bean>	
-	
-						
 </beans>

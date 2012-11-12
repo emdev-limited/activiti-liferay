@@ -43,12 +43,15 @@ import org.activiti.rest.api.process.ProcessInstanceResource;
 import org.activiti.rest.api.process.ProcessInstanceSignalExecutionResource;
 import org.activiti.rest.api.process.ProcessInstancesResource;
 import org.activiti.rest.api.process.StartProcessInstanceResource;
+import org.activiti.rest.api.process.WorkflowLogResource;
 import org.activiti.rest.api.repository.DeploymentArtifactResource;
 import org.activiti.rest.api.repository.DeploymentArtifactsResource;
 import org.activiti.rest.api.repository.DeploymentDeleteResource;
 import org.activiti.rest.api.repository.DeploymentUploadResource;
 import org.activiti.rest.api.repository.DeploymentsDeleteResource;
 import org.activiti.rest.api.repository.DeploymentsResource;
+import org.activiti.rest.api.task.ExtTaskCountResource;
+import org.activiti.rest.api.task.ExtTaskResource;
 import org.activiti.rest.api.task.TaskAddResource;
 import org.activiti.rest.api.task.TaskAttachmentAddResource;
 import org.activiti.rest.api.task.TaskAttachmentResource;
@@ -57,6 +60,7 @@ import org.activiti.rest.api.task.TaskOperationResource;
 import org.activiti.rest.api.task.TaskPropertiesResource;
 import org.activiti.rest.api.task.TaskResource;
 import org.activiti.rest.api.task.TaskUrlAddResource;
+import org.activiti.rest.api.task.TaskVariableResource;
 import org.activiti.rest.api.task.TasksResource;
 import org.activiti.rest.api.task.TasksSummaryResource;
 import org.restlet.Application;
@@ -143,6 +147,13 @@ public class ActivitiRestApplication extends Application {
     router.attach("/task/{taskId}/attachment", TaskAttachmentAddResource.class);
     router.attach("/task/{taskId}/url", TaskUrlAddResource.class);
     router.attach("/task/{taskId}/{operation}", TaskOperationResource.class);
+    
+    router.attach("/ext-task-count", ExtTaskCountResource.class);
+    router.attach("/ext-task", ExtTaskResource.class);
+    
+    router.attach("/task-variable/{taskId}/{action}", TaskVariableResource.class);
+    
+    router.attach("/workflow-log/{taskId}", WorkflowLogResource.class);
     
     router.attach("/attachment/{attachmentId}", TaskAttachmentResource.class);
     

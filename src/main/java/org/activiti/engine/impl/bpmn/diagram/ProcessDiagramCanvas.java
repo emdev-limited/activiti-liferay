@@ -25,10 +25,10 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -58,6 +58,7 @@ public class ProcessDiagramCanvas {
   // Predefined sized
   protected static final int ARROW_WIDTH = 5;
   protected static final int CONDITIONAL_INDICATOR_WIDTH = 16;
+  protected static final int DEFAULT_INDICATOR_WIDTH = 10;
   protected static final int MARKER_WIDTH = 12;
 
   // Colors
@@ -65,6 +66,10 @@ public class ProcessDiagramCanvas {
   protected static Color BOUNDARY_EVENT_COLOR = new Color(255, 255, 255);
   protected static Color CONDITIONAL_INDICATOR_COLOR = new Color(255, 255, 255);
   protected static Color HIGHLIGHT_COLOR = Color.RED;
+  protected static Color LABEL_COLOR = new Color(112, 146, 190);
+  
+  // Fonts
+  protected static Font LABEL_FONT = new Font("Arial", Font.ITALIC, 10);
 
   // Strokes
   protected static Stroke THICK_TASK_BORDER_STROKE = new BasicStroke(3.0f);
@@ -72,8 +77,9 @@ public class ProcessDiagramCanvas {
   protected static Stroke END_EVENT_STROKE = new BasicStroke(3.0f);
   protected static Stroke MULTI_INSTANCE_STROKE = new BasicStroke(1.3f);
   protected static Stroke EVENT_SUBPROCESS_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 1.0f }, 0.0f);
-  protected static Stroke HIGHLIGHT_FLOW_STROKE = new BasicStroke(2.0f);
-  
+  protected static Stroke NON_INTERRUPTING_EVENT_STROKE = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1.0f,  new float[] { 4.0f, 3.0f }, 0.0f);
+  protected static Stroke HIGHLIGHT_FLOW_STROKE = new BasicStroke(1.3f);
+
   // icons
   protected static int ICON_SIZE = 16;
   protected static Image USERTASK_IMAGE;
@@ -216,8 +222,8 @@ public class ProcessDiagramCanvas {
   }
 
   public void drawErrorEndEvent(String name, int x, int y, int width, int height) {
-	drawErrorEndEvent(x, y, width, height);
-	drawLabel(name, x, y, width, height);
+    drawErrorEndEvent(x, y, width, height);
+    drawLabel(name, x, y, width, height);
   }
   
   public void drawErrorEndEvent(int x, int y, int width, int height) {
@@ -230,7 +236,7 @@ public class ProcessDiagramCanvas {
     g.drawImage(ERROR_CATCH_IMAGE, x + 3, y + 3, width - 6, height - 6, null);
   }
 
-  public void drawCatchingEvent(int x, int y, int width, int height, Image image) {
+  public void drawCatchingEvent(int x, int y, int width, int height, Boolean isInterrupting, Image image) {
     // event circles
     Ellipse2D outerCircle = new Ellipse2D.Double(x, y, width, height);
     int innerCircleX = x + 3;
@@ -240,180 +246,197 @@ public class ProcessDiagramCanvas {
     Ellipse2D innerCircle = new Ellipse2D.Double(innerCircleX, innerCircleY, innerCircleWidth, innerCircleHeight);
 
     Paint originalPaint = g.getPaint();
+    Stroke originalStroke = g.getStroke();
     g.setPaint(BOUNDARY_EVENT_COLOR);
     g.fill(outerCircle);
 
     g.setPaint(originalPaint);
+    if (isInterrupting!= null && !isInterrupting) 
+      g.setStroke(NON_INTERRUPTING_EVENT_STROKE);
     g.draw(outerCircle);
+    g.setStroke(originalStroke);
     g.draw(innerCircle);
 
     g.drawImage(image, innerCircleX, innerCircleY, innerCircleWidth, innerCircleHeight, null);
   }
 
-  public void drawCatchingTimerEvent(String name, int x, int y, int width, int height) {
-	  drawCatchingTimerEvent(x, y, width, height);
-	  drawLabel(name, x, y, width, height);
-  }
-
-  public void drawCatchingTimerEvent(int x, int y, int width, int height) {
-    drawCatchingEvent(x, y, width, height, TIMER_IMAGE);
-  }
-
-  public void drawCatchingErroEvent(String name, int x, int y, int width, int height) {
-    drawCatchingErroEvent(x, y, width, height);
+  public void drawCatchingTimerEvent(String name, int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingTimerEvent(x, y, width, height, isInterrupting);
     drawLabel(name, x, y, width, height);
   }
-  
-  public void drawCatchingErroEvent(int x, int y, int width, int height) {
-    drawCatchingEvent(x, y, width, height, ERROR_CATCH_IMAGE);
+
+  public void drawCatchingTimerEvent(int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingEvent(x, y, width, height, isInterrupting, TIMER_IMAGE);
   }
-  
-  public void drawCatchingSignalEvent(String name, int x, int y, int width, int height) {
-	  drawCatchingSignalEvent(x, y, width, height);
-	  drawLabel(name, x, y, width, height);
+
+  public void drawCatchingErroEvent(String name, int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingErroEvent(x, y, width, height, isInterrupting);
+    drawLabel(name, x, y, width, height);
   }
-  public void drawCatchingSignalEvent(int x, int y, int width, int height) {
-    drawCatchingEvent(x, y, width, height, SIGNAL_CATCH_IMAGE);
+
+  public void drawCatchingErroEvent(int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingEvent(x, y, width, height, isInterrupting, ERROR_CATCH_IMAGE);
   }
-  
+
+  public void drawCatchingSignalEvent(String name, int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingSignalEvent(x, y, width, height, isInterrupting);
+    drawLabel(name, x, y, width, height);
+  }
+
+  public void drawCatchingSignalEvent(int x, int y, int width, int height, Boolean isInterrupting) {
+    drawCatchingEvent(x, y, width, height, isInterrupting, SIGNAL_CATCH_IMAGE);
+  }
+
   public void drawThrowingSignalEvent(int x, int y, int width, int height) {
-    drawCatchingEvent(x, y, width, height, SIGNAL_THROW_IMAGE);
+    drawCatchingEvent(x, y, width, height, false, SIGNAL_THROW_IMAGE);
   }
 
   public void drawSequenceflow(int srcX, int srcY, int targetX, int targetY, boolean conditional) {
-	  drawSequenceflow(srcX, srcY, targetX, targetY, conditional, false);
+    drawSequenceflow(srcX, srcY, targetX, targetY, conditional, false);
   }
+  
   public void drawSequenceflow(int srcX, int srcY, int targetX, int targetY, boolean conditional, boolean highLighted) {
-	Paint originalPaint = g.getPaint();
-	if (highLighted)
-		g.setPaint(HIGHLIGHT_COLOR);
-    
-	Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
+    Paint originalPaint = g.getPaint();
+    if (highLighted)
+      g.setPaint(HIGHLIGHT_COLOR);
+
+    Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
     g.draw(line);
     drawArrowHead(line);
-    
-    if (highLighted)
-		g.setPaint(originalPaint);
-    
+
     if (conditional) {
       drawConditionalSequenceFlowIndicator(line);
     }
+
+    if (highLighted)
+      g.setPaint(originalPaint);
   }
-  
-  public void drawSequenceflow(int[] xPoints, int[] yPoints, boolean conditional, boolean highLighted) {
-	  Paint originalPaint = g.getPaint();
-	  Stroke originalStroke = g.getStroke();
+
+  public void drawSequenceflow(int[] xPoints, int[] yPoints, boolean conditional, boolean isDefault, boolean highLighted) {
+    Paint originalPaint = g.getPaint();
+    Stroke originalStroke = g.getStroke();
+
+    if (highLighted) {
+      g.setPaint(HIGHLIGHT_COLOR);
+      g.setStroke(HIGHLIGHT_FLOW_STROKE);
+    }
+
+    int radius = 15;
 	  
-	  if (highLighted) {
-		g.setPaint(HIGHLIGHT_COLOR);
-		g.setStroke(HIGHLIGHT_FLOW_STROKE);
-	  }
-	  
-	  int a = 15;
-	  Integer nextSrcX=null, nextSrcY=null;
-	  for(int i=1; i<xPoints.length; i++) {
-		  Integer srcX = xPoints[i-1], srcY = yPoints[i-1];
-		    
-		  Integer targetX = xPoints[i], targetY = yPoints[i];
-		  
-		  if (nextSrcX != null && nextSrcY !=null) {
-				srcX = nextSrcX;
-				srcY = nextSrcY;
-			}
-		  
-		  if (i < xPoints.length-1) {
-		    Integer cx = targetX, cy = targetY;
-		    
-		    
-		 // pivot point of prev line
- 			Integer AB = targetY - srcY,
- 					OB = targetX - srcX;
- 			double 	AO = Math.sqrt(Math.pow(AB, 2) + Math.pow(OB, 2)),
- 					ED = AB * a / AO,
- 					OD = OB * a / AO;
- 			targetX = (int) (targetX - OD);
- 			targetY = (int) (targetY - ED);
- 			if (AO <= a) {
- 				OD = OB;
- 				ED = AB;
- 				targetX = srcX;
- 				targetY = srcY;
- 			}
- 			
- 		
- 			Integer nextTargetX = xPoints[i+1], nextTargetY = yPoints[i+1];
- 			
- 		// pivot point of next line
-					AB = cy - nextTargetY;
-					OB = cx - nextTargetX;
-					AO = Math.sqrt(Math.pow(AB, 2) + Math.pow(OB, 2));
-					ED = AB * a / AO;
-					OD = OB * a / AO;
-					nextSrcX = (int) (cx - OD);
-					nextSrcY = (int) (cy - ED);
-			if (AO <= a) {
- 				OD = OB;
- 				ED = AB;
- 				nextSrcX = nextTargetX;
- 				nextSrcY = nextTargetY;
- 			}
-			
-			double 	dx0 = (cx - targetX) / 3,
-					dy0 = (cy - targetY) / 3,
-					ax = cx - dx0,
-					ay = cy - dy0,
-					
-					dx1 = (cx - nextSrcX) / 3,
-					dy1 = (cy - nextSrcY) / 3,
-					bx = cx - dx1,
-					by = cy - dy1,
-					
-					zx=nextSrcX, zy=nextSrcY;
-			
-			  // add curve
-			  CubicCurve2D c = new CubicCurve2D.Double();
-			  c.setCurve(targetX, targetY, ax, ay, bx, by, zx, zy);
-			  g.draw(c);
-		  }
-		  
-		// add line
-		  Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
-		  g.draw(line);
-		  
-		  if (i == xPoints.length-1) {
-			  Line2D.Double lineDouble = new Line2D.Double(srcX, srcY, targetX, targetY);
-			    g.draw(lineDouble);
-			    drawArrowHead(lineDouble);
-		  }
-	  }
-	  
-	  if (conditional) {
-		  Line2D.Double line = new Line2D.Double(xPoints[0], yPoints[0], xPoints[1], yPoints[1]);
-		  drawConditionalSequenceFlowIndicator(line);
-	  }
-	  
-	  g.setPaint(originalPaint);
-	  g.setStroke(originalStroke);
+    Path2D path = new Path2D.Double();
+
+    boolean isDefaultConditionAvailable = false;
+
+    //Integer nextSrcX=null, nextSrcY=null;
+    for(int i=0; i<xPoints.length; i++) {
+      Integer anchorX = xPoints[i];
+      Integer anchorY = yPoints[i];
+
+      double targetX = anchorX, targetY = anchorY;
+
+      double ax=0, ay=0, bx=0, by=0, zx=0, zy=0;
+
+      if (i>0 && i < xPoints.length-1) {
+        Integer cx = anchorX, cy = anchorY;
+
+        // pivot point of prev line
+        double  lineLengthY = yPoints[i] - yPoints[i-1],
+                lineLengthX = xPoints[i] - xPoints[i-1];
+        double  lineLength = Math.sqrt(Math.pow(lineLengthY, 2) + Math.pow(lineLengthX, 2)),
+                dx = lineLengthX * radius / lineLength,
+                dy = lineLengthY * radius / lineLength;
+                targetX = targetX - dx;
+                targetY = targetY - dy;
+
+        isDefaultConditionAvailable = isDefault && i == 1 && lineLength > 10;
+
+        if (lineLength < 2*radius && i>1) {
+                targetX = xPoints[i] - lineLengthX/2;
+                targetY = yPoints[i] - lineLengthY/2;
+        }
+
+        // pivot point of next line
+                lineLengthY = yPoints[i+1] - yPoints[i];
+                lineLengthX = xPoints[i+1] - xPoints[i];
+                lineLength = Math.sqrt(Math.pow(lineLengthY, 2) + Math.pow(lineLengthX, 2));
+        if (lineLength < radius) {
+          lineLength = radius;
+        }
+        dx = lineLengthX * radius / lineLength;
+        dy = lineLengthY * radius / lineLength;
+
+        double  nextSrcX = xPoints[i] + dx,
+                nextSrcY = yPoints[i] + dy;
+
+        if (lineLength < 2*radius && i<xPoints.length-2) {
+          nextSrcX = xPoints[i] + lineLengthX/2;
+          nextSrcY = yPoints[i] + lineLengthY/2;
+        }
+
+        double dx0 = (cx - targetX) / 3,
+               dy0 = (cy - targetY) / 3;
+               ax = cx - dx0;
+               ay = cy - dy0;
+
+        double dx1 = (cx - nextSrcX) / 3,
+               dy1 = (cy - nextSrcY) / 3;
+               bx = cx - dx1;
+               by = cy - dy1;
+
+               zx=nextSrcX;
+               zy=nextSrcY;
+    }
+
+    if (i==0) {
+      path.moveTo(targetX, targetY);
+    } else {
+      path.lineTo(targetX, targetY);
+    }
+
+    if (i>0 && i < xPoints.length-1) {
+      // add curve
+      path.curveTo(ax, ay, bx, by, zx, zy);
+    }
+
+    if (i == xPoints.length-1) {
+      Line2D.Double lineDouble = new Line2D.Double(xPoints[i-1], yPoints[i-1], xPoints[i], yPoints[i]);
+      drawArrowHead(lineDouble);
+    }
   }
-  
+  g.draw(path);
+
+  if (isDefaultConditionAvailable){
+    Line2D.Double line = new Line2D.Double(xPoints[0], yPoints[0], xPoints[1], yPoints[1]);
+    drawDefaultSequenceFlowIndicator(line);
+  }
+
+  if (conditional) {
+    Line2D.Double line = new Line2D.Double(xPoints[0], yPoints[0], xPoints[1], yPoints[1]);
+    drawConditionalSequenceFlowIndicator(line);
+  }
+
+  g.setPaint(originalPaint);
+  g.setStroke(originalStroke);
+}
+
   public void drawSequenceflowWithoutArrow(int srcX, int srcY, int targetX, int targetY, boolean conditional) {
-	  drawSequenceflowWithoutArrow(srcX, srcY, targetX, targetY, conditional, false);
+    drawSequenceflowWithoutArrow(srcX, srcY, targetX, targetY, conditional, false);
   }
-  
+
   public void drawSequenceflowWithoutArrow(int srcX, int srcY, int targetX, int targetY, boolean conditional, boolean highLighted) {
-	Paint originalPaint = g.getPaint();
-	if (highLighted)
-		g.setPaint(HIGHLIGHT_COLOR);
-		
+    Paint originalPaint = g.getPaint();
+    if (highLighted)
+      g.setPaint(HIGHLIGHT_COLOR);
+
     Line2D.Double line = new Line2D.Double(srcX, srcY, targetX, targetY);
     g.draw(line);
 
-    if (highLighted)
-		g.setPaint(originalPaint);
-    
     if (conditional) {
       drawConditionalSequenceFlowIndicator(line);
     }
+
+    if (highLighted)
+      g.setPaint(originalPaint);
   }
 
   public void drawArrowHead(Line2D.Double line) {
@@ -432,6 +455,26 @@ public class ProcessDiagramCanvas {
     AffineTransform originalTransformation = g.getTransform();
     g.setTransform(transformation);
     g.fill(arrowHead);
+    g.setTransform(originalTransformation);
+  }
+
+  public void drawDefaultSequenceFlowIndicator(Line2D.Double line) {
+    double length = DEFAULT_INDICATOR_WIDTH, halfOfLength = length/2, f = 8;
+    Line2D.Double defaultIndicator = new Line2D.Double(-halfOfLength, 0, halfOfLength, 0);
+
+    double angle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
+	double dx = f * Math.cos(angle), dy = f * Math.sin(angle),
+	       x1 = line.x1 + dx, y1 = line.y1 + dy;
+
+    AffineTransform transformation = new AffineTransform();
+    transformation.setToIdentity();
+    transformation.translate(x1, y1);
+    transformation.rotate((angle - 3 * Math.PI / 4));
+
+    AffineTransform originalTransformation = g.getTransform();
+    g.setTransform(transformation);
+    g.draw(defaultIndicator);
+
     g.setTransform(originalTransformation);
   }
 
@@ -691,27 +734,27 @@ public class ProcessDiagramCanvas {
     g.draw(circle);
     g.setStroke(orginalStroke);
   }
-  
-  public void drawEventBasedGateway(int x, int y, int width, int height) {
-	    // rhombus
-	    drawGateway(x, y, width, height);
 
-	    // rombus inside rhombus
-	    Stroke orginalStroke = g.getStroke();
-	    g.setStroke(GATEWAY_TYPE_STROKE);
-	    int n=5;
-	    double angle = 2*Math.PI/n;
-	    int x1Points[]= new int[n];
-	    int y1Points[]= new int[n];
-        for ( int index = 0; index < n; index++ ) {
-        	double v = index*angle - Math.PI/2;
-        	x1Points[index] = x + (int)Math.round(width/2) + (int)Math.round((width/4)*Math.cos(v));
-        	y1Points[index] = y + (int)Math.round(height/2) + (int)Math.round((height/4)*Math.sin(v));
-        };
- 
-        g.drawPolygon(x1Points, y1Points, n);
-	    g.setStroke(orginalStroke);
-	  }
+  public void drawEventBasedGateway(int x, int y, int width, int height) {
+    // rhombus
+    drawGateway(x, y, width, height);
+
+    // pentagon inside rhombus
+    Stroke orginalStroke = g.getStroke();
+    g.setStroke(GATEWAY_TYPE_STROKE);
+    int n=5;
+    double angle = 2*Math.PI/n;
+    int x1Points[]= new int[n];
+    int y1Points[]= new int[n];
+       for ( int index = 0; index < n; index++ ) {
+       	double v = index*angle - Math.PI/2;
+       	x1Points[index] = x + (int)Math.round(width/2) + (int)Math.round((width/4)*Math.cos(v));
+       	y1Points[index] = y + (int)Math.round(height/2) + (int)Math.round((height/4)*Math.sin(v));
+       };
+
+       g.drawPolygon(x1Points, y1Points, n);
+    g.setStroke(orginalStroke);
+  }
 
   public void drawMultiInstanceMarker(boolean sequential, int x, int y, int width, int height) {
     int rectangleWidth = MARKER_WIDTH;
@@ -750,23 +793,22 @@ public class ProcessDiagramCanvas {
   }
 
   public void drawLabel(String name, int x, int y, int width, int height){
-		// text
-	    if (name != null) {
-	    	Paint originalPaint = g.getPaint();
-	    	Font originalFont = g.getFont();
-	    	
-	    	g.setPaint(new Color(112, 146, 190));
-	    	Font font = new Font("Arial", Font.ITALIC, 10);
-	        g.setFont(font);
-	      //String text = fitTextToWidth(name, width);
-	      int textX = x + width - fontMetrics.stringWidth(name)/2;
-	      int textY = y + height + fontMetrics.getHeight();
-	      g.drawString(name, textX, textY);
-	      
-	      	// restore originals
-	      	g.setFont(originalFont);
-	      	g.setPaint(originalPaint);
-	    }
+    // text
+    if (name != null) {
+      Paint originalPaint = g.getPaint();
+      Font originalFont = g.getFont();
+
+      g.setPaint(LABEL_COLOR);
+      g.setFont(LABEL_FONT);
+
+      int textX = x + width/2 - fontMetrics.stringWidth(name)/2;
+      int textY = y + height + fontMetrics.getHeight();
+
+      g.drawString(name, textX, textY);
+  
+      // restore originals
+      g.setFont(originalFont);
+      g.setPaint(originalPaint);
+    }
   }
 }
- 

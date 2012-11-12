@@ -3,6 +3,7 @@ package net.emforge.activiti;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +35,10 @@ import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import net.emforge.activiti.social.WorkflowTaskActivityKeys;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -56,6 +57,7 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
+import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -78,10 +80,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	LiferayIdentityService liferayIdentityService;
 	@Autowired
 	ProcessInstanceExtensionDao processInstanceExtensionDao;
-	
 	@Autowired
 	WorkflowInstanceManagerExt workflowInstanceManager;
-	
 	@Autowired
 	WorkflowDefinitionManagerExt workflowDefinitionManager;
 	
@@ -135,7 +135,21 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			
 			// get new state of task
 			task = taskService.createTaskQuery().taskId(taskId).singleResult();
-			return getWorkflowTask(task);
+			WorkflowTask workflowTask = getWorkflowTask(task);
+			try {
+				long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
+				
+				// Add activity
+				SocialActivityLocalServiceUtil.addActivity(
+						userId, groupId, WorkflowTask.class.getName(),
+						workflowTask.getWorkflowTaskId(), WorkflowTaskActivityKeys.ASSIGNE_WORKFLOW_TASK_TO_USER,
+						comment, 0);				
+			} catch(Exception e) {
+				_log.error("SocialActivity was not created", e);
+			}
+			
+			//return getWorkflowTask(task);
+			return workflowTask;
 		} catch (WorkflowException ex) {
 			throw ex;
 		} catch (Exception ex) {
@@ -152,33 +166,22 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-		//This commented part related to attempts to resolve this issue: http://issues.liferay.com/browse/LPS-27713
-//		if (userId > 0) {
-//			try {
-//				User usr = UserLocalServiceUtil.getUser(userId);
-//				String processInstanceId = task.getProcessInstanceId();
-//				Map<String, Serializable> ctx = new HashMap<String, Serializable>();
-//				if (context != null) {
-//					ctx.putAll(context);
-//				}
-//				ctx.put("latestActivitiUserId", userId); // Put user id to use it in script tasks
-//				for (String key : ctx.keySet()) {
-//					runtimeService.setVariable(processInstanceId, key, ctx.get(key));
-//				}
-//				ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
-//				ctx = WorkflowInstanceManagerImpl.convertFromVars(runtimeService.getVariables(processInstanceId));
-//				workflowInstanceManager.getWorkflowInstance(inst, null, ctx);
-////				runtimeService.setVariable(processInstanceId, "latestActivitiUserId", userId);
-//			} catch (Exception e) {
-//				_log.warn("Failed to put latest user into workflow context", e);
-//			}
-//		}
+		long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
 		// complete task
 		Map<String, Object> vars = WorkflowInstanceManagerImpl.convertFromContext(context);
 		vars.put("outputTransition", transitionName); // Put transition name into outputTransition variable for later use in gateway
-		vars.put("latestActivitiUserId", userId); // Put user id to use it in script tasks
 		taskService.complete(taskId, vars);
 		
+		try {
+			// Add activity
+			SocialActivityLocalServiceUtil.addActivity(
+					userId, groupId, WorkflowTask.class.getName(),
+					workflowTaskId, WorkflowTaskActivityKeys.COMPLETE_WORKFLOW_TASK,
+					comment, 0);				
+		} catch(Exception e) {
+			_log.error("SocialActivity was not created", e);
+		}
+
 		// save log
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
@@ -186,8 +189,15 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		workflowLogEntry.setState(task.getName());
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
-
+		
 		// TODO - find the next task
+		try {
+			Task nextTask = taskService.createTaskQuery()
+				.taskCandidateUser(String.valueOf(userId)).listPage(0, 1).get(0);
+			return getWorkflowTask(nextTask);
+		} catch(Exception e) {
+			_log.info("There is no next task to user " + userId + ". " + e.getMessage());
+		}
 		return null;
 	}
 
@@ -349,28 +359,35 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			String keywords, Boolean completed, Boolean searchByUserRoles,
 			int start, int end, OrderByComparator orderByComparator)
 			throws WorkflowException {
-		if (userId == 0 || StringUtils.isNotEmpty(keywords)) {
-			_log.warn("Method is partially implemented"); // TODO
+		_log.debug("-----> Search Start1 " + start + " end " + end);
+		Long groupId = null;
+		if (StringUtils.isNotEmpty(keywords)) {
+			try {
+				groupId = new Long(keywords);
+			} catch (Exception e) {
+				
+			}
 		}
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
 
+        		taskQuery.taskGroupId(groupId);
         		// is comparator specified
         		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
-        				taskQuery.orderByDueDate().asc();
+        				taskQuery = taskQuery.orderByDueDate().asc();
         			} else {
-        				taskQuery.orderByDueDate().desc();
+        				taskQuery = taskQuery.orderByDueDate().desc();
         			}
         		}
-        		
+        		List<Task> list = null;
     			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			taskQuery.listPage(start, end - start);
-        		}
-        		
-	            List<Task> list = taskQuery.list();
+    				list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
+        		}           
             
 	            return getWorkflowTasks(list);
         	} else {
@@ -381,54 +398,65 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
 
+        		taskQuery.taskGroupId(groupId);
         		// is comparator specified
         		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
-        				taskQuery.orderByDueDate().asc();
+        				taskQuery = taskQuery.orderByDueDate().asc();
         			} else {
-        				taskQuery.orderByDueDate().desc();
+        				taskQuery = taskQuery.orderByDueDate().desc();
         			}
         		}
-        		
+        		List<Task> list = null;
     			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			taskQuery.listPage(start, end - start);
+    				list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
         		}
-        		
-	            List<Task> list = taskQuery.list();
-            
+
 	            return getWorkflowTasks(list);
         	} else {
         		// search for completed tasks in history service
         		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
 
+        		// TODO taskQuery.taskGroupId(groupId);
         		if (orderByComparator != null) {
         			// TODO need to be implemented
         			_log.warn("Method is partially implemented");
 	    		}
-        		
+        		List<HistoricTaskInstance> list = null;
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			query.listPage(start, end - start);
+        			list = query.listPage(start, end - start);
+        		} else {
+        			list = query.list();
         		}
         		
-        		List<HistoricTaskInstance> list = query.list();
+
         		
         		return getHistoryWorkflowTasks(list);
         	}
         }
 	}
 
-	@Transactional	
+	@Transactional
 	@Override
 	public int searchCount(long companyId, long userId, String keywords,
 			Boolean completed, Boolean searchByUserRoles)
 			throws WorkflowException {
-		if (userId == 0 || StringUtils.isNotEmpty(keywords)) {
-			_log.warn("Method is partially implemented"); // TODO
+		Long groupId = null;
+		if (StringUtils.isNotEmpty(keywords)) {
+			try {
+				groupId = new Long(keywords);
+			} catch (Exception e) {
+				
+			}
 		}
+		
 		if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
-	        	
+        		taskQuery.taskGroupId(groupId);
+        		
         		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
@@ -438,11 +466,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         } else {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
-	        	
+        		taskQuery.taskGroupId(groupId);
+        		
 	    		Long count = taskQuery.count();
 	    		return count.intValue();
         	} else {
         		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(idMappingService.getUserName(userId)).finished();
+        		// TODO 
+        		//taskQuery.taskGroupId(groupId);
         		
         		Long count = query.count();
 	    		return count.intValue();
@@ -450,7 +481,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         }
 	}
 
-	@Transactional	
+	@Transactional
 	@Override
 	public WorkflowTask updateDueDate(long companyId, long userId, long workflowTaskId, String comment, Date dueDate)
 			throws WorkflowException {
@@ -461,6 +492,18 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		
 		task.setDueDate(dueDate);
 		taskService.saveTask(task);
+		
+		try {
+			long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
+			
+			// Add activity
+			SocialActivityLocalServiceUtil.addActivity(
+					userId, groupId, WorkflowTask.class.getName(),
+					workflowTaskId, WorkflowTaskActivityKeys.UPDATE_DUE_DATE,
+					comment, 0);				
+		} catch(Exception e) {
+			_log.error("SocialActivity does not create", e);
+		}
 		
 		// save log
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
@@ -491,21 +534,24 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	/**
 	 * parameter Long[] assetPrimaryKey added by Maxx
 	 */
-	@Transactional
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
 			String taskName, String assetType, Long[] assetPrimaryKey, Date dueDateGT, Date dueDateLT,
 			Boolean completed, Boolean searchByUserRoles, boolean andOperator,
 			int start, int end, OrderByComparator orderByComparator)
 			throws WorkflowException {
+		_log.debug("-----> Search Start2 " + start + " end " + end);
 		if (dueDateGT != null || dueDateLT != null || assetPrimaryKey != null) {
 			_log.warn("Method is partially implemented"); // TODO
-		}
+		}		
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
         	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));;
         		// add conditions
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
@@ -520,12 +566,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         				taskQuery.orderByDueDate().desc();
         			}
         		}
-        		
+        		List<Task> list = null;
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			taskQuery.listPage(start, end - start);
-        		}
-        		
-	            List<Task> list = taskQuery.list();
+        			list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
+        		}	            
             
 	            return getWorkflowTasks(list);
         	} else {
@@ -536,6 +582,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
@@ -550,12 +599,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         				taskQuery.orderByDueDate().desc();
         			}
         		}
-
+        		List<Task> list = null;
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			taskQuery.listPage(start, end - start);
-        		}
-        		
-	            List<Task> list = taskQuery.list();
+        			list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
+        		}	  
             
 	            return getWorkflowTasks(list);
         	} else {
@@ -572,12 +621,12 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         		if (orderByComparator != null) {
         			_log.warn("Method is partially implemented"); // TODO
 	    		}
-        		
+        		List<HistoricTaskInstance> list = null;
         		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			query.listPage(start, end - start);
+        			list = query.listPage(start, end - start);
+        		} else {
+        			list = query.list();
         		}
-        		
-        		List<HistoricTaskInstance> list = query.list();
         		
         		return getHistoryWorkflowTasks(list);
         	}
@@ -585,7 +634,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	}
 	
 	/**
-	 * added by Maxx
+	 * added by Alex Zhdanov
 	 */
 	@Transactional
 	@Override
@@ -594,13 +643,94 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			Boolean completed, Boolean searchByUserRoles, int start, int end,
 			OrderByComparator orderByComparator)
 		throws WorkflowException {
+		_log.debug("-----> Search Start3 " + start + " end " + end);
 		
-		List<WorkflowTask> result = new ArrayList<WorkflowTask>();
-		for(String assetType : assetTypes)
-			result.addAll(search(companyId, userId, null, assetType, null, null, null,
-					completed, searchByUserRoles, true,
-					start, end, orderByComparator));
-		return result;
+		List<String> listAssetTypes = new ArrayList<String>();
+		if (assetTypes != null) {
+			for (int i = 0; i < assetTypes.length; i++) {
+				listAssetTypes.add(getAssetClassName(assetTypes[i]));
+			}
+		}
+		
+        if (searchByUserRoles != null && searchByUserRoles == true) {
+        	if (completed == null || !completed) {
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));;
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
+        		if (listAssetTypes.size() > 0) {
+        			taskQuery.taskEntryClassNames(listAssetTypes);
+        		}
+
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
+        		}
+        		List<Task> list = null;
+        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			_log.debug("paged query 1");
+        			list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
+        		}	            
+            
+	            return getWorkflowTasks(list);
+        	} else {
+        		_log.warn("Method is partially implemented"); // TODO
+        		return new ArrayList<WorkflowTask>();
+        	}
+        } else {
+        	if (completed == null || !completed) {
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
+        		if (listAssetTypes.size() > 0) {
+        			taskQuery.taskEntryClassNames(listAssetTypes);
+        		}
+
+        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        			if (orderByComparator.isAscending()) {
+        				taskQuery.orderByDueDate().asc();
+        			} else {
+        				taskQuery.orderByDueDate().desc();
+        			}
+        		}
+        		List<Task> list = null;
+        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			_log.debug("paged query 2");
+        			list = taskQuery.listPage(start, end - start);
+        		} else {
+        			list = taskQuery.list();
+        		}	  
+            
+	            return getWorkflowTasks(list);
+        	} else {
+        		// search for completed tasks in history service
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
+        		
+        		 //TODO
+        		/*if (listAssetTypes.size() > 0) {
+        			query.taskEntryClassNames(listAssetTypes);
+        		}*/
+        		
+        		if (orderByComparator != null) {
+        			_log.warn("Method is partially implemented"); // TODO
+	    		}
+        		List<HistoricTaskInstance> list = null;
+        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+        			_log.debug("paged query 3");
+        			list = query.listPage(start, end - start);
+        		} else {
+        			list = query.list();
+        		}
+        		
+        		return getHistoryWorkflowTasks(list);
+        	}
+        }
 	}
 
 	/**
@@ -620,6 +750,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
         		// add conditions
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
@@ -637,6 +770,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         	if (completed == null || !completed) {
         		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
         		// add conditions
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
         		if (StringUtils.isNotEmpty(taskName)) {
         			taskQuery.taskNameLike(taskName);
         		}
@@ -673,20 +809,65 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			Boolean completed, Boolean searchByUserRoles)
 		throws WorkflowException {
 		
-		int count = 0;
-		for(String assetType : assetTypes)
-			count += searchCount(companyId, userId, null,
-					assetType, null, null, null,
-					completed, searchByUserRoles, true);
-		return count;
+		List<String> listAssetTypes = new ArrayList<String>();
+		if (assetTypes != null) {
+			for (int i = 0; i < assetTypes.length; i++) {
+				listAssetTypes.add(getAssetClassName(assetTypes[i]));
+			}
+		}
+		
+		if (searchByUserRoles != null && searchByUserRoles == true) {
+        	if (completed == null || !completed) {
+        		
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
+        		if (listAssetTypes.size() > 0) {
+        			taskQuery.taskEntryClassNames(listAssetTypes);
+        		}
+
+        		Long count = taskQuery.count();
+	    		return count.intValue();
+        	} else {
+        		_log.warn("Method is partially implemented"); // TODO
+        		return 0;
+        	}
+        } else {
+        	if (completed == null || !completed) {
+        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
+        		if (companyId > 0) {
+        			taskQuery.taskCompanyId(companyId);
+        		}
+        		if (listAssetTypes.size() > 0) {
+        			taskQuery.taskEntryClassNames(listAssetTypes);
+        		}
+        			        	
+	    		Long count = taskQuery.count();
+	    		return count.intValue();
+        	} else {
+        		// search for completed tasks in history service
+        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
+        		
+        		// TODO
+        		/*if (listAssetTypes.size() > 0) {
+        			taskQuery.taskEntryClassNames(listAssetTypes);
+        		}*/
+        		
+        		Long count = query.count();
+	    		return count.intValue();
+        	}
+        }
 	}
 
-	@Transactional	
+	@Transactional
 	@Override
 	public int getWorkflowTaskCountByWorkflowInstance(long companyId, Long userId, long workflowInstanceId, Boolean completed) throws WorkflowException {
-		if (completed) {
-			_log.warn("Method is partially implemented"); // TODO
-			return 0;
+		if (completed == null || completed) {
+			Long count = historyService.createHistoricTaskInstanceQuery()
+				.processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId)).count();
+			return count.intValue();
+			
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
@@ -701,9 +882,21 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public List<WorkflowTask> getWorkflowTasksByWorkflowInstance(long companyId, Long userId, long workflowInstanceId,
 																 Boolean completed, int start, int end,
 																 OrderByComparator orderByComparator) throws WorkflowException {
-		if (completed) {
-			_log.warn("Method is partially implemented"); // TODO
-			return null;
+		if (completed == null || completed) {
+			List<HistoricTaskInstance> hiList = historyService.createHistoricTaskInstanceQuery().processInstanceId(idMappingService.getActivitiProcessInstanceId(workflowInstanceId)).list();
+			List<WorkflowTask> result = new ArrayList<WorkflowTask>(hiList.size());
+			
+			for (HistoricTaskInstance hiTask : hiList) {
+				try {
+					result.add(getWorkflowTask(companyId, hiTask));
+				} catch (Exception ex) {
+					_log.warn("Cannot convert Activiti task " + hiTask.getId() + " into Liferay: " + ex);
+					_log.debug("Cannot convert Activiti task into Liferay", ex);
+				}
+			}
+			
+			return result;
+			// return null;
 		} else {
 			TaskService taskService = processEngine.getTaskService();
 			TaskQuery taskQuery = taskService.createTaskQuery();
@@ -738,6 +931,165 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 	}
 
+	@Transactional
+	private WorkflowTask getWorkflowTask(long companyId, HistoricTaskInstance task) throws WorkflowException {
+		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
+		
+		String processInstanceId = task.getProcessInstanceId();
+		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+		
+		ProcessDefinition processDef = workflowDefinitionManager.getProcessDefinition(task.getProcessDefinitionId());
+		
+		// TODO setAsynchronous(!task.isBlocking());
+		// TODO setCompletionDate(taskInstance.getEnd());
+		workflowTask.setCreateDate(task.getStartTime());
+		workflowTask.setDescription(task.getDescription());
+		workflowTask.setName(task.getName());
+		
+		if ("completed".equals(task.getDeleteReason())) {
+			Map<String, Serializable> optionalAttributes = new HashMap<String, Serializable>();
+			optionalAttributes.put("deleteReason", task.getDeleteReason());
+			workflowTask.setOptionalAttributes(optionalAttributes);
+			workflowTask.setCompletionDate(task.getEndTime());
+		}
+		
+		Map<String, Object> vars = runtimeService.getVariables(processInstanceId);
+		
+		workflowTask.setDueDate(task.getDueDate() != null ? task.getDueDate() : (Date)vars.get("dueDate")); // keep getting dueDate from vars for backward compatibility
+		
+		workflowTask.setOptionalAttributes(WorkflowInstanceManagerImpl.convertFromVars(vars));
+		
+		workflowTask.setWorkflowDefinitionId(idMappingService.getLiferayWorkflowDefinitionId(processDef.getId()));
+		
+		workflowTask.setWorkflowDefinitionName(processDef.getName());
+		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
+		Long liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+		if (liferayProcessInstanceId == null) {
+			// subprocess - they do not have liferay process instance - lets try to use original id
+			// lets try to create it
+			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
+			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+			
+			//throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
+		}
+		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
+		
+		/*
+		long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
+		*/
+		
+		String assignee = task.getAssignee();
+		if (assignee != null && !"null".equals(assignee)) { // TODO check why we have this "null" string
+			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			
+			WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+					User.class.getName(), idMappingService.getUserId(assignee));
+			workflowTaskAssignees.add(workflowTaskAssignee);
+			
+			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
+		} else {
+			// return group (if exists)
+			List<IdentityLink> participations = new ArrayList<IdentityLink>();
+			
+			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			try {					
+				participations = taskService.getIdentityLinksForTask(task.getId());
+			} catch (Exception ex) {
+				// for completed tasks it will simple produce exception - ignore it
+			}
+			
+			for (IdentityLink participation : participations) {
+				if (StringUtils.isNotEmpty(participation.getGroupId())) {
+					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
+					WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+							Role.class.getName(), role.getRoleId());
+					workflowTaskAssignees.add(workflowTaskAssignee);
+				}
+			}
+			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
+		}
+		
+		workflowTask.setWorkflowTaskId(Long.valueOf(task.getId()));
+		
+		return workflowTask;
+	}
+
+	private WorkflowTask getWorkflowTask(HistoricTaskInstance task) throws WorkflowException {
+		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
+		
+		String processInstanceId = task.getProcessInstanceId();
+		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+		
+		ProcessDefinition processDef = workflowDefinitionManager.getProcessDefinition(task.getProcessDefinitionId());
+		
+		// TODO setAsynchronous(!task.isBlocking());
+		// TODO setCompletionDate(taskInstance.getEnd());
+		workflowTask.setCreateDate(task.getStartTime());
+		workflowTask.setDescription(task.getDescription());
+		workflowTask.setName(task.getName());
+		
+		Map<String, Object> vars = runtimeService.getVariables(processInstanceId);
+		
+		workflowTask.setDueDate(task.getDueDate() != null ? task.getDueDate() : (Date)vars.get("dueDate")); // keep getting dueDate from vars for backward compatibility
+		
+		workflowTask.setOptionalAttributes(WorkflowInstanceManagerImpl.convertFromVars(vars));
+		
+		workflowTask.setWorkflowDefinitionId(idMappingService.getLiferayWorkflowDefinitionId(processDef.getId()));
+		
+		workflowTask.setWorkflowDefinitionName(processDef.getName());
+		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
+		Long liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+		if (liferayProcessInstanceId == null) {
+			// subprocess - they do not have liferay process instance - lets try to use original id
+			// lets try to create it
+			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
+			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+			
+			//throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
+		}
+		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
+		
+		long companyId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "companyId"));
+		/*
+		long groupId = GetterUtil.getLong((String)taskService.getVariable(task.getId(), "groupId"));
+		*/
+		
+		String assignee = task.getAssignee();
+		if (assignee != null && !"null".equals(assignee)) { // TODO check why we have this "null" string
+			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			
+			WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+					User.class.getName(), idMappingService.getUserId(assignee));
+			workflowTaskAssignees.add(workflowTaskAssignee);
+			
+			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
+		} else {
+			// return group (if exists)
+			List<IdentityLink> participations = new ArrayList<IdentityLink>();
+			
+			List<WorkflowTaskAssignee> workflowTaskAssignees = new ArrayList<WorkflowTaskAssignee>(1);
+			try {					
+				participations = taskService.getIdentityLinksForTask(task.getId());
+			} catch (Exception ex) {
+				// for completed tasks it will simple produce exception - ignore it
+			}
+			
+			for (IdentityLink participation : participations) {
+				if (StringUtils.isNotEmpty(participation.getGroupId())) {
+					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
+					WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+							Role.class.getName(), role.getRoleId());
+					workflowTaskAssignees.add(workflowTaskAssignee);
+				}
+			}
+			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
+		}
+		
+		workflowTask.setWorkflowTaskId(Long.valueOf(task.getId()));
+		
+		return workflowTask;
+	}
+
 	/** Convert jBPM Tasks to Liferay WorkflowTask
 	 * 
 	 * @param list
@@ -766,12 +1118,13 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	 */
 	@Transactional
 	private WorkflowTask getWorkflowTask(Task task) throws WorkflowException {
+
 		DefaultWorkflowTask workflowTask = new DefaultWorkflowTask();
 		
 		String processInstanceId = task.getProcessInstanceId();
 		
 		ProcessDefinition processDef = workflowDefinitionManager.getProcessDefinition(task.getProcessDefinitionId());
-		
+
 		// TODO setAsynchronous(!task.isBlocking());
 		// TODO setCompletionDate(taskInstance.getEnd());
 		workflowTask.setCreateDate(task.getCreateTime());
@@ -789,14 +1142,15 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		workflowTask.setWorkflowDefinitionName(processDef.getName());
 		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());
 		Long liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
+		
+		_log.debug("liferayProcessInstanceId " + liferayProcessInstanceId);
+		
 		if (liferayProcessInstanceId == null) {
 			// subprocess - they do not have liferay process instance - lets try to use original id
 			// lets try to create it
 			ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
 			workflowInstanceManager.getWorkflowInstance(processInstance, null, null);
-			
 			liferayProcessInstanceId = idMappingService.getLiferayProcessInstanceId(processInstanceId);
-			
 			//throw new WorkflowException("Cannot get liferay process instance id by activity process instance " + processInstanceId);
 		}
 		workflowTask.setWorkflowInstanceId(liferayProcessInstanceId);
@@ -824,6 +1178,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			
 			long companyId = GetterUtil.getLong((String)vars.get(WorkflowConstants.CONTEXT_COMPANY_ID));
 
+			_log.debug("participations size " + participations.size());
 			for (IdentityLink participation : participations) {
 				if (StringUtils.isNotEmpty(participation.getGroupId())) {
 					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
@@ -832,17 +1187,18 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 					workflowTaskAssignees.add(workflowTaskAssignee);
 				}
 			}
+			_log.debug("participations end ");
 			workflowTask.setWorkflowTaskAssignees(workflowTaskAssignees);
 		}
 		
 		workflowTask.setWorkflowTaskId(Long.valueOf(task.getId()));
-		
+		_log.debug("END-----> convert task : " + task.getId());
 		return workflowTask;
 	}
 
 	private List<WorkflowTask> getHistoryWorkflowTasks(List<HistoricTaskInstance> list) throws WorkflowException {
 		List<WorkflowTask> result = new ArrayList<WorkflowTask>(list.size());
-		
+		_log.debug("----->  size " + list.size());
 		for (HistoricTaskInstance task : list) {
 			WorkflowTask workflowTask = getHistoryWorkflowTask(task);
 			result.add(workflowTask);
@@ -866,7 +1222,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		// get process def from activity
 		String processDefId = task.getProcessDefinitionId();
 		
-		ProcessDefinition processDef =  workflowDefinitionManager.getProcessDefinition(processDefId);
+		ProcessDefinition processDef = workflowDefinitionManager.getProcessDefinition(task.getProcessDefinitionId());
+		
 		workflowTask.setWorkflowDefinitionId(idMappingService.getLiferayWorkflowDefinitionId(processDefId));
 		workflowTask.setWorkflowDefinitionName(processDef.getName());
 		workflowTask.setWorkflowDefinitionVersion(processDef.getVersion());

@@ -1,5 +1,7 @@
 package net.emforge.activiti.util;
 
+import java.util.Map;
+
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.DelegateTask;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,16 @@ import com.liferay.portal.kernel.util.StringUtil;
 public class BPMLogUtil {
 	private static Log _log = LogFactoryUtil.getLog("BPMS"/*BPMLogUtil.class*/);
 	
+	public static void start(DelegateExecution execution) {
+		_log.info(_up(">>> START: " + execution.getCurrentActivityName() + "\n"
+					+ "VARS:[ " + execution.getVariables() + "]"));
+	}
+	
+	public static void end(DelegateExecution execution) {
+		_log.info(_up("<<< END: " + execution.getCurrentActivityName() + "\n"
+					+ "VARS:[ " + execution.getVariables() + "]"));
+	}
+	
 	public static void echo(String msg){
 		_log.info("[" + _up(msg) + "]");
 	}
@@ -28,21 +40,6 @@ public class BPMLogUtil {
 			return StringUtil.upperCase(msg);
 	}
 	
-	private static String _getInfo(DelegateExecution execution) {
-		return "PROCESS EXECUTION[id:" + execution.getId() + ", piId:" + execution.getProcessInstanceId() + "]:{" +
-				"event: " + _up(execution.getEventName()) + ", " + 
-				"key: " + _up(execution.getProcessBusinessKey()) +
-			"}";
-	}
-	
-	private static String _getTrace(DelegateExecution execution) {
-		return "PROCESS EXECUTION[id:" + execution.getId() + ", piId:" + execution.getProcessInstanceId() + "]:{" +
-				"event:" + _up(execution.getEventName()) + ", " + 
-				"key:" + _up(execution.getProcessBusinessKey()) + ", " + 
-				"VARS:[" + execution.getVariables() + "]" +
-			"}";
-	}
-	
 	private static String _getInfo(DelegateTask task) {
 		DelegateExecution execution = task.getExecution();
 		return "PROCESS TASK[" + _up(task.getName()) + "]:" + 
@@ -52,6 +49,26 @@ public class BPMLogUtil {
 				"pdId:" + task.getProcessDefinitionId() + ", " +
 				"tdKey:" + _up(task.getTaskDefinitionKey()) 
 			+ "}";
+	}
+	
+	private static String _getTrace(DelegateExecution execution) {
+		Map<String, Object> vars = execution.getVariables();
+		vars.remove("bpmLog");
+		vars.remove("bpmTimer");
+		return "PROCESS EXECUTION[" + execution.getProcessDefinitionId() + "] " + 
+				"[id:" + execution.getId() + ", piId:" + execution.getProcessInstanceId() + "], " +
+				( (execution.getEventName() == null)? "" : "event:" + _up(execution.getEventName()) + ", " ) + 
+				"activity: " + execution.getCurrentActivityId() + ", (" + 
+				execution.getCurrentActivityName() + "), " + 
+				"VARS:[" + vars + "]";
+	}
+	
+	private static String _getInfo(DelegateExecution execution) {
+		return "PROCESS EXECUTION [" + execution.getProcessDefinitionId() + "] " + 
+				"[id:" + execution.getId() + ", piId:" + execution.getProcessInstanceId() + "], " +
+				( (execution.getEventName() == null)? "" : "event:" + _up(execution.getEventName()) + ", " ) +
+				"activity: " + execution.getCurrentActivityId() + "(" + 
+				execution.getCurrentActivityName() + ")";
 	}
 	
 	private static String _getTrace(DelegateTask task) {
@@ -68,6 +85,10 @@ public class BPMLogUtil {
 				"piId:" + task.getProcessInstanceId() + ", " +
 				"tdKey:" + _up(task.getTaskDefinitionKey()) + ", " +
 				"VARS:[" + task.getVariables() + "]}";
+	}
+	
+	public static void info(String msg){
+		_log.info(_up(msg));
 	}
 	
 	public static void trace(DelegateExecution execution){

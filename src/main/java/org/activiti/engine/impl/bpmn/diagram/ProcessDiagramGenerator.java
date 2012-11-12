@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.activiti.engine.impl.bpmn.behavior.BoundaryEventActivityBehavior;
+import org.activiti.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.activiti.engine.impl.bpmn.parser.BpmnParse;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmTransition;
@@ -61,7 +63,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("intermediateSignalCatch", new ActivityDrawInstruction() {
       
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight(), null);
       }
     });
     
@@ -192,8 +194,8 @@ public class ProcessDiagramGenerator {
         processDiagramCreator.drawParallelGateway(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
       }
     });
-    
-    // event gateway
+
+    // eventBased gateway
     activityDrawInstructions.put("eventBasedGateway", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
@@ -201,12 +203,12 @@ public class ProcessDiagramGenerator {
       }
     });
 
-
     // Boundary timer
     activityDrawInstructions.put("boundaryTimer", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        BoundaryEventActivityBehavior behavior = (BoundaryEventActivityBehavior)activityImpl.getActivityBehavior();
+        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight(), behavior.isInterrupting());
       }
     });
 
@@ -214,7 +216,8 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("boundaryError", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingErroEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        BoundaryEventActivityBehavior behavior = (BoundaryEventActivityBehavior)activityImpl.getActivityBehavior();
+        processDiagramCreator.drawCatchingErroEvent(activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight(), behavior.isInterrupting());
       }
     });
     
@@ -222,7 +225,8 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("boundarySignal", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        BoundaryEventActivityBehavior behavior = (BoundaryEventActivityBehavior)activityImpl.getActivityBehavior();
+        processDiagramCreator.drawCatchingSignalEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight(), behavior.isInterrupting());
       }
     });
 
@@ -230,7 +234,7 @@ public class ProcessDiagramGenerator {
     activityDrawInstructions.put("intermediateTimer", new ActivityDrawInstruction() {
 
       public void draw(ProcessDiagramCanvas processDiagramCreator, ActivityImpl activityImpl) {
-        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight());
+        processDiagramCreator.drawCatchingTimerEvent((String) activityImpl.getProperty("name"), activityImpl.getX(), activityImpl.getY(), activityImpl.getWidth(), activityImpl.getHeight(), null);
       }
     });
 
@@ -311,9 +315,9 @@ public class ProcessDiagramGenerator {
   }
 
   public static InputStream generateDiagram(ProcessDefinitionEntity processDefinition, String imageType, List<String> highLightedActivities) {
-	  return generateDiagram(processDefinition, highLightedActivities, Collections.<String> emptyList()).generateImage(imageType);
+    return generateDiagram(processDefinition, highLightedActivities, Collections.<String> emptyList()).generateImage(imageType);
   }
-  
+
   public static InputStream generateDiagram(ProcessDefinitionEntity processDefinition, String imageType, List<String> highLightedActivities, List<String> highLightedFlows) {
     return generateDiagram(processDefinition, highLightedActivities, highLightedFlows).generateImage(imageType);
   }
@@ -337,6 +341,7 @@ public class ProcessDiagramGenerator {
       }
 
       // Gather info on the collapsed marker
+      collapsed = (activity.getActivityBehavior() instanceof CallActivityBehavior);
       Boolean expanded = (Boolean) activity.getProperty(BpmnParse.PROPERTYNAME_ISEXPANDED);
       if (expanded != null) {
         collapsed = !expanded;
@@ -362,10 +367,8 @@ public class ProcessDiagramGenerator {
       for (int i = 2; i < waypoints.size(); i += 2) { // waypoints.size()
                                                       // minimally 4: x1, y1,
                                                       // x2, y2
-    	boolean highLighted = (highLightedFlows.contains(sequenceFlow.getId()));
-    	//System.out.println(sequenceFlow.getId() + " highLighted: " + highLighted + "("+highLightedFlows+")");
-    	
-        boolean drawConditionalIndicator = (i == 2) && sequenceFlow.getProperty(BpmnParse.PROPERTYNAME_CONDITION) != null
+        boolean highLighted = (highLightedFlows.contains(sequenceFlow.getId()));
+    	boolean drawConditionalIndicator = (i == 2) && sequenceFlow.getProperty(BpmnParse.PROPERTYNAME_CONDITION) != null
                 && !((String) activity.getProperty("type")).toLowerCase().contains("gateway");
         if (i < waypoints.size() - 2) {
           processDiagramCanvas.drawSequenceflowWithoutArrow(waypoints.get(i - 2), waypoints.get(i - 1), waypoints.get(i), waypoints.get(i + 1),
@@ -377,14 +380,15 @@ public class ProcessDiagramGenerator {
     }
     */
     
- // Outgoing transitions of activity
+    // Outgoing transitions of activity
     for (PvmTransition sequenceFlow : activity.getOutgoingTransitions()) {
       boolean highLighted = (highLightedFlows.contains(sequenceFlow.getId()));
       boolean drawConditionalIndicator = sequenceFlow.getProperty(BpmnParse.PROPERTYNAME_CONDITION) != null
               && !((String) activity.getProperty("type")).toLowerCase().contains("gateway");
+      boolean isDefault = sequenceFlow.getId().equals(activity.getProperty("default"))
+    		  && ((String) activity.getProperty("type")).toLowerCase().contains("gateway");
       
       List<Integer> waypoints = ((TransitionImpl) sequenceFlow).getWaypoints();
-      //List<List> points = new ArrayList<List>();
       int xPoints[]= new int[waypoints.size()/2];
 	  int yPoints[]= new int[waypoints.size()/2];
       for (int i=0, j=0; i < waypoints.size(); i+=2, j++) { // waypoints.size()
@@ -392,15 +396,8 @@ public class ProcessDiagramGenerator {
                                                       // x2, y2
     	xPoints[j] = waypoints.get(i);
     	yPoints[j] = waypoints.get(i+1);
-    	//List<Integer> point = new ArrayList<Integer>();
-    	//point.add(waypoints.get(i));
-      	//point.add(waypoints.get(i+1));
-      	
-    	//Integer[] point = new Integer[2];
-    	//point[0] = waypoints.get(i);
-    	//point[1] = waypoints.get(i+1);
       }
-      processDiagramCanvas.drawSequenceflow(xPoints, yPoints, drawConditionalIndicator, highLighted);
+      processDiagramCanvas.drawSequenceflow(xPoints, yPoints, drawConditionalIndicator, isDefault, highLighted);
     }
 
     // Nested activities (boundary events)
@@ -500,4 +497,3 @@ public class ProcessDiagramGenerator {
   }
 
 }
- 

@@ -12,6 +12,7 @@ public class CustomHistoricTaskInstanceQueryImpl extends AbstractQuery<CustomHis
 	protected String assignee;
 	protected String nameLike;
 	protected String entryClassName;
+	protected Long companyId;
 
 	public CustomHistoricTaskInstanceQueryImpl(CommandContext commandContext) {
 		super(commandContext);
@@ -33,6 +34,11 @@ public class CustomHistoricTaskInstanceQueryImpl extends AbstractQuery<CustomHis
 	
 	public CustomHistoricTaskInstanceQueryImpl taskAssignee(String assignee) {
 		this.assignee = assignee;
+		return this;
+	}
+	
+	public CustomHistoricTaskInstanceQueryImpl taskCompanyId(Long companyId) {
+		this.companyId = companyId;
 		return this;
 	}
 	
@@ -59,6 +65,10 @@ public class CustomHistoricTaskInstanceQueryImpl extends AbstractQuery<CustomHis
 	
 	public String getEntryClassName() {
 		return entryClassName;
+	}
+	
+	public Long getCompanyId() {
+		return companyId;
 	}
 	
 }

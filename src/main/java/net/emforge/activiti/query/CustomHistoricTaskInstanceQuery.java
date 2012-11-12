@@ -8,4 +8,6 @@ public interface CustomHistoricTaskInstanceQuery  extends Query<CustomHistoricTa
 	
 	CustomHistoricTaskInstanceQuery taskNameLike(String taskName);
 	CustomHistoricTaskInstanceQuery taskEntryClassName(String entryClassName);
+	
+	CustomHistoricTaskInstanceQuery taskCompanyId(Long companyId);
 }
