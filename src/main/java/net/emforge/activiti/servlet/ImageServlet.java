@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.emforge.activiti.IdMappingService;
+import net.emforge.activiti.WorkflowDefinitionManagerExt;
 import net.emforge.activiti.WorkflowDefinitionManagerImpl;
 import net.emforge.activiti.entity.WorkflowDefinitionExtensionImpl;
 
@@ -199,7 +200,7 @@ public class ImageServlet extends HttpServlet {
 		ApplicationContext applicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
 
 		// get beans
-		WorkflowDefinitionManagerImpl workflowManager = (WorkflowDefinitionManagerImpl)applicationContext.getBean("workflowDefinitionManager");
+		WorkflowDefinitionManagerExt workflowManager = (WorkflowDefinitionManagerExt)applicationContext.getBean("workflowDefinitionManager");
 		RepositoryService repositoryService = (RepositoryService)applicationContext.getBean(RepositoryService.class);
 		_log.debug("Get app context and beans");
 		
