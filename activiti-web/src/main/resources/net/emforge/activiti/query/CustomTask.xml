@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+<mapper namespace="org.activiti.engine.impl.persistence.entity.TaskEntity">
+  <!--  Task Search -->
+  <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
+    ${limitBefore}
+    select distinct RES.*
+    <include refid="customSearchTasksSql"/>
+    <!-- comment next because something wrong - if orderBy is null, sql still be with ordey by RES.ID_ asc -->
+    <!-- <if test="orderBy != null">
+      ${orderBy}
+    </if> -->
+    ${limitAfter}
+  </select>
+
+  <select id="customSearchTasksCount" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultType="long">
+    select count(distinct RES.ID_)
+    <include refid="customSearchTasksSql"/>
+  </select>
+
+	<sql id="customSearchTasksSql">
+		from ACT_RU_TASK RES
+	    <if test="candidateUser != null || candidateGroups != null">
+	      inner join ACT_RU_IDENTITYLINK I on I.TASK_ID_ = RES.ID_
+	    </if>
+    	<!-- <if test="entryClassName != null">
+    	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName'
+	    </if>
+	    <if test="entryClassNames != null &amp;&amp; entryClassNames.size() &gt; 0">
+    	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName' and
+			<foreach item="entryClassNamesItem" index="index" collection="entryClassNames" 
+	                     open="(" separator="or" close=")">
+	              V1.TEXT_ = #{entryClassNamesItem}
+			</foreach>
+	         
+	    </if> -->
+	    
+	    <if test="groupId != null || companyId != null || entryClassPKs != null">
+	    	inner join ACT_RU_VARIABLE V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_)
+	     </if>
+	    
+	    <if test="groupId != null">
+    	   and V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId}
+	    </if>
+	    
+	    <if test="companyId != null">
+    	   and V1.NAME_= 'companyId' and V1.TEXT_ = #{companyId}
+	    </if>
+	    
+	    <if test="entryClassPKs != null">
+    	   and V1.NAME_= 'entryClassPK' and V1.TEXT_ in 
+    	   <foreach item="entryClassPKItem" index="index" collection="entryClassPKs" 
+	                     open="(" separator="," close=")">
+	             #{entryClassPKItem}
+			</foreach>
+	    </if>
+	    	    
+    	<where>
+	      <if test="nameLike != null">
+	        and lower(RES.NAME_) like #{nameLike}
+	      </if>
+	      <if test="assignee != null">
+	        and RES.ASSIGNEE_ = #{assignee}
+	      </if>
+
+	      <if test="candidateUser != null || candidateGroups != null">
+	        and RES.ASSIGNEE_ is null
+	        and I.TYPE_ = 'candidate'
+	        and 
+	        ( 
+	          <if test="candidateUser != null">
+	            I.USER_ID_ = #{candidateUser}          
+	          </if>
+
+	          <if test="candidateUser != null &amp;&amp; candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
+	            or
+	          </if>
+	          <if test="candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
+	            I.GROUP_ID_ IN
+	            <foreach item="group" index="index" collection="candidateGroups" 
+	                     open="(" separator="," close=")">
+	              #{group}
+	            </foreach>
+	          </if>
+	        )
+	      </if>
+	      
+	      <if test="entryClassName != null">
+	    	  <!-- and V1.TEXT_ like  #{entryClassName} -->
+	    	  and V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId}
+			</if>
+	    </where>
+	</sql>
+
+	<select id="selectTaskByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
+		${limitBefore}
+		select distinct RES.*
+		<include refid="selectTaskByExtQueryCriteriaSql"/>
+		<if test="orderBy != null">
+			${orderBy}
+		</if>
+		${limitAfter}
+	</select>
+
+	<select id="selectTaskCountByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtTaskQueryImpl" resultType="long">
+		select count(distinct RES.ID_)
+		<include refid="selectTaskByExtQueryCriteriaSql"/>
+	</select>
+	
+	<sql id="selectTaskByExtQueryCriteriaSql">
+		from (
+			select RES.*
+			<include refid="org.activiti.engine.impl.persistence.entity.TaskEntity.selectTaskByQueryCriteriaSql"/>
+		) RES
+		<if test="variableInName != null">
+			inner join ACT_RU_VARIABLE B on RES.PROC_INST_ID_ = B.PROC_INST_ID_ 
+		</if>
+		<where>
+			<if test="dueDateIsNull">
+				and RES.DUE_DATE_ is null
+			</if>
+			<if test="dueDateIsNotNull">
+				and RES.DUE_DATE_ is not null
+			</if>
+			<if test="variableInName != null">
+				and B.NAME_= #{variableInName}
+				and B.TEXT_ IN
+				<foreach item="var" index="index" collection="variableInValues" 
+						 open="(" separator="," close=")">
+					#{var}
+				</foreach> 
+			</if>
+		</where>
+	</sql>	
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+<mapper namespace="org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity">
+
+  
+  	<select id="selectProcessDefinitionByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtProcessDefinitionQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity.processDefinitionResultMap">
+		${limitBefore}
+		select distinct RES.*
+		<include refid="selectProcessDefinitionByExtQueryCriteriaSql"/>
+		<if test="orderBy != null">
+			${orderBy}
+		</if>
+		${limitAfter}
+	</select>
+
+	<select id="selectProcessDefinitionCountByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtProcessDefinitionQueryImpl" resultType="long">
+		select count(distinct RES.ID_)
+		<include refid="selectProcessDefinitionByExtQueryCriteriaSql"/>
+	</select>
+	
+	<sql id="selectProcessDefinitionByExtQueryCriteriaSql">
+		from (
+			select RES.*
+			<include refid="org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity.selectProcessDefinitionsByQueryCriteriaSql"/>
+		) RES
+		inner join ACT_RE_DEPLOYMENT B on RES.DEPLOYMENT_ID_ = B.ID_ 
+		<where>
+			B.CATEGORY_ = #{companyId}
+		</where>
+	</sql>	
+	
+	<select id="selectLatestProcessDefinitionByKeyAndCompany" parameterType="net.emforge.activiti.query.ExtProcessDefinitionQueryImpl" resultMap="processDefinitionResultMap">
+    select RES.*
+    from ${prefix}ACT_RE_PROCDEF RES
+    where KEY_ = #{key} and
+          VERSION_ = (select max(VERSION_) from ${prefix}ACT_RE_PROCDEF RES inner join ${prefix}ACT_RE_DEPLOYMENT B on RES.DEPLOYMENT_ID_ = B.ID_ 
+	where KEY_ = #{key}
+	and B.CATEGORY_ = (select CATEGORY_ from ${prefix}ACT_RE_DEPLOYMENT where ID_ = (select DEPLOYMENT_ID_ from ${prefix}ACT_RE_PROCDEF where ID_ = #{id})))
+  </select>
+</mapper>

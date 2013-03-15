@@ -1,0 +1,35 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>net.emforge</groupId>
+    <artifactId>activiti-liferay</artifactId>
+    <version>6.1.1.13</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <groupId>net.emforge</groupId>
+  <artifactId>activiti-liferay-service</artifactId>
+  <version>6.1.1.13</version>
+  <name>Activiti-web Service</name>
+  
+  <build>
+		<plugins>
+			<plugin>
+				<groupId>com.liferay.maven.plugins</groupId>
+				<artifactId>liferay-maven-plugin</artifactId>
+				<version>${liferay.plugin.version}</version>
+				<configuration>
+					<webappBaseDir>${basedir}/../activiti-web</webappBaseDir>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.liferay.portal</groupId>
+			<artifactId>portal-service</artifactId>
+			<version>${liferay.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

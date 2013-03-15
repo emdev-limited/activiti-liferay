@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	
+<!-- 	<settings> -->
+<!-- 		<setting name="defaultExecutorType" value="SIMPLE"/> -->
+		
+		<!-- <setting name="cacheEnabled" value="true"/>
+		<setting name="lazyLoadingEnabled" value="true"/>
+		<setting name="multipleResultSetsEnabled" value="true"/>
+		<setting name="useColumnLabel" value="true"/>
+		<setting name="useGeneratedKeys" value="false"/>
+		<setting name="autoMappingBehavior" value="PARTIAL"/>
+		<setting name="defaultExecutorType" value="SIMPLE"/>
+		<setting name="defaultStatementTimeout" value="35000"/>
+		<setting name="safeRowBoundsEnabled" value="false"/>
+		<setting name="mapUnderscoreToCamelCase" value="false"/>
+		<setting name="localCacheScope" value="SESSION"/>
+		<setting name="jdbcTypeForNull" value="OTHER"/>
+		<setting name="lazyLoadTriggerMethods" value="equals,clone,hashCode,toString"/> -->
+	
+		<!-- <setting name="lazyLoadingEnabled" value="false" /> -->
+		
+		<!-- <setting name="defaultExecutorType" value="BATCH" /> -->
+		<!-- <setting name="safeRowBoundsEnabled" value="true" />  -->
+		
+		<!-- <setting name="cacheEnabled" value="true" /> -->
+<!-- 	</settings> -->
+	<mappers>
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Attachment.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Comment.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Deployment.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Execution.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Group.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/HistoricActivityInstance.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/HistoricDetail.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/HistoricProcessInstance.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/HistoricTaskInstance.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/HistoricVariableInstance.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/IdentityInfo.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/IdentityLink.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Job.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Membership.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Model.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/ProcessDefinition.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Property.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Resource.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/TableData.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/Task.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/User.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/VariableInstance.xml" /> -->
+<!-- 	    <mapper resource="org/activiti/db/mapping/entity/EventSubscription.xml" /> -->
+	    
+	    <!-- Additional mapping file -->
+	    <mapper resource="net/emforge/activiti/query/CustomTask.xml" />
+	    <mapper resource="net/emforge/activiti/query/CustomHistoricTaskInstance.xml" />
+	    <mapper resource="net/emforge/activiti/query/CustomProcessDefinition.xml" />
+	    <mapper resource="net/emforge/activiti/query/CustomResource.xml" />
+	    <mapper resource="net/emforge/activiti/query/CustomModel.xml" />
+	</mappers>
+</configuration>

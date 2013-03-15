@@ -1,0 +1,25 @@
+name=
+module-group-id=liferay
+module-incremental-version=11
+tags=
+short-description=
+change-log=
+page-url=http://www.emforge.net
+author=EmForge.net
+licenses=LGPL
+portal-dependency-jars=\
+    aspectj-rt.jar,\
+    aspectj-weaver.jar,\
+    commons-lang.jar,\
+    commons-collections.jar,\
+    commons-io.jar,\
+    commons-email.jar,\
+    dom4j.jar,\
+    ehcache.jar,\
+    hibernate3.jar,\
+    javassist.jar,\
+    slf4j-api.jar,\
+    slf4j-log4j12.jar,\
+    stax.jar,\
+    wsdl4j.jar,\
+    xml-apis.jar

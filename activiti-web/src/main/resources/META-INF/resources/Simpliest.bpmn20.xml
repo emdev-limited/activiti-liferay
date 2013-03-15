@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="Simpliest" name="Simpliest">
+    <scriptTask id="SimpliestScriptTask" name="SimpliestScriptTask" scriptFormat="javascript">
+      <script><![CDATA[bpmLog.trace(execution)
+bpmLog.echo('>>>>>>>>>> Second portal instance')]]></script>
+    </scriptTask>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <userTask id="simpliestTask" name="Simpliest Task" activiti:assignee="${userId}"></userTask>
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <intermediateCatchEvent id="timerintermediatecatchevent1" name="TimerCatchEvent">
+      <timerEventDefinition>
+        <timeDuration>PT25S</timeDuration>
+      </timerEventDefinition>
+    </intermediateCatchEvent>
+    <sequenceFlow id="flow5" name="" sourceRef="SimpliestScriptTask" targetRef="simpliestTask"></sequenceFlow>
+    <sequenceFlow id="flow7" name="" sourceRef="simpliestTask" targetRef="endevent1"></sequenceFlow>
+    <sequenceFlow id="flow8" name="" sourceRef="startevent1" targetRef="timerintermediatecatchevent1"></sequenceFlow>
+    <sequenceFlow id="flow9" name="" sourceRef="timerintermediatecatchevent1" targetRef="SimpliestScriptTask"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Simpliest">
+    <bpmndi:BPMNPlane bpmnElement="Simpliest" id="BPMNPlane_Simpliest">
+      <bpmndi:BPMNShape bpmnElement="SimpliestScriptTask" id="BPMNShape_SimpliestScriptTask">
+        <omgdc:Bounds height="55" width="105" x="230" y="130"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35" width="35" x="372" y="140"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="simpliestTask" id="BPMNShape_simpliestTask">
+        <omgdc:Bounds height="55" width="105" x="300" y="240"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35" width="35" x="110" y="140"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="timerintermediatecatchevent1" id="BPMNShape_timerintermediatecatchevent1">
+        <omgdc:Bounds height="35" width="35" x="170" y="140"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="282" y="185"></omgdi:waypoint>
+        <omgdi:waypoint x="352" y="240"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="352" y="240"></omgdi:waypoint>
+        <omgdi:waypoint x="389" y="175"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="145" y="157"></omgdi:waypoint>
+        <omgdi:waypoint x="170" y="157"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="205" y="157"></omgdi:waypoint>
+        <omgdi:waypoint x="230" y="157"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

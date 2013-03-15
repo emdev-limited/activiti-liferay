@@ -1,0 +1,4 @@
+application.startup.events=net.emforge.activiti.StartUpAction
+
+activiti.userName.strategy=userId
+

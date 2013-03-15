@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+<mapper namespace="org.activiti.engine.impl.persistence.entity.ResourceEntity">
+  
+  <!-- RESOURCE UPDATE -->
+  <update id="updateResource" parameterType="org.activiti.engine.impl.persistence.entity.ResourceEntity">
+    update ${prefix}ACT_GE_BYTEARRAY
+    <set>
+      BYTES_ = #{bytes, jdbcType=BLOB}
+    </set>
+    where ID_= #{id, jdbcType=VARCHAR}
+  </update>
+  
+  <delete id="deleteResourceById" parameterType="string">
+  	delete from ${prefix}ACT_GE_BYTEARRAY where ID_ = #{resourceId} 
+  </delete>
+  
+  <select id="selectNamesByCompany" parameterType="net.emforge.activiti.query.ResourceByCompanyQueryImpl" resultType="string">
+    select distinct RES.NAME_
+    <include refid="selectNamesByCompanySql"/>
+    ${orderBy}
+    ${limitAfter}
+  </select>
+  
+  <select id="selectResourceByNameAndCompany" parameterType="net.emforge.activiti.query.ResourceByCompanyQueryImpl" resultMap="resourceResultMap">
+    select  RES.*
+    <include refid="selectNamesByCompanySql"/>
+    ${orderBy}
+    ${limitAfter}
+  </select>
+  
+  <select id="selectNamesByCompanyCount" parameterType="net.emforge.activiti.query.ResourceByCompanyQueryImpl" resultType="long">
+    select count(distinct RES.ID_)
+    <include refid="selectNamesByCompanySql"/>
+  </select>
+  
+  <sql id="selectNamesByCompanySql">
+  	from ${prefix}ACT_GE_BYTEARRAY RES
+    where RES.NAME_ like #{nameLike} and RES.BYTES_ = #{companyId}
+  </sql>
+
+</mapper>

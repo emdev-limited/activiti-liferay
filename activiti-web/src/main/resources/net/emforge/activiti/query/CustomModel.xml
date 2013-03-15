@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+  
+<mapper namespace="org.activiti.engine.impl.persistence.entity.ModelEntity">
+  
+  <sql id="selectModelsSql">
+    from ${prefix}ACT_RE_MODEL RES where RES.ID_ in
+    <foreach item="item" index="index" collection="parameter" open="(" separator="," close=")">
+    	#{item}
+   </foreach>
+   order by RES.CREATE_TIME_ desc
+  </sql>
+  
+  <select id="selectModelsByIds" parameterType="list" resultMap="modelResultMap">
+  		${limitBefore}
+		select RES.* ${limitBetween}
+		<include refid="selectModelsSql"/>
+		${limitAfter}
+  </select>
+
+</mapper>

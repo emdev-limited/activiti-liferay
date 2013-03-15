@@ -1,62 +1,32 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>net.emforge</groupId>
-	<artifactId>activiti-web</artifactId>
-	<version>6.1.1.12</version>
-	<packaging>war</packaging>
-
-	<properties>
-		<liferay.version>6.1.1</liferay.version>
-		<spring.version>3.1.2.RELEASE</spring.version>
-		<activiti.version>5.10</activiti.version>
-		<webXmlPath>src/main/webapp/WEB-INF/web.xml</webXmlPath>
-		
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
-	<profiles>
-		<profile>
-			<id>6.1.0</id>
-			<properties>
-				<liferay.version>6.1.0</liferay.version>
-				<webXmlPath>profiles/6.1.0/WEB-INF/web.xml</webXmlPath>
-			</properties>
-		</profile>
-		
-    	<profile>
-      		<id>jta</id>
-      		<build>
-      			<resources>
-      				<resource>
-      					<directory>src/main/resources</directory>
-      					<excludes>
-          					<exclude>META-INF/infrastructure-spring.xml</exclude>
-        				</excludes>
-      				</resource>
-      				<resource>
-      					<directory>profiles/jta</directory>
-      				</resource>
-      			</resources>
-      		</build>
-	    </profile>
-	</profiles>
-	
-	<build>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.emforge</groupId>
+  <artifactId>activiti-liferay</artifactId>
+  <version>6.1.1.13</version>
+  <packaging>pom</packaging>
+  
+  <properties>
+	<liferay.version>6.1.1</liferay.version>
+	<liferay.plugin.version>6.1.1-emdev</liferay.plugin.version>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <build>
 		<plugins>
 			<plugin>
 				<groupId>com.liferay.maven.plugins</groupId>
 				<artifactId>liferay-maven-plugin</artifactId>
-				<version>${liferay.version}</version>
+				<version>${liferay.plugin.version}</version>
 				<configuration>
 					<autoDeployDir>${liferay.auto.deploy.dir}</autoDeployDir>
 					<liferayVersion>${liferay.version}</liferayVersion>
-					<pluginName>scm-portlet</pluginName>
-					<pluginType>portlet</pluginType>
+					<pluginName>activiti-web</pluginName>
+					<pluginType>web</pluginType>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.5.1</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
 					<source>1.6</source>
@@ -64,237 +34,71 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.4.2</version>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
 				<configuration>
-					<skipTests>true</skipTests>
+					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-			<plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-war-plugin</artifactId>
-	            <configuration>
-	                <webXml>${webXmlPath}</webXml>
-	            </configuration>
-        	</plugin>
 		</plugins>
 	</build>
-
-	<dependencies>
-		<dependency>
-			<groupId>javax.activation</groupId>
-			<artifactId>activation</artifactId>
-			<version>1.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- dependency> <groupId>com.camunda.fox.activiti-enterprise</groupId> 
-			<artifactId>activiti-enterprise-deployer</artifactId> <version>0.9.5</version> 
-			</dependency -->
-		<dependency>
-			<groupId>org.activiti</groupId>
-			<artifactId>activiti-engine</artifactId>
-			<version>${activiti.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.activiti</groupId>
-			<artifactId>activiti-spring</artifactId>
-			<version>${activiti.version}</version>
-		</dependency>
-		<!-- <dependency> <groupId>org.activiti</groupId> <artifactId>activiti-cdi</artifactId> 
-			<version>5.9</version> </dependency> -->
-		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
-			<artifactId>groovy-all</artifactId>
-			<version>1.7.5</version>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
-			<version>1.0.0.Final</version>
-		</dependency>
-		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
-			<version>2.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.xml.bind</groupId>
-			<artifactId>jaxb-impl</artifactId>
-			<version>2.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.codemodel</groupId>
-			<artifactId>codemodel</artifactId>
-			<version>2.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mybatis</groupId>
-			<artifactId>mybatis</artifactId>
-			<version>3.0.6</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-web</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.2.1</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.10</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<!-- Liferay dependencies -->
-		<dependency>
-			<groupId>com.liferay.portal</groupId>
-			<artifactId>util-java</artifactId>
-			<version>${liferay.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.liferay.portal</groupId>
-			<artifactId>portal-impl</artifactId>
-			<version>${liferay.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.liferay.portal</groupId>
-			<artifactId>portal-service</artifactId>
-			<version>${liferay.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>3.5.3-Final</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>1.4</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.4</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-email</artifactId>
-			<version>1.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.mail</groupId>
-			<artifactId>mail</artifactId>
-			<version>1.4</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>stax</groupId>
-			<artifactId>stax-api</artifactId>
-			<version>1.0.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
-			<version>6.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- REST dependencies -->
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.5</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet.jee</groupId>
-			<artifactId>org.restlet</artifactId>
-			<version>2.0.14</version>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet.jee</groupId>
-			<artifactId>org.restlet.ext.servlet</artifactId>
-			<version>2.0.14</version>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet.jee</groupId>
-			<artifactId>org.restlet.ext.jackson</artifactId>
-			<version>2.0.14</version>
-		</dependency>
-		<dependency>
-			<groupId>org.restlet.jee</groupId>
-			<artifactId>org.restlet.ext.fileupload</artifactId>
-			<version>2.0.14</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>1.9.8</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-asl</artifactId>
-			<version>1.9.8</version>
-		</dependency>
-		<dependency>
-      		<groupId>commons-fileupload</groupId>
-      		<artifactId>commons-fileupload</artifactId>
-      		<version>1.2.2</version>
-    	</dependency>
-	</dependencies>
-
+	
+	<modules>
+		<module>activiti-web</module>
+		<module>activiti-liferay-service</module>
+	</modules>
+	
 	<repositories>
+		<repository>
+			<id>emdev-private</id>
+			<name>EmDev Private</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
+		</repository>
 		<repository>
 			<id>alfresco</id>
 			<name>alfresco</name>
 			<url>https://maven.alfresco.com/nexus/content/repositories/public/</url>
 		</repository>
-		<repository>  
-   			<id>maven-restlet</id>  
-   			<name>Public online Restlet repository</name>  
-   			<url>http://maven.restlet.org</url>  
+		<repository>
+			<id>maven-restlet</id>
+			<name>Public online Restlet repository</name>
+			<url>http://maven.restlet.org</url>
 		</repository>
 	</repositories>
-	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>emdev-private</id>
+			<name>EmDev Private</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
+		</pluginRepository>
+	</pluginRepositories>
+					
 	<distributionManagement>
-  		<repository>
-    		<id>emdev-public</id>
-    		<name>EmDev Public</name>
-    		<url>http://build.emdev.ru/nexus/content/repositories/emdev-public</url>
-    		<layout>default</layout>
-  		</repository>
-  		<snapshotRepository>
-    		<id>snapshots</id>
-    		<name>Snapshots</name>
-    		<url>http://build.emdev.ru/nexus/content/repositories/snapshots/</url>
-    		<layout>default</layout>
-  		</snapshotRepository>
+		<repository>
+			<id>emdev-private</id>
+			<name>EmDev Private</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
+			<layout>default</layout>
+		</repository>
+		<snapshotRepository>
+			<id>private-snapshots</id>
+			<name>Private Snapshots</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/private-snapshots/</url>
+			<layout>default</layout>
+		</snapshotRepository>
 	</distributionManagement>
-	
+<!--  
 	<ciManagement>
 		<system>jenkins</system>
-		<url>http://build.emdev.ru/jenkins/job/activiti-web/</url>
+		<url>http://build.emdev.ru/jenkins/job/activiti-6.1.1/</url>
 	</ciManagement>
 	<scm>
-		<url>http://svn.emforge.net/svnroot/activiti-liferay/trunk/activiti-web</url>
+		<url>http://svn.emforge.net/svnroot/emdev-v1/trunk/activiti</url>
 	</scm>
+-->	
 	<organization>
 		<name>EmDev Limited</name>
 		<url>http://www.emdev.ru</url>
 	</organization>
+  
 </project>

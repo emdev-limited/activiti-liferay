@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="Document_Approver_Timer" name="Document_Approver_Timer">
+    <startEvent id="startevent2" name="Start"></startEvent>
+    <userTask id="usertask2" name="Check Document" activiti:candidateGroups="Administrator">
+		<extensionElements>
+			<activiti:formProperty id="outputTransition" type="enum" required="true">
+				<activiti:value id="Accept" label="Accept"/>
+				<activiti:value id="Deny" label="Deny"/>
+			</activiti:formProperty>
+		</extensionElements>
+	</userTask>
+    <boundaryEvent id="boundarytimer7" name="Timer" cancelActivity="true" attachedToRef="usertask2">
+      <timerEventDefinition>
+        <timeDuration>PT1M</timeDuration>
+      </timerEventDefinition>
+    </boundaryEvent>
+    <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow14" name="" sourceRef="startevent2" targetRef="usertask2"></sequenceFlow>
+    <sequenceFlow id="flow15" name="" sourceRef="usertask2" targetRef="exclusivegateway3"></sequenceFlow>
+    <scriptTask id="scripttask5" name="Change Status" scriptFormat="LiferayJavaScript">
+      <script><![CDATA[Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus("approved"), workflowContext);]]></script>
+    </scriptTask>
+    <scriptTask id="scripttask6" name="Change Status" scriptFormat="LiferayJavaScript">
+      <script><![CDATA[Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus("denied"), workflowContext);]]></script>
+    </scriptTask>
+    <sequenceFlow id="flow16" name="denied" sourceRef="exclusivegateway3" targetRef="scripttask6">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Deny"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow17" name="approved" sourceRef="exclusivegateway3" targetRef="scripttask5">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${outputTransition == "Accept"}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway4" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow18" name="" sourceRef="scripttask5" targetRef="exclusivegateway4"></sequenceFlow>
+    <sequenceFlow id="flow19" name="" sourceRef="scripttask6" targetRef="exclusivegateway4"></sequenceFlow>
+    <endEvent id="endevent2" name="End"></endEvent>
+    <sequenceFlow id="flow20" name="" sourceRef="exclusivegateway4" targetRef="endevent2"></sequenceFlow>
+    <sequenceFlow id="flow21" name="Time Reached without interaction" sourceRef="usertask2" targetRef="scripttask5"></sequenceFlow>
+    <sequenceFlow id="flow22" name="" sourceRef="boundarytimer7" targetRef="scripttask5"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Document_Approver_Timer">
+    <bpmndi:BPMNPlane bpmnElement="Document_Approver_Timer" id="BPMNPlane_Document_Approver_Timer">
+      <bpmndi:BPMNShape bpmnElement="startevent2" id="BPMNShape_startevent2">
+        <omgdc:Bounds height="35" width="35" x="40" y="190"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask2" id="BPMNShape_usertask2">
+        <omgdc:Bounds height="55" width="105" x="87" y="180"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="boundarytimer7" id="BPMNShape_boundarytimer7">
+        <omgdc:Bounds height="30" width="30" x="162" y="162"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway3" id="BPMNShape_exclusivegateway3">
+        <omgdc:Bounds height="40" width="40" x="220" y="187"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask5" id="BPMNShape_scripttask5">
+        <omgdc:Bounds height="55" width="105" x="320" y="100"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask6" id="BPMNShape_scripttask6">
+        <omgdc:Bounds height="55" width="105" x="320" y="261"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway4" id="BPMNShape_exclusivegateway4">
+        <omgdc:Bounds height="40" width="40" x="480" y="187"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35" width="35" x="550" y="190"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+        <omgdi:waypoint x="75" y="207"></omgdi:waypoint>
+        <omgdi:waypoint x="87" y="207"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="192" y="207"></omgdi:waypoint>
+        <omgdi:waypoint x="220" y="207"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
+        <omgdi:waypoint x="240" y="227"></omgdi:waypoint>
+        <omgdi:waypoint x="240" y="287"></omgdi:waypoint>
+        <omgdi:waypoint x="320" y="288"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+        <omgdi:waypoint x="240" y="187"></omgdi:waypoint>
+        <omgdi:waypoint x="240" y="127"></omgdi:waypoint>
+        <omgdi:waypoint x="320" y="127"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
+        <omgdi:waypoint x="425" y="127"></omgdi:waypoint>
+        <omgdi:waypoint x="500" y="127"></omgdi:waypoint>
+        <omgdi:waypoint x="500" y="187"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="425" y="288"></omgdi:waypoint>
+        <omgdi:waypoint x="500" y="288"></omgdi:waypoint>
+        <omgdi:waypoint x="500" y="227"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow20" id="BPMNEdge_flow20">
+        <omgdi:waypoint x="520" y="207"></omgdi:waypoint>
+        <omgdi:waypoint x="550" y="207"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow21" id="BPMNEdge_flow21">
+        <omgdi:waypoint x="192" y="207"></omgdi:waypoint>
+        <omgdi:waypoint x="176" y="61"></omgdi:waypoint>
+        <omgdi:waypoint x="372" y="61"></omgdi:waypoint>
+        <omgdi:waypoint x="372" y="45"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
