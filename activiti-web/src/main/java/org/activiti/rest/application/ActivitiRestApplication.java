@@ -87,6 +87,7 @@ import org.activiti.rest.editor.model.ModelDeleteResource;
 import org.activiti.rest.editor.model.ModelDiagramResource;
 import org.activiti.rest.editor.model.ModelEditorJsonRestResource;
 import org.activiti.rest.editor.model.ModelSaveRestResource;
+import org.activiti.rest.editor.model.ModelSvgResource;
 import org.activiti.rest.editor.model.ModelsResource;
 
 import com.liferay.portal.kernel.log.Log;
@@ -201,6 +202,7 @@ public class ActivitiRestApplication extends Application {
     
     router.attach("/model/{modelId}/json", ModelEditorJsonRestResource.class);
     router.attach("/model/{modelId}/diagram", ModelDiagramResource.class);
+    router.attach("/model/{modelId}/svg", ModelSvgResource.class);
     router.attach("/model/{modelId}/save", ModelSaveRestResource.class);
     router.attach("/model/{companyId}/{modelId}/delete", ModelDeleteResource.class);
     router.attach("/model", ModelAddResource.class);
