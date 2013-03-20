@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.emforge.activiti.query.ResourceByCompanyQuery;
@@ -66,8 +67,9 @@ public class GetModelsCmd implements Command<List<Model>>, Serializable {
 		rbc.companyAndNameLike(companyId, "model:%:company");
 		List<String> names = rbc.list();
 
-		if (names == null) {
-			return null;
+		if (names == null || names.isEmpty()) {
+			_log.debug("No models exist");
+			return Collections.EMPTY_LIST;
 		}
 		List<String> ids = extractModelIds(names);
 
