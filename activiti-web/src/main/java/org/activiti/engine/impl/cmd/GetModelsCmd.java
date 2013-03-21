@@ -70,6 +70,8 @@ public class GetModelsCmd implements Command<List<Model>>, Serializable {
 		if (names == null || names.isEmpty()) {
 			_log.debug("No models exist");
 			return Collections.EMPTY_LIST;
+		} else {
+			_log.debug(">>>>>Names[0] = " + names.get(0) + ", names size = " + names.size());
 		}
 		List<String> ids = extractModelIds(names);
 
@@ -83,8 +85,9 @@ public class GetModelsCmd implements Command<List<Model>>, Serializable {
 
 		for (String name : names) {
 			String id = name.substring(name.indexOf(StringPool.COLON) + 1);
-			id = id.substring(0, name.indexOf(StringPool.COLON) - 1);
-
+			id = id.substring(0, id.indexOf(StringPool.COLON));
+			
+			_log.debug("Id to convert: " + id);
 			// check
 			if (NumberUtils.isNumber(id)) {
 				ids.add(id);
