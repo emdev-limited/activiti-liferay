@@ -3,6 +3,8 @@ package net.emforge.activiti.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -86,47 +88,19 @@ public class SignavioFixer {
 			}
 
             // remove resourceRef attribute
-            String[] tagNames = new String[] {"performer", "humanPerformer", "potentialOwner","endEvent"};
+            String[] tagNames = new String[] {"performer", "humanPerformer", "potentialOwner","endEvent","serviceTask", "userTask"};
             for (String tagName : tagNames) {
                 if (tagName.equals("endEvent")){
                     processEndEvent(doc);
                     continue;
                 }
-                NodeList nodes = doc.getElementsByTagName(tagName);
-                for (int i=0; i < nodes.getLength(); i++) {
-                	Node node = nodes.item(i);
-                	if (node.getAttributes().getNamedItem("resourceRef") != null) {
-                		_log.info("found resouceRef attribute - remove it");
-                		 Element element = (Element)node;
-                		 element.removeAttribute("resourceRef");
-                		 Node userTask = node.getParentNode();
-                     	 if (userTask.getNodeName().equals("userTask")) {
-                     		_log.info(String.format("found userTask [%s] to improve", userTask.getAttributes().getNamedItem("name")));
-                     		NodeList expressions = element.getElementsByTagName("formalExpression");
-                     		if (expressions != null && expressions.item(0) != null) {
-                     			
-                     			Element formalExpression = (Element) expressions.item(0);
-                     			String formalExpressionVal = null;
-                     			if (formalExpression.getLastChild() != null) {
-                     				formalExpressionVal = formalExpression.getLastChild().getNodeValue();
-                     			}
-                     			
-                     			Element usrTaskElement = (Element) userTask;
-                     			if (StringUtils.isNotEmpty(formalExpressionVal)) {
-                     				if (tagName.equals("humanPerformer")) {
-                     					usrTaskElement.setAttribute("activiti:assignee", formalExpressionVal);
-                             		} else if (tagName.equals("potentialOwner")) {
-                             			//handle candidate groups - should be activiti:candidateGroups="#{liferayGroups.getGroups(execution, &quot;Role1, Role2&quot;)}"
-                             			String attrValue = String.format("#{liferayGroups.getGroups(execution, \" %s \")}", formalExpressionVal);
-                             			usrTaskElement.setAttribute("activiti:candidateGroups", attrValue);
-                             		} else if (tagName.equals("performer")) {
-                             			//TODO handle candidate users
-                             		}
-                     			}
-                     		}
-                     	}
-                	}
-
+                if (tagName.equals("serviceTask")){
+                    processMailTask(doc);
+                    continue;
+                }
+                if (tagName.equals("userTask")){
+                    processUserTask(doc);
+                    continue;
                 }
             }
 
@@ -173,6 +147,63 @@ public class SignavioFixer {
                  replaceSid(doc,"bpmndi:BPMNShape","bpmnElement",oldEndEventId,endEventName);
             }
         }
+    }
+    
+    private void processMailTask(Document doc) {
+    	NodeList nodes = doc.getElementsByTagName("serviceTask");
+    	if (nodes != null) {
+    		for (int i=0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                Element element = (Element)node;
+                
+                String type = element.getAttribute("activiti:type");
+                if ("mail".equals(type)) {
+                	_log.info("Mail task got to handle");
+                	NodeList childNode = element.getElementsByTagName("extensionElements");
+                	if (childNode != null && childNode.getLength() > 0) {
+                		NodeList fields = ((Element) childNode.item(0)).getElementsByTagName("activiti:field");
+                		if (fields != null) {
+                			List<Node> fieldsToRemove = new ArrayList<Node>();
+                			for (int j=0; j < fields.getLength(); j++) {
+                				Node fNode = fields.item(j);
+                                Element field = (Element)fNode;
+                                if (field.getAttribute("name").equals("cc") || field.getAttribute("name").equals("bcc")
+                                		|| field.getAttribute("name").equals("charset") || field.getAttribute("name").equals("from")) {
+                                	//check if empty and remove if so
+                                	String value = field.getAttribute("stringValue");
+                                	if (StringUtils.isEmpty(value)) {
+                                		fieldsToRemove.add(field);
+                                	}
+                                }
+                			}
+                			if (!fieldsToRemove.isEmpty()) {
+                				Element extensionElement = (Element) childNode.item(0);
+                				for (Node toRemove : fieldsToRemove) {
+                					extensionElement.removeChild(toRemove);
+                				}
+                			}
+                			
+                		}
+                	}
+                }
+        	}
+    	}
+    }
+    
+    private void processUserTask(Document doc) {
+    	NodeList nodes = doc.getElementsByTagName("userTask");
+    	for (int i=0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            Element element = (Element)node;
+            
+            String candidateGroups = element.getAttribute("activiti:candidateGroups");
+            if (!StringUtils.isEmpty(candidateGroups)) {
+            	element.removeAttribute("activiti:candidateGroups");
+            	_log.debug("Got userTask candidate groups to handle: " + candidateGroups);
+            	String attrValue = String.format("#{liferayGroups.getGroups(execution, \" %s \")}", candidateGroups);
+            	element.setAttribute("activiti:candidateGroups", attrValue);
+            }
+    	} 
     }
 
     /**
