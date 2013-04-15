@@ -1,0 +1,87 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<parent>
+		<groupId>net.emforge</groupId>
+		<artifactId>activiti-liferay</artifactId>
+		<version>6.1.1.13</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>net.emforge</groupId>
+	<artifactId>activiti-rest-stubs</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>activiti-rest-stubs</name>
+	<url>http://maven.apache.org</url>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.activiti</groupId>
+			<artifactId>activiti-engine</artifactId>
+			<version>${activiti.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.activiti</groupId>
+			<artifactId>activiti-spring</artifactId>
+			<version>${activiti.version}</version>
+		</dependency>
+		<dependency>  
+      		<groupId>org.restlet.jee</groupId>  
+      		<artifactId>org.restlet</artifactId>
+      		<version>2.0.14</version>
+      		<scope>compile</scope>  
+    	</dependency>
+    	<dependency>
+			<groupId>com.liferay.portal</groupId>
+			<artifactId>portal-service</artifactId>
+			<version>${liferay.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+	<repositories>
+		<repository>
+			<id>alfresco</id>
+			<name>alfresco</name>
+			<url>https://maven.alfresco.com/nexus/content/repositories/public/</url>
+		</repository>
+		<repository>  
+   			<id>maven-restlet</id>  
+   			<name>Public online Restlet repository</name>  
+   			<url>http://maven.restlet.org</url>  
+		</repository>
+	</repositories>
+	
+	<distributionManagement>
+  		<repository>
+    		<id>emdev-public</id>
+    		<name>EmDev Public</name>
+    		<url>http://build.emdev.ru/nexus/content/repositories/emdev-public</url>
+    		<layout>default</layout>
+  		</repository>
+  		<snapshotRepository>
+    		<id>emdev-snapshots</id>
+    		<name>Snapshots</name>
+    		<url>http://build.emdev.ru/nexus/content/repositories/snapshots/</url>
+    		<layout>default</layout>
+  		</snapshotRepository>
+	</distributionManagement>
+	
+	<scm>
+		<url>http://svn.emforge.net/svnroot/activiti-liferay/trunk/activiti-rest-stubs</url>
+	</scm>
+	<organization>
+		<name>EmDev Limited</name>
+		<url>http://www.emdev.ru</url>
+	</organization>
+</project>

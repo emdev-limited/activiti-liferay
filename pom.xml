@@ -9,6 +9,8 @@
 	<liferay.version>6.1.1</liferay.version>
 	<liferay.plugin.version>6.1.1-emdev</liferay.plugin.version>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<spring.version>3.1.2.RELEASE</spring.version>
+	<activiti.version>5.11</activiti.version>
   </properties>
   
   <build>
@@ -46,6 +48,7 @@
 	<modules>
 		<module>activiti-web</module>
 		<module>activiti-liferay-service</module>
+		<module>activiti-rest-stubs</module>
 	</modules>
 	
 	<repositories>
