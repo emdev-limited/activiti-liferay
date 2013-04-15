@@ -66,12 +66,10 @@ public class SignavioFixer {
 			for (int i = 0; i < processes.getLength(); i++) {
 				Node node = processes.item(i);
 				Element element = (Element) node;
-				if (node.getAttributes().getNamedItem("name") == null) {
-					_log.info("name attribute is missed in process tag, add process name: "
-							+ processName);
-
-					element.setAttribute("name", processName);
-				}
+				// always set specified process Name into name attribute 
+				// (to fix problems http://cloud.emdev.ru/group/bpmn-portal/tasks/-/tasks_entry/1315/view
+				// and http://cloud.emdev.ru/group/bpmn-portal/tasks/-/tasks_entry/1318/view
+				element.setAttribute("name", processName);
 				
 				// also set processName into id - to avoid multiple
 				// workflows definitions in the system
