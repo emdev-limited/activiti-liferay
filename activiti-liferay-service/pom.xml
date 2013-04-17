@@ -6,9 +6,7 @@
     <version>6.1.1.13</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <groupId>net.emforge</groupId>
   <artifactId>activiti-liferay-service</artifactId>
-  <version>6.1.1.13</version>
   <name>Activiti-web Service</name>
   
   <build>
