@@ -38,8 +38,24 @@
 			<list>
 				<ref bean="customModelManagerWrapper" />
 			</list>
-		</property>	
-	</bean>	
+		</property>
+		<property name="customDefaultBpmnParseHandlers">
+			<list>
+				<ref bean="customServiceTaskParseHandler" />
+				<ref bean="customSequenceFlowParseHandler" />
+			</list>
+		</property>
+		<property name="bpmnParseFactory" ref="customBpmnParseFactory" />
+	</bean>
+	
+	<bean id="customServiceTaskParseHandler" class="org.activiti.engine.impl.bpmn.parser.handler.CustomServiceTaskParseHandler">
+	</bean>
+	
+	<bean id="customSequenceFlowParseHandler" class="org.activiti.engine.impl.bpmn.parser.handler.CustomSequenceFlowParseHandler">
+	</bean>
+	
+	<bean id="customBpmnParseFactory" class="org.activiti.engine.impl.cfg.CustomBpmnParseFactory">
+	</bean>
 	
 	<bean id="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil" class="com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil">
 		<property name="workflowComparatorFactory">

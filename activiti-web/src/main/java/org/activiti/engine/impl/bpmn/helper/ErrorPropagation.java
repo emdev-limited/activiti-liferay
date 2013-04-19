@@ -22,7 +22,7 @@ import org.activiti.engine.delegate.BpmnError;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.EventSubProcessStartEventActivityBehavior;
-import org.activiti.engine.impl.bpmn.parser.BpmnParse;
+import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
 import org.activiti.engine.impl.bpmn.parser.ErrorEventDefinition;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
@@ -80,7 +80,7 @@ public class ErrorPropagation {
     while (scope != null) {
       
       @SuppressWarnings("unchecked")
-      List<ErrorEventDefinition> definitions = (List<ErrorEventDefinition>) scope.getProperty(BpmnParse.PROPERTYNAME_ERROR_EVENT_DEFINITIONS);
+      List<ErrorEventDefinition> definitions = (List<ErrorEventDefinition>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_ERROR_EVENT_DEFINITIONS);
       if(definitions != null) {      
         // definitions are sorted by precedence, ie. event subprocesses first.      
         for (ErrorEventDefinition errorEventDefinition : definitions) {

@@ -17,11 +17,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.activiti.engine.EngineServices;
-import org.activiti.engine.impl.bpmn.parser.BpmnParse;
+import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
 import org.activiti.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.db.DbSqlSession;
@@ -51,22 +49,25 @@ import org.activiti.engine.impl.pvm.runtime.InterpretableExecution;
 import org.activiti.engine.impl.pvm.runtime.OutgoingExecution;
 import org.activiti.engine.impl.pvm.runtime.StartingExecution;
 import org.activiti.engine.impl.util.BitMaskUtil;
-import org.activiti.engine.impl.variable.VariableDeclaration;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.Job;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * @author Tom Baeyens
  * @author Daniel Meyer
  * @author Falko Menge
+ * @author Saeid Mirzaei
  */
+
 public class ExecutionEntity extends VariableScopeImpl implements ActivityExecution, ExecutionListenerExecution, Execution, PvmExecution, ProcessInstance, InterpretableExecution, PersistentObject, HasRevision {
 
   private static final long serialVersionUID = 1L;
   
-  private static Logger log = Logger.getLogger(ExecutionEntity.class.getName());
+  private static Logger log = LoggerFactory.getLogger(ExecutionEntity.class);
   
   // Persistent refrenced entities state //////////////////////////////////////
   protected static final int EVENT_SUBSCRIPTIONS_STATE_BIT = 1;
@@ -132,6 +133,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   protected List<EventSubscriptionEntity> eventSubscriptions;  
   protected List<JobEntity> jobs;
   protected List<TaskEntity> tasks;
+  protected List<IdentityLinkEntity> identityLinks;
   protected int cachedEntityState;
   
   // cascade deletion ////////////////////////////////////////////////////////
@@ -217,6 +219,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected String laneSetName = null;
 
+
   public ExecutionEntity() {
   }
   
@@ -239,8 +242,8 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     createdExecution.setProcessInstance(getProcessInstance());
     createdExecution.setActivity(getActivity());
     
-    if (log.isLoggable(Level.FINE)) {
-      log.fine("Child execution "+createdExecution+" created with parent "+this);
+    if (log.isDebugEnabled()) {
+      log.debug("Child execution {} created with parent ", createdExecution, this);
     }
     
     return createdExecution;
@@ -280,18 +283,11 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
   @SuppressWarnings("unchecked")
   public void initialize() {
-    log.fine("initializing "+this);
+    log.debug("initializing {}", this);
 
     ScopeImpl scope = getScope();
     ensureParentInitialized();
 
-    List<VariableDeclaration> variableDeclarations = (List<VariableDeclaration>) scope.getProperty(BpmnParse.PROPERTYNAME_VARIABLE_DECLARATIONS);
-    if (variableDeclarations!=null) {
-      for (VariableDeclaration variableDeclaration : variableDeclarations) {
-        variableDeclaration.initialize(this, parent);
-      }
-    }
-    
     // initialize the lists of referenced objects (prevents db queries)
     variableInstances = new HashMap<String, VariableInstanceEntity>();
     eventSubscriptions = new ArrayList<EventSubscriptionEntity>();
@@ -301,19 +297,19 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     // Cached entity-state initialized to null, all bits are zore, indicating NO entities present
     cachedEntityState = 0;
     
-    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(BpmnParse.PROPERTYNAME_TIMER_DECLARATION);
+    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_TIMER_DECLARATION);
     if (timerDeclarations!=null) {
       for (TimerDeclarationImpl timerDeclaration : timerDeclarations) {
         TimerEntity timer = timerDeclaration.prepareTimerEntity(this);
         Context
           .getCommandContext()
-          .getJobManager()
+          .getJobEntityManager()
           .schedule(timer);        
       }
     }
     
     // create event subscriptions for the current scope
-    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(BpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
+    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
     if(eventSubscriptionDeclarations != null) {
       for (EventSubscriptionDeclaration eventSubscriptionDeclaration : eventSubscriptionDeclarations) {        
         if(!eventSubscriptionDeclaration.isStartEvent()) {
@@ -322,7 +318,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         }        
       }
     }
-
+    
     // lane and laneSet
     List<LaneSet> laneSets = processDefinition.getLaneSets();
     if (laneSets != null) {
@@ -348,7 +344,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   }
 
   public void destroy() {
-    log.fine("destroying "+this);
+    log.debug("destroying {}", this);
     
     ensureParentInitialized();
     deleteVariablesInstanceForLeavingScope();
@@ -418,9 +414,9 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         otherConcurrentExecutions.add(this);
       }
     }
-    if (log.isLoggable(Level.FINE)) {
-      log.fine("inactive concurrent executions in '"+activity+"': "+inactiveConcurrentExecutionsInActivity);
-      log.fine("other concurrent executions: "+otherConcurrentExecutions);
+    if (log.isDebugEnabled()) {
+      log.debug("inactive concurrent executions in '{}': {}", activity, inactiveConcurrentExecutionsInActivity);
+      log.debug("other concurrent executions: {}", otherConcurrentExecutions);
     }
     return inactiveConcurrentExecutionsInActivity;
   }
@@ -458,9 +454,9 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
       }
     }
 
-    if (log.isLoggable(Level.FINE)) {
-      log.fine("transitions to take concurrent: " + transitions);
-      log.fine("active concurrent executions: " + concurrentActiveExecutions);
+    if (log.isDebugEnabled()) {
+      log.debug("transitions to take concurrent: {}", transitions);
+      log.debug("active concurrent executions: {}", concurrentActiveExecutions);
     }
 
     if ( (transitions.size()==1)
@@ -475,12 +471,12 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         // Some recyclable executions are inactivated (joined executions)
         // Others are already ended (end activities)
         if (!prunedExecution.isEnded()) {
-          log.fine("pruning execution " + prunedExecution);
+          log.debug("pruning execution {}", prunedExecution);
           prunedExecution.remove();
         }
       }
 
-      log.fine("activating the concurrent root "+concurrentRoot+" as the single path of execution going forward");
+      log.debug("activating the concurrent root {} as the single path of execution going forward", concurrentRoot);
       concurrentRoot.setActive(true);
       concurrentRoot.setActivity(activity);
       concurrentRoot.setConcurrent(false);
@@ -492,7 +488,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
       recyclableExecutions.remove(concurrentRoot);
   
-      log.fine("recyclable executions for reuse: " + recyclableExecutions);
+      log.debug("recyclable executions for reuse: {}", recyclableExecutions);
       
       // first create the concurrent executions
       while (!transitions.isEmpty()) {
@@ -501,11 +497,11 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         ExecutionEntity outgoingExecution = null;
         if (recyclableExecutions.isEmpty()) {
           outgoingExecution = concurrentRoot.createExecution();
-          log.fine("new "+outgoingExecution+" with parent " 
-                  + outgoingExecution.getParent()+" created to take transition "+outgoingTransition);
+          log.debug("new {} with parent {} created to take transition {}", 
+                  outgoingExecution, outgoingExecution.getParent(), outgoingTransition);
         } else {
           outgoingExecution = (ExecutionEntity) recyclableExecutions.remove(0);
-          log.fine("recycled "+outgoingExecution+" to take transition "+outgoingTransition);
+          log.debug("recycled {} to take transition {}", outgoingExecution, outgoingTransition);
         }
         
         outgoingExecution.setActive(true);
@@ -517,7 +513,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
       // prune the executions that are not recycled 
       for (ActivityExecution prunedExecution: recyclableExecutions) {
-        log.fine("pruning execution "+prunedExecution);
+        log.debug("pruning execution {}", prunedExecution);
         prunedExecution.end();
       }
 
@@ -569,7 +565,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
     Context
       .getCommandContext()
-      .getJobManager()
+      .getJobEntityManager()
       .send(message);
   }
 
@@ -594,7 +590,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (executions==null) {
       this.executions = (List) Context
         .getCommandContext()
-        .getExecutionManager()
+        .getExecutionEntityManager()
         .findChildExecutionsByParentExecutionId(id);
     }
   }
@@ -672,7 +668,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if ((processDefinition == null) && (processDefinitionId != null)) {
       ProcessDefinitionEntity deployedProcessDefinition = Context
         .getProcessEngineConfiguration()
-        .getDeploymentCache()
+        .getDeploymentManager()
         .findDeployedProcessDefinitionById(processDefinitionId);
       setProcessDefinition(deployedProcessDefinition);
     }
@@ -695,7 +691,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if ((processInstance == null) && (processInstanceId != null)) {
       processInstance =  Context
         .getCommandContext()
-        .getExecutionManager()
+        .getExecutionEntityManager()
         .findExecutionById(processInstanceId);
     }
   }
@@ -749,7 +745,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (parent == null && parentId != null) {
       parent = Context
         .getCommandContext()
-        .getExecutionManager()
+        .getExecutionEntityManager()
         .findExecutionById(parentId);
     }
   }
@@ -792,7 +788,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (superExecution == null && superExecutionId != null) {
       superExecution = Context
         .getCommandContext()
-        .getExecutionManager()
+        .getExecutionEntityManager()
         .findExecutionById(superExecutionId);
     }
   }
@@ -810,7 +806,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (subProcessInstance == null) {
       subProcessInstance = Context
         .getCommandContext()
-        .getExecutionManager()
+        .getExecutionEntityManager()
         .findSubProcessInstanceBySuperExecutionId(id);
     }
   }
@@ -859,6 +855,9 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     
     // remove event scopes:            
     removeEventScopes();
+    
+    // remove identity links
+    removeIdentityLinks();
 
     // finally delete this execution
     Context.getCommandContext()
@@ -868,8 +867,8 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
   public void destroyScope(String reason) {
     
-    if(log.isLoggable(Level.FINE)) {
-      log.fine("performing destroy scope behavior for execution "+this);
+    if(log.isDebugEnabled()) {
+      log.debug("performing destroy scope behavior for execution {}", this);
     }
     
     // remove all child executions and sub process instances:
@@ -890,7 +889,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     List<InterpretableExecution> childExecutions = new ArrayList<InterpretableExecution>(getExecutions());
     for (InterpretableExecution childExecution : childExecutions) {
       if(childExecution.isEventScope()) {
-        log.fine("removing eventScope "+childExecution);
+        log.debug("removing eventScope {}", childExecution);
         childExecution.destroy();
         childExecution.remove();
       }
@@ -931,7 +930,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         }
       } else {
         Context.getCommandContext()
-          .getTaskManager()
+          .getTaskEntityManager()
           .deleteTask(task, reason, false);
       }
     }
@@ -951,7 +950,17 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     // update the related tasks
     for (TaskEntity task: getTasks()) {
       task.setExecutionId(replacedBy.getId());
-      task.setExecution(this.replacedBy);
+      task.setExecution(this.replacedBy);         
+      
+      // update the related local task variables
+      List<VariableInstanceEntity> variables = (List) commandContext
+        .getVariableInstanceEntityManager()
+        .findVariableInstancesByTaskId(task.getId());
+      
+      for (VariableInstanceEntity variable : variables) {
+        variable.setExecution(this.replacedBy);
+      }
+      
       this.replacedBy.addTask(task);
     }
     
@@ -979,7 +988,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     
     // update the related process variables
     List<VariableInstanceEntity> variables = (List) commandContext
-      .getVariableInstanceManager()
+      .getVariableInstanceEntityManager()
       .findVariableInstancesByExecutionId(id);
     
     for (VariableInstanceEntity variable: variables) {
@@ -1008,7 +1017,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   protected List<VariableInstanceEntity> loadVariableInstances() {
     return Context
       .getCommandContext()
-      .getVariableInstanceManager()
+      .getVariableInstanceEntityManager()
       .findVariableInstancesByExecutionId(id);
   }
 
@@ -1128,7 +1137,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (eventSubscriptions == null) {
 
       eventSubscriptions = Context.getCommandContext()
-        .getEventSubscriptionManager()
+        .getEventSubscriptionEntityManager()
         .findEventSubscriptionsByExecution(id);
     }
   }
@@ -1148,7 +1157,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   protected void ensureJobsInitialized() {
     if(jobs == null) {    
       jobs = (List)Context.getCommandContext()
-        .getJobManager()
+        .getJobEntityManager()
         .findJobsByExecutionId(id);
     }    
   }
@@ -1176,7 +1185,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   protected void ensureTasksInitialized() {
     if(tasks == null) {    
       tasks = (List)Context.getCommandContext()
-        .getTaskManager()
+        .getTaskEntityManager()
         .findTasksByExecutionId(id);      
     }    
   }
@@ -1198,7 +1207,48 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     getTasksInternal().remove(task);
   }
     
+  // identity links ///////////////////////////////////////////////////////////
 
+  public List<IdentityLinkEntity> getIdentityLinks() {
+    if (identityLinks == null) {
+      identityLinks = Context
+        .getCommandContext()
+        .getIdentityLinkEntityManager()
+        .findIdentityLinksByProcessInstanceId(id);
+    }
+    
+    return identityLinks;
+  }
+
+  public IdentityLinkEntity addIdentityLink(String userId, String type) {
+    IdentityLinkEntity identityLinkEntity = IdentityLinkEntity.createAndInsert();
+    getIdentityLinks().add(identityLinkEntity);
+    identityLinkEntity.setProcessInstance(this);
+    identityLinkEntity.setUserId(userId);
+    identityLinkEntity.setType(type);
+    return identityLinkEntity;
+  }
+  
+  /** 
+   * Adds an IdentityLink for this user with the specified type, 
+   * but only if the user is not associated with this instance yet.
+   **/
+  public IdentityLinkEntity involveUser(String userId, String type) {
+    for (IdentityLinkEntity identityLink : getIdentityLinks()) {
+      if (identityLink.getUserId().equals(userId)) {
+        return identityLink;
+      }
+    }
+    return addIdentityLink(userId, type);
+  }
+  
+  public void removeIdentityLinks() {
+    Context
+      .getCommandContext()
+      .getIdentityLinkEntityManager()
+      .deleteIdentityLinksByProcInstance(id);
+  }
+  
   // getters and setters //////////////////////////////////////////////////////
   
   
@@ -1345,12 +1395,13 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   public String getCurrentActivityName() {
     return activityName;
   }
-  
+
   public String getCurrentLaneSetName() {
 	return laneName;
   }
-  
+	  
   public String getCurrentLaneName() {
 	return laneName;
   }
+  
 }

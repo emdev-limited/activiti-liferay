@@ -85,7 +85,7 @@ public class AddWorkflowLogEntryCmd implements Command<Object> {
 		    
 		comment.setFullMessage(fullMessage);
 		    
-		commandContext.getCommentManager().insert(comment);
+		commandContext.getCommentEntityManager().insert(comment);
 		    
 		return null;
    	}

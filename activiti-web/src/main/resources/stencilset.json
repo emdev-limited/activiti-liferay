@@ -1244,56 +1244,6 @@
     "groups" : [ "Artifacts" ],
     "propertyPackages" : [ "elementbase", "baseattributes", "textannotationbase" ],
     "roles" : [ "all" ]
-  }, {
-    "type" : "node",
-    "id" : "ApproveAsset",
-    "superId" : "ScriptTask",
-    "title" : "Approve Asset",
-    "description" : "Approve Liferay Asset",
-    "view" : "activity/scripttask.svg",
-    "icon" : "liferay/approved.png",
-    "groups" : [ "Liferay" ],
-    "propertyPackages" : [ "elementbase", "baseattributes", "scripttaskbase", "asynchronousbase", "executionlistenersbase", "loopcharacteristics", "activity" ],
-    "roles" : [ "sequence_start", "Activity", "sequence_end", "ActivitiesMorph", "all" ],
-    "properties": [
-                {
-                    "id":"name",
-                    "value":"Approve Asset"
-                },
-                {
-                    "id":"scriptformat",
-                    "value":"LiferayJavaScript"
-                },
-                {
-                    "id":"scripttext",
-                    "value":"Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus(\"approved\"), workflowContext);"
-                },
-            ]
-  }, {
-    "type" : "node",
-    "id" : "RejectAsset",
-    "superId" : "ScriptTask",
-    "title" : "Reject Asset",
-    "description" : "Reject Liferay Asset",
-    "view" : "activity/scripttask.svg",
-    "icon" : "liferay/rejected.png",
-    "groups" : [ "Liferay" ],
-    "propertyPackages" : [ "elementbase", "baseattributes", "scripttaskbase", "asynchronousbase", "executionlistenersbase", "loopcharacteristics", "activity" ],
-    "roles" : [ "sequence_start", "Activity", "sequence_end", "ActivitiesMorph", "all" ],
-    "properties": [
-                {
-                    "id":"name",
-                    "value":"Reject Asset"
-                },
-                {
-                    "id":"scriptformat",
-                    "value":"LiferayJavaScript"
-                },
-                {
-                    "id":"scripttext",
-                    "value":"Packages.com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil.updateStatus(Packages.com.liferay.portal.kernel.workflow.WorkflowConstants.toStatus(\"denied\"), workflowContext);"
-                },
-            ]
   } ],
   "rules" : {
     "cardinalityRules" : [ {
