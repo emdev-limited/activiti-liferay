@@ -9,7 +9,7 @@ import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.repository.Model;
 import org.activiti.rest.api.ActivitiUtil;
 
-public class CustomModelManager extends ModelManager {
+public class CustomModelManager extends ModelEntityManager {
 
 	public List<Model> findModelsByIds(List<String> ids, int start, int end) {
 	    return (List<Model>) getDbSqlSession().selectList("selectModelsByIds", ids, start, end);

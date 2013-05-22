@@ -45,7 +45,7 @@ public class GetResourceCmd implements Command<ResourceEntity>, Serializable {
     }
     
     ResourceEntity resource = commandContext
-      .getResourceManager()
+      .getResourceEntityManager()
       .findResourceByDeploymentIdAndResourceName(deploymentId, resourceName);
     return resource;
   }

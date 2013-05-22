@@ -3,4 +3,9 @@
 
 <hook>
 	<portal-properties>portal.properties</portal-properties>
+	<custom-jsp-dir>/jsp-hook</custom-jsp-dir>
+	<struts-action>
+		<struts-action-path>/workflow_definitions/edit_workflow_definition</struts-action-path>
+		<struts-action-impl>net.emforge.workflowdefinitions.action.ExtEditWorkflowDefinitionAction</struts-action-impl>
+	</struts-action>
 </hook>

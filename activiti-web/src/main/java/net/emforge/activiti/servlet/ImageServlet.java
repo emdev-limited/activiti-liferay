@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.emforge.activiti.IdMappingService;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 
+import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
@@ -27,6 +28,7 @@ import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
+import org.activiti.rest.api.ActivitiUtil;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -119,7 +121,10 @@ public class ImageServlet extends HttpServlet {
 		// it is important to use this way to get ProcessDEfinition - since in this case readed all required for image generation data
 		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity)(ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(defId);
 		
-		return ProcessDiagramGenerator.generateDiagram(processDefinition, "png", taskIds);
+		BpmnModel bpmnModel = ActivitiUtil.getRepositoryService().getBpmnModel(processDefinition.getId());
+        InputStream resource = ProcessDiagramGenerator.generateDiagram(bpmnModel, "png", taskIds);
+		
+		return resource;
 	}
 	
 	protected InputStream getProcessImage(Long processInstanceId) {
@@ -151,7 +156,10 @@ public class ImageServlet extends HttpServlet {
 	    	List<String> highLightedFlows = getHighLightedFlows(historyService, processDefinition, procId, highLightedActivities);
 		    _log.info("> procId:" + procId + ", flows: " + highLightedFlows);
 		    
-		    return ProcessDiagramGenerator.generateDiagram(processDefinition, "png", highLightedActivities, highLightedFlows);
+		    BpmnModel bpmnModel = ActivitiUtil.getRepositoryService().getBpmnModel(processDefinition.getId());
+	        InputStream resource = ProcessDiagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivities, highLightedFlows);
+		    
+		    return resource;
 	    } 
 	    
 	    return null;

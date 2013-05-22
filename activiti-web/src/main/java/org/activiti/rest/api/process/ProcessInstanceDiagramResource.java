@@ -15,6 +15,7 @@ package org.activiti.rest.api.process;
 
 import java.io.InputStream;
 
+import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.bpmn.diagram.ProcessDiagramGenerator;
@@ -54,7 +55,8 @@ public class ProcessInstanceDiagramResource extends SecuredResource {
         .getDeployedProcessDefinition(pi.getProcessDefinitionId());
 
     if (pde != null && pde.isGraphicalNotationDefined()) {
-      InputStream resource = ProcessDiagramGenerator.generateDiagram(pde, "png", ActivitiUtil.getRuntimeService().getActiveActivityIds(processInstanceId));
+    	BpmnModel bpmnModel = ActivitiUtil.getRepositoryService().getBpmnModel(pde.getId());
+        InputStream resource = ProcessDiagramGenerator.generateDiagram(bpmnModel, "png", ActivitiUtil.getRuntimeService().getActiveActivityIds(processInstanceId));
 
       InputRepresentation output = new InputRepresentation(resource, MediaType.IMAGE_PNG);
       return output;

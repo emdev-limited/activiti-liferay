@@ -21,17 +21,11 @@ import javax.servlet.ServletContextListener;
 
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngines;
-import org.activiti.engine.impl.util.LogUtil;
 
 /**
  * @author Tijs Rademakers
  */
 public class ActivitiServletContextListener implements ServletContextListener {
-  
-  //Initialise logging
-  static {
-    LogUtil.readJavaUtilLoggingConfigFromClasspath();
-  }
   
   protected static final Logger LOGGER = Logger.getLogger(ActivitiServletContextListener.class.getName());
 

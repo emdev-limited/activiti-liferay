@@ -9,14 +9,14 @@ import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.UserQueryImpl;
 import org.activiti.engine.impl.persistence.entity.IdentityInfoEntity;
 import org.activiti.engine.impl.persistence.entity.UserEntity;
-import org.activiti.engine.impl.persistence.entity.UserManager;
+import org.activiti.engine.impl.persistence.entity.UserEntityManager;
 import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 @Service("liferayUserManagerSession")
-public class LiferayUserManagerSession extends UserManager {
+public class LiferayUserManagerSession extends UserEntityManager {
 	
 	private static Log _log = LogFactoryUtil.getLog(LiferayUserManagerSession.class);
 

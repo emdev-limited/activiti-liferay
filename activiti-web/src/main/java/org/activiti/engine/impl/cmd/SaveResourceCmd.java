@@ -38,7 +38,7 @@ public class SaveResourceCmd implements Command<Void>, Serializable {
       throw new ActivitiException("model is null");
     }
     if (model.getId() == null) {
-      commandContext.getResourceManager().insertResource(model);
+      commandContext.getResourceEntityManager().insertResource(model);
     } else {
       commandContext.getDbSqlSession().update(model);
     }

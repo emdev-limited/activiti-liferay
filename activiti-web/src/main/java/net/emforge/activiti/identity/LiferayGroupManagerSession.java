@@ -9,7 +9,7 @@ import org.activiti.engine.identity.GroupQuery;
 import org.activiti.engine.impl.GroupQueryImpl;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.persistence.entity.GroupEntity;
-import org.activiti.engine.impl.persistence.entity.GroupManager;
+import org.activiti.engine.impl.persistence.entity.GroupEntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 @Service("liferayGroupManagerSession")
-public class LiferayGroupManagerSession extends GroupManager {
+public class LiferayGroupManagerSession extends GroupEntityManager {
 	private static Log _log = LogFactoryUtil.getLog(LiferayGroupManagerSession.class);
 
 	@Autowired

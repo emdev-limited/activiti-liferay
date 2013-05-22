@@ -9,10 +9,13 @@
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.emforge</groupId>
 	<artifactId>activiti-web</artifactId>
+	<version>6.1.1.13</version>
 	<packaging>war</packaging>
 
 	<properties>
+		<spring.version>3.1.2.RELEASE</spring.version>
 		<webXmlPath>src/main/webapp/WEB-INF/web.xml</webXmlPath>
 	</properties>
 
@@ -114,6 +117,11 @@
 		<dependency>
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-spring</artifactId>
+			<version>${activiti.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.activiti</groupId>
+			<artifactId>activiti-bpmn-converter</artifactId>
 			<version>${activiti.version}</version>
 		</dependency>
 		<!-- <dependency> <groupId>org.activiti</groupId> <artifactId>activiti-cdi</artifactId> 
@@ -287,7 +295,7 @@
 		<dependency>
 			<groupId>net.emforge</groupId>
 			<artifactId>activiti-rest-stubs</artifactId>
-			<version>${version}</version>
+			<version>1.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>
