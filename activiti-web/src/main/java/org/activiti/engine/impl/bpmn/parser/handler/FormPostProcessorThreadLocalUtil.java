@@ -77,4 +77,8 @@ public class FormPostProcessorThreadLocalUtil {
 			LOCALS.get().add(obj);
 		}
 	}
+	
+	public static void cleanUp() {
+		LOCALS.set(new ArrayList<FormPostProcessorWrapper>());
+	}
 }

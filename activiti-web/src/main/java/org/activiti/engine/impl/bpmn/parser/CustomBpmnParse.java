@@ -75,6 +75,12 @@ public class CustomBpmnParse extends BpmnParse {
 						}
 					}
 				}
+				//clean up thread local
+				try {
+					FormPostProcessorThreadLocalUtil.cleanUp();
+				} catch (Exception e) {
+					LOGGER.error("Failed to clean up FormPostProcessorThreadLocal ", e);
+				}
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to improve user tasks form", e);
