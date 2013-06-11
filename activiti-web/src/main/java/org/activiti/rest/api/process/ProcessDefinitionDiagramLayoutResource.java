@@ -16,7 +16,7 @@ import org.activiti.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.BoundaryEventActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.SequentialMultiInstanceBehavior;
-import org.activiti.engine.impl.bpmn.parser.BpmnParse;
+import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
 import org.activiti.engine.impl.bpmn.parser.ErrorEventDefinition;
 import org.activiti.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.activiti.engine.impl.jobexecutor.TimerDeclarationImpl;
@@ -272,7 +272,7 @@ public class ProcessDefinitionDiagramLayoutResource extends SecuredResource {
       ActivityBehavior activityBehavior = activity.getActivityBehavior();
       // Gather info on the collapsed marker
       Boolean collapsed = (activityBehavior instanceof CallActivityBehavior);
-      Boolean expanded = (Boolean) activity.getProperty(BpmnParse.PROPERTYNAME_ISEXPANDED);
+      Boolean expanded = (Boolean) activity.getProperty(CustomBpmnParse.PROPERTYNAME_ISEXPANDED);
       if (expanded != null) {
         collapsed = !expanded;
       }
@@ -287,7 +287,7 @@ public class ProcessDefinitionDiagramLayoutResource extends SecuredResource {
       for (PvmTransition sequenceFlow : activity.getOutgoingTransitions()) {
         String flowName = (String) sequenceFlow.getProperty("name");
         boolean isHighLighted = (highLightedFlows.contains(sequenceFlow.getId()));
-        boolean isConditional = sequenceFlow.getProperty(BpmnParse.PROPERTYNAME_CONDITION) != null
+        boolean isConditional = sequenceFlow.getProperty(CustomBpmnParse.PROPERTYNAME_CONDITION) != null
                 && !((String) activity.getProperty("type")).toLowerCase().contains("gateway");
         boolean isDefault = sequenceFlow.getId().equals(activity.getProperty("default"))
       		  && ((String) activity.getProperty("type")).toLowerCase().contains("gateway");

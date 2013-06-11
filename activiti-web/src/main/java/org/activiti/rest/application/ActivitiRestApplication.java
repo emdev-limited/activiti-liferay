@@ -79,9 +79,6 @@ import org.restlet.security.Verifier;
 import org.restlet.service.Service;
 import org.restlet.service.StatusService;
 import org.activiti.rest.api.process.ProcessInstanceTaskResource;
-import org.activiti.rest.editor.main.EditorRestResource;
-import org.activiti.rest.editor.main.PluginRestResource;
-import org.activiti.rest.editor.main.StencilsetRestResource;
 import org.activiti.rest.editor.model.ModelAddResource;
 import org.activiti.rest.editor.model.ModelDeleteResource;
 import org.activiti.rest.editor.model.ModelDiagramResource;
@@ -207,10 +204,6 @@ public class ActivitiRestApplication extends Application {
     router.attach("/model/{companyId}/{modelId}/delete", ModelDeleteResource.class);
     router.attach("/model", ModelAddResource.class);
     router.attach("/models", ModelsResource.class);
-    
-    router.attach("/editor", EditorRestResource.class);
-    router.attach("/editor/plugins", PluginRestResource.class);
-    router.attach("/editor/stencilset", StencilsetRestResource.class);
     
     authenticator.setNext(router);
     

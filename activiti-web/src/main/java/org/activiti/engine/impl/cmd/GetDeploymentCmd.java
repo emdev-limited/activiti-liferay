@@ -22,7 +22,7 @@ public class GetDeploymentCmd implements Command<DeploymentEntity>, Serializable
 	    }
 	    
 	    DeploymentEntity resource = commandContext
-	      .getDeploymentManager()
+	      .getDeploymentEntityManager()
 	      .findDeploymentById(deploymentId);
 	    return resource;
 	  }

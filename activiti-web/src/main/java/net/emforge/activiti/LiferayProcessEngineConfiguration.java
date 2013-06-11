@@ -13,13 +13,18 @@ import net.emforge.activiti.hook.LiferayBpmnParser;
 
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
+import org.activiti.engine.impl.bpmn.parser.BpmnParseHandlers;
 import org.activiti.engine.impl.bpmn.parser.BpmnParser;
+import org.activiti.engine.impl.bpmn.parser.factory.DefaultActivityBehaviorFactory;
+import org.activiti.engine.impl.bpmn.parser.factory.DefaultListenerFactory;
+import org.activiti.engine.impl.cfg.DefaultBpmnParseFactory;
 import org.activiti.engine.impl.db.DbSqlSessionFactory;
 import org.activiti.engine.impl.db.IbatisVariableTypeHandler;
 import org.activiti.engine.impl.persistence.deploy.Deployer;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.impl.util.ReflectUtil;
 import org.activiti.engine.impl.variable.VariableType;
+import org.activiti.engine.parse.BpmnParseHandler;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
@@ -65,28 +70,54 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 		return ReflectUtil.getResourceAsStream(EXT_MYBATIS_MAPPING_FILE);
 	}
 	
-	@Override
-	protected Collection<? extends Deployer> getDefaultDeployers() {
-		List<Deployer> defaultDeployers = new ArrayList<Deployer>();
-
-		BpmnDeployer bpmnDeployer = new BpmnDeployer();
-		bpmnDeployer.setExpressionManager(expressionManager);
-		bpmnDeployer.setIdGenerator(idGenerator);
-		BpmnParser bpmnParser = new LiferayBpmnParser(expressionManager, bpmnParseFactory);
-
-		if (preParseListeners != null) {
-			bpmnParser.getParseListeners().addAll(preParseListeners);
-		}
-		bpmnParser.getParseListeners().addAll(getDefaultBPMNParseListeners());
-		if (postParseListeners != null) {
-			bpmnParser.getParseListeners().addAll(postParseListeners);
-		}
-
-		bpmnDeployer.setBpmnParser(bpmnParser);
-
-		defaultDeployers.add(bpmnDeployer);
-		return defaultDeployers;
-	}
+//	@Override
+//	protected Collection<? extends Deployer> getDefaultDeployers() {
+//		List<Deployer> defaultDeployers = new ArrayList<Deployer>();
+//
+//	    BpmnDeployer bpmnDeployer = new BpmnDeployer();
+//	    bpmnDeployer.setExpressionManager(expressionManager);
+//	    bpmnDeployer.setIdGenerator(idGenerator);
+//	    
+//	    if (bpmnParseFactory == null) {
+//	      bpmnParseFactory = new DefaultBpmnParseFactory();
+//	    }
+//	    
+//	    if (activityBehaviorFactory == null) {
+//	      DefaultActivityBehaviorFactory defaultActivityBehaviorFactory = new DefaultActivityBehaviorFactory();
+//	      defaultActivityBehaviorFactory.setExpressionManager(expressionManager);
+//	      activityBehaviorFactory = defaultActivityBehaviorFactory;
+//	    }
+//	    
+//	    if (listenerFactory == null) {
+//	      DefaultListenerFactory defaultListenerFactory = new DefaultListenerFactory();
+//	      defaultListenerFactory.setExpressionManager(expressionManager);
+//	      listenerFactory = defaultListenerFactory;
+//	    }
+//	    
+//	    BpmnParser bpmnParser = new LiferayBpmnParser();
+//	    bpmnParser.setExpressionManager(expressionManager);
+//	    bpmnParser.setBpmnParseFactory(bpmnParseFactory);
+//	    bpmnParser.setActivityBehaviorFactory(activityBehaviorFactory);
+//	    bpmnParser.setListenerFactory(listenerFactory);
+//	    
+//	    List<BpmnParseHandler> parseHandlers = new ArrayList<BpmnParseHandler>();
+//	    if(getPreBpmnParseHandlers() != null) {
+//	      parseHandlers.addAll(getPreBpmnParseHandlers());
+//	    }
+//	    parseHandlers.addAll(getDefaultBpmnParseHandlers());
+//	    if(getPostBpmnParseHandlers() != null) {
+//	      parseHandlers.addAll(getPostBpmnParseHandlers());
+//	    }
+//	    
+//	    BpmnParseHandlers bpmnParseHandlers = new BpmnParseHandlers();
+//	    bpmnParseHandlers.addHandlers(parseHandlers);
+//	    bpmnParser.setBpmnParserHandlers(bpmnParseHandlers);
+//	    
+//	    bpmnDeployer.setBpmnParser(bpmnParser);
+//	    
+//	    defaultDeployers.add(bpmnDeployer);
+//	    return defaultDeployers;
+//	}
 	
 	protected void initSessionFactories() {
 		super.initSessionFactories();

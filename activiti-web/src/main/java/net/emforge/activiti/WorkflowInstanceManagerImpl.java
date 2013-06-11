@@ -509,17 +509,17 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	        inst.setEndDate(historyPI.getEndTime());
 	        inst.setStartDate(historyPI.getStartTime());
 	
-	        List<String> activities = new ArrayList<String>();
+	        /*List<String> activities = new ArrayList<String>();
 	        try {
 	        	activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
 	        } catch (Exception ex) {
 	        	// in case then process has no user tasks - process may be finished just after it is started
 	        	// so - we will not have active activities here.
 	        	_log.debug("Error during getting active activities", ex);
-	        }
+	        }*/
 	
 	        // activities contains internal ids - need to be converted into names
-			List<String> activityNames = new ArrayList<String>(activities.size());
+			/*List<String> activityNames = new ArrayList<String>(activities.size());
 	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
 	
 			for (String activiti: activities) {
@@ -527,7 +527,7 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 				if (findActivity != null)
 					activityNames.add(findActivity.getProperty("name").toString());
 			}
-			inst.setState(StringUtils.join(activityNames, ","));
+			inst.setState(StringUtils.join(activityNames, ","));*/
 	
 	        // copy variables
 	

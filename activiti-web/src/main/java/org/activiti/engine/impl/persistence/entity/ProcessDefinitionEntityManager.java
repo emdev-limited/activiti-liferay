@@ -33,7 +33,7 @@ import org.activiti.engine.repository.ProcessDefinition;
  * @author Falko Menge
  * @author Saeid Mirzaei
  */
-public class ProcessDefinitionManager extends AbstractManager {
+public class ProcessDefinitionEntityManager extends AbstractManager {
 
   public ProcessDefinitionEntity findLatestProcessDefinitionByKey(String processDefinitionKey) {
     return (ProcessDefinitionEntity) getDbSqlSession().selectOne("selectLatestProcessDefinitionByKey", processDefinitionKey);
