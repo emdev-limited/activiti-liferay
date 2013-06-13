@@ -132,9 +132,6 @@ public class StartUpAction extends SimpleAction {
 				log.warn("Cannot upgrade table to newer version of activiti-web. Please ignore on first deploy: " + e.getMessage());
 			}
 			
-//			for (String companyId : ids) {
-//				doRun(GetterUtil.getLong(companyId));
-//			}
 		} catch (Exception e) {
 			log.error("Initialization failed", e);
 			throw new ActionException(e);
