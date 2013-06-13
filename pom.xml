@@ -63,6 +63,10 @@
 		</repository>
 	</repositories>
 	
+	<scm>
+		<url>https://github.com/emdev-limited/activiti-liferay</url>
+	</scm>
+	
 	<organization>
 		<name>EmDev Limited</name>
 		<url>http://www.emdev.ru</url>
