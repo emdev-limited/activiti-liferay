@@ -1,16 +1,8 @@
 package net.emforge.activiti;
 
-import static net.emforge.activiti.constants.RoleConstants.APPROVER_ROLE_DESCRIPTION;
-import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
-
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.ServletContext;
 
@@ -18,14 +10,11 @@ import net.emforge.activiti.spring.ContextLoaderListener;
 
 import org.springframework.web.context.ContextLoader;
 
-import com.liferay.portal.dao.db.MySQLDB;
 import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
@@ -34,7 +23,6 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 /** 
