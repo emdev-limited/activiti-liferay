@@ -18,6 +18,7 @@ import net.emforge.activiti.spring.ContextLoaderListener;
 
 import org.springframework.web.context.ContextLoader;
 
+import com.liferay.portal.dao.db.MySQLDB;
 import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
@@ -118,20 +119,22 @@ public class StartUpAction extends SimpleAction {
 			try {
 				if (!independentFixesRun) {
 					//we do not need it to be run against each portal instance..
-					DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=0;");
-					removeProcessInstanceExtTable();
-					removeProcessDefinitionExtTable();
-					fixTitleAbsence();
-					// DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=1;");
-					independentFixesRun = true;
+					if (DBFactoryUtil.getDB().getClass().getName().equals("com.liferay.portal.dao.db.MySQLDB")) {
+						DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=0;");
+						removeProcessInstanceExtTable();
+						removeProcessDefinitionExtTable();
+						fixTitleAbsence();
+						// DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=1;");
+						independentFixesRun = true;
+					}
 				}
 			} catch (Exception e) {
-				log.error(e, e);
+				log.warn("Cannot upgrade table to newer version of activiti-web. Please ignore on first deploy: " + e.getMessage());
 			}
 			
-			for (String companyId : ids) {
-				doRun(GetterUtil.getLong(companyId));
-			}
+//			for (String companyId : ids) {
+//				doRun(GetterUtil.getLong(companyId));
+//			}
 		} catch (Exception e) {
 			log.error("Initialization failed", e);
 			throw new ActionException(e);
