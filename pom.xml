@@ -52,11 +52,6 @@
 	
 	<repositories>
 		<repository>
-			<id>emdev-private</id>
-			<name>EmDev Private</name>
-			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
-		</repository>
-		<repository>
 			<id>alfresco</id>
 			<name>alfresco</name>
 			<url>https://maven.alfresco.com/nexus/content/repositories/public/</url>
@@ -67,37 +62,11 @@
 			<url>http://maven.restlet.org</url>
 		</repository>
 	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>emdev-private</id>
-			<name>EmDev Private</name>
-			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
-		</pluginRepository>
-	</pluginRepositories>
-					
-	<distributionManagement>
-		<repository>
-			<id>emdev-private</id>
-			<name>EmDev Private</name>
-			<url>http://build.emdev.ru/nexus/content/repositories/emdev-private</url>
-			<layout>default</layout>
-		</repository>
-		<snapshotRepository>
-			<id>private-snapshots</id>
-			<name>Private Snapshots</name>
-			<url>http://build.emdev.ru/nexus/content/repositories/private-snapshots/</url>
-			<layout>default</layout>
-		</snapshotRepository>
-	</distributionManagement>
-<!--  
-	<ciManagement>
-		<system>jenkins</system>
-		<url>http://build.emdev.ru/jenkins/job/activiti-6.1.1/</url>
-	</ciManagement>
+	
 	<scm>
-		<url>http://svn.emforge.net/svnroot/emdev-v1/trunk/activiti</url>
+		<url>https://github.com/emdev-limited/activiti-liferay</url>
 	</scm>
--->	
+	
 	<organization>
 		<name>EmDev Limited</name>
 		<url>http://www.emdev.ru</url>

@@ -1,16 +1,8 @@
 package net.emforge.activiti;
 
-import static net.emforge.activiti.constants.RoleConstants.APPROVER_ROLE_DESCRIPTION;
-import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
-import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
-
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.ServletContext;
 
@@ -23,8 +15,6 @@ import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
@@ -33,7 +23,6 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
 
 /** 
@@ -118,20 +107,19 @@ public class StartUpAction extends SimpleAction {
 			try {
 				if (!independentFixesRun) {
 					//we do not need it to be run against each portal instance..
-					DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=0;");
-					removeProcessInstanceExtTable();
-					removeProcessDefinitionExtTable();
-					fixTitleAbsence();
-					// DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=1;");
-					independentFixesRun = true;
+					if (DBFactoryUtil.getDB().getClass().getName().equals("com.liferay.portal.dao.db.MySQLDB")) {
+						DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=0;");
+						removeProcessInstanceExtTable();
+						removeProcessDefinitionExtTable();
+						fixTitleAbsence();
+						// DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=1;");
+						independentFixesRun = true;
+					}
 				}
 			} catch (Exception e) {
-				log.error(e, e);
+				log.warn("Cannot upgrade table to newer version of activiti-web. Please ignore on first deploy: " + e.getMessage());
 			}
 			
-			for (String companyId : ids) {
-				doRun(GetterUtil.getLong(companyId));
-			}
 		} catch (Exception e) {
 			log.error("Initialization failed", e);
 			throw new ActionException(e);
