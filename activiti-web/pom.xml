@@ -118,24 +118,25 @@
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-spring</artifactId>
 			<version>${activiti.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>spring-orm</artifactId>
+					<groupId>org.springframework</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-bpmn-converter</artifactId>
 			<version>${activiti.version}</version>
 		</dependency>
-		<!-- <dependency> <groupId>org.activiti</groupId> <artifactId>activiti-cdi</artifactId> 
-			<version>5.9</version> </dependency> -->
+
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
 			<version>1.7.5</version>
 		</dependency>
-		<dependency>
-			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
-			<version>1.0.0.Final</version>
-		</dependency>
+
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
@@ -206,14 +207,7 @@
 			<scope>provided</scope>
 		</dependency>
 
-<!-- 
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>3.5.3-Final</version>
-			<scope>provided</scope>
-		</dependency>
- -->		
+
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -297,6 +291,7 @@
 			<artifactId>activiti-rest-stubs</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-parser</artifactId>

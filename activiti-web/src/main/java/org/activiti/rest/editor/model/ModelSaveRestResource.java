@@ -58,7 +58,9 @@ public class ModelSaveRestResource extends ServerResource implements ModelDataJs
       repositoryService.saveModel(model);
       
       repositoryService.addModelEditorSource(model.getId(), modelForm.getFirstValue("json_xml").getBytes("utf-8"));
-      repositoryService.addModelEditorSourceExtra(model.getId(), modelForm.getFirstValue("svg_xml").getBytes("utf-8"));
+      if (modelForm.getFirstValue("svg_xml") != null) {
+    	  repositoryService.addModelEditorSourceExtra(model.getId(), modelForm.getFirstValue("svg_xml").getBytes("utf-8"));
+      }
       
     } catch(Exception e) {
       LOGGER.log(Level.SEVERE, "Error saving model", e);
