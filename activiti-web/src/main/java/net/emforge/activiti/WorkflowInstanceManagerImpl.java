@@ -3,6 +3,7 @@ package net.emforge.activiti;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,20 +137,76 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	public int getWorkflowInstanceCount(long companyId,
 			String workflowDefinitionName, Integer workflowDefinitionVersion,
 			Boolean completed) throws WorkflowException {
-		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+		
+		if (workflowDefinitionVersion == null || workflowDefinitionVersion > 0) {
+			ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+			ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+			query = query.processDefinitionId(def.getId());
 
-		ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-		query = query.processDefinitionId(def.getId());
+			/* TODO
+			if (completed) {
+				query = query.suspended();
+			} else {
+				query = query.notSuspended();
+			}
+			*/
 
-		/* TODO
-		if (completed) {
-			query = query.suspended();
+			return Long.valueOf(query.count()).intValue();
 		} else {
-			query = query.notSuspended();
+			//get all instances for all versions of definition
+			List<ProcessDefinition> defs = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName);
+			
+			//TODO These ugly code should be reworked!!!
+			//Use sql to query 
+			Collection workflowInstanceIds = new ArrayList<Long>();
+			for (ProcessDefinition def : defs) {
+				HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+				query = query.processDefinitionId(def.getId());
+				if (completed) {
+					query.finished();
+		        } else {
+		        	query.unfinished();
+		        }
+				List<HistoricProcessInstance> insts = query.list();
+				for (HistoricProcessInstance inst : insts) {
+					workflowInstanceIds.add(Long.valueOf(inst.getId()));
+				}
+			}
+			
+			if (workflowInstanceIds.isEmpty()) {
+	        	return 0;
+	        }
+			final HistoricProcessInstanceQuery historicProcessInstanceQuery = createWorkflowDefinitionNameQuery(workflowInstanceIds, completed);
+	        
+	        return Long.valueOf(historicProcessInstanceQuery.count()).intValue();
 		}
-		*/
-
-		return Long.valueOf(query.count()).intValue();
+		
+	}
+	
+	private HistoricProcessInstanceQuery createWorkflowDefinitionNameQuery(Collection workflowInstanceIds, Boolean completed) {
+		//we have to narrow ids by those that are stored in Portal...
+		//it is possible to have some excess values in Activiti
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(WorkflowInstanceLink.class, PortalClassLoaderUtil.getClassLoader());
+		dynamicQuery.setProjection(ProjectionFactoryUtil.property("workflowInstanceId"));
+		dynamicQuery.add(PropertyFactoryUtil.forName("workflowInstanceId").in(workflowInstanceIds));
+		try {
+			workflowInstanceIds = WorkflowInstanceLinkLocalServiceUtil.dynamicQuery(dynamicQuery);
+		} catch (SystemException e) {
+			_log.error("Failed to filter instances ids", e);
+		}
+		final HashSet<String> ids = new HashSet<String>(workflowInstanceIds.size());
+        for (Object id :  workflowInstanceIds) {
+            ids.add(String.valueOf((Long) id));
+        }
+        final HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery();
+        historicProcessInstanceQuery.processInstanceIds(ids);
+        if (completed) {
+            historicProcessInstanceQuery.finished();
+        } else {
+            historicProcessInstanceQuery.unfinished();
+        }
+        
+        return historicProcessInstanceQuery;
 	}
 
 	/** Get process instances
@@ -162,32 +219,80 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
 		_log.info("Get process instances 3");
-		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+		if (workflowDefinitionVersion == null || workflowDefinitionVersion > 0) {
+			ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
 
-		ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-		query = query.processDefinitionId(def.getId());
+			ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+			query = query.processDefinitionId(def.getId());
 
-		/* TODO
-		if (completed) {
-			query = query.suspended();
+			/* TODO
+			if (completed) {
+				query = query.suspended();
+			} else {
+				query = query.notSuspended();
+			}
+			*/
+
+			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+				query.listPage(start, end - start);
+			}
+
+
+			List<ProcessInstance> insts = query.list();
+			List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(insts.size());
+
+			for (ProcessInstance inst : insts) {
+				result.add(getWorkflowInstance(inst, null, null));
+			}
+
+			return result;
 		} else {
-			query = query.notSuspended();
+			//get all instances for all versions of definition
+			List<ProcessDefinition> defs = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName);
+			
+			//TODO These ugly code should be reworked!!!
+			//Use sql to query 
+			Collection workflowInstanceIds = new ArrayList<Long>();
+			for (ProcessDefinition def : defs) {
+				HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+				query = query.processDefinitionId(def.getId());
+				if (completed) {
+					query.finished();
+		        } else {
+		        	query.unfinished();
+		        }
+				List<HistoricProcessInstance> insts = query.list();
+				for (HistoricProcessInstance inst : insts) {
+					workflowInstanceIds.add(Long.valueOf(inst.getId()));
+				}
+			}
+			
+			if (workflowInstanceIds.isEmpty()) {
+	        	return Collections.emptyList();
+	        }
+			final HistoricProcessInstanceQuery historicProcessInstanceQuery = createWorkflowDefinitionNameQuery(workflowInstanceIds, completed);
+
+	        List<HistoricProcessInstance> historicProcessInstances;
+	        if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+	            historicProcessInstances = historicProcessInstanceQuery.listPage(start, end);
+	        } else {
+	            historicProcessInstances = historicProcessInstanceQuery.list();
+	        }
+
+	        if (_log.isDebugEnabled()) {
+	            _log.debug(String.format("Found results: [%s]", historicProcessInstances == null || historicProcessInstances.isEmpty() ? 0 : historicProcessInstances.size()));
+	        }
+
+	        if (historicProcessInstances != null) {
+	            List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(historicProcessInstances.size());
+	            for (HistoricProcessInstance historicProcessInstance : historicProcessInstances) {
+	                result.add(getWorkflowInstance(historicProcessInstance));
+	            }
+	            return result;
+	        } else {
+	            return Collections.emptyList();
+	        }
 		}
-		*/
-
-		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-			query.listPage(start, end - start);
-		}
-
-
-		List<ProcessInstance> insts = query.list();
-		List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(insts.size());
-
-		for (ProcessInstance inst : insts) {
-			result.add(getWorkflowInstance(inst, null, null));
-		}
-
-		return result;
 	}
 
 	@Override

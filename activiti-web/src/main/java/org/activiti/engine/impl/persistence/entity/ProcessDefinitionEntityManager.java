@@ -39,6 +39,10 @@ public class ProcessDefinitionEntityManager extends AbstractManager {
     return (ProcessDefinitionEntity) getDbSqlSession().selectOne("selectLatestProcessDefinitionByKey", processDefinitionKey);
   }
   
+  public ProcessDefinitionEntity findProcessDefinitionById(String processDefinitionId) {
+	    return (ProcessDefinitionEntity) getDbSqlSession().selectOne("selectProcessDefinitionById", processDefinitionId);
+  }
+  
   public ProcessDefinitionEntity findLatestProcessDefinitionByKeyAndCompany(String parentId, String processDefinitionKey) {
 	  ExtProcessDefinitionQueryImpl extQuery = (ExtProcessDefinitionQueryImpl) new ExtProcessDefinitionQueryImpl()
 	  			.processDefinitionId(parentId)
