@@ -49,6 +49,16 @@ public class MessageProducer {
 		return reply;
 	}
 	
-
-	
+	public String sendSerialMessage(DelegateExecution execution, Serializable classPK, String actionName,
+			String listenerName, String className) throws Exception {
+		_log.info("Sending message for listener [" + listenerName + "], classPK = [" + classPK + "], action name = [" + actionName + "]");
+		Message message = new Message();
+		message.put("actionName", actionName);
+		message.put("classPK", classPK);
+		message.put("className", className);
+		
+		String reply = (String) MessageBusUtil.sendSynchronousMessage(listenerName, message);
+		_log.info("Reply fetched [" + reply + "]");
+		return reply;
+	}
 }
