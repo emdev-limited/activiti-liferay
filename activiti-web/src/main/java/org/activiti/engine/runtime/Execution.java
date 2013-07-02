@@ -51,4 +51,9 @@ public interface Execution {
    * Name of the Lane which contains the execution.
    */
   String getCurrentLaneName();
+  
+  /**
+   * Gets the id of the parent of this execution. If null, the execution represents a process-instance.
+  */
+  String getParentId();
 }
