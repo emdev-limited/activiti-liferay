@@ -10,7 +10,9 @@ import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.history.HistoryLevel;
 import org.activiti.engine.impl.interceptor.SessionFactory;
 import org.activiti.engine.impl.persistence.entity.GroupEntityManager;
+import org.activiti.engine.impl.persistence.entity.GroupIdentityManager;
 import org.activiti.engine.impl.persistence.entity.UserEntityManager;
+import org.activiti.engine.impl.persistence.entity.UserIdentityManager;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.activiti.spring.SpringExpressionManager;
 import org.codehaus.groovy.jsr223.GroovyScriptEngineFactory;
@@ -40,8 +42,8 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 		
 		// preconfigure process engine to use our identity session
 		Map<Class<?>, SessionFactory> sessionFactories = processEngineConfiguration.getSessionFactories();
-		sessionFactories.put(GroupEntityManager.class, liferayGroupManagerSessionFactory);
-		sessionFactories.put(UserEntityManager.class, new LiferayUserManagerSessionFactory());
+		sessionFactories.put(GroupIdentityManager.class, liferayGroupManagerSessionFactory);
+		sessionFactories.put(UserIdentityManager.class, new LiferayUserManagerSessionFactory());
 		
 		// Add Liferay Script Engine Factory
 		processEngineConfiguration.getScriptingEngines().addScriptEngineFactory(new LiferayScriptEngineFactory("LiferayJavaScript", "javascript"));

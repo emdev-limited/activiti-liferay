@@ -125,7 +125,7 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	}
 	
 	protected List<String> getGroupsForCandidateUser(String candidateUser) {
-	    List<Group> groups = Context.getCommandContext().getGroupEntityManager().findGroupsByUser(candidateUser);
+	    List<Group> groups = Context.getCommandContext().getGroupIdentityManager().findGroupsByUser(candidateUser);
 	    List<String> groupIds = new ArrayList<String>();
 	    
 	    for (Group group : groups) {
