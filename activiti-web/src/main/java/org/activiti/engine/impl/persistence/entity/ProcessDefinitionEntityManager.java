@@ -32,11 +32,16 @@ import org.activiti.engine.repository.ProcessDefinition;
  * @author Tom Baeyens
  * @author Falko Menge
  * @author Saeid Mirzaei
+ * @author Joram Barrez
  */
 public class ProcessDefinitionEntityManager extends AbstractManager {
 
   public ProcessDefinitionEntity findLatestProcessDefinitionByKey(String processDefinitionKey) {
     return (ProcessDefinitionEntity) getDbSqlSession().selectOne("selectLatestProcessDefinitionByKey", processDefinitionKey);
+  }
+  
+  public ProcessDefinitionEntity findProcessDefinitionById(String processDefinitionId) {
+	    return (ProcessDefinitionEntity) getDbSqlSession().selectOne("selectProcessDefinitionById", processDefinitionId);
   }
   
   public ProcessDefinitionEntity findLatestProcessDefinitionByKeyAndCompany(String parentId, String processDefinitionKey) {
@@ -99,12 +104,13 @@ public class ProcessDefinitionEntityManager extends AbstractManager {
     return   new ProcessDefinitionQueryImpl().startableByUser(user).list();
   }
   
-  public List<User> findProcessDefinitionPotentialStarterUsers() {
-    return null;
+  @SuppressWarnings("unchecked")
+  public List<ProcessDefinition> findProcessDefinitionsByNativeQuery(Map<String, Object> parameterMap, int firstResult, int maxResults) {
+	  return getDbSqlSession().selectListWithRawParameter("selectProcessDefinitionByNativeQuery", parameterMap, firstResult, maxResults);
   }
   
-  public List<Group> findProcessDefinitionPotentialStarterGroups() {
-    return null;
+  public long findProcessDefinitionCountByNativeQuery(Map<String, Object> parameterMap) {
+	  return (Long) getDbSqlSession().selectOne("selectProcessDefinitionCountByNativeQuery", parameterMap);
   }
 
  

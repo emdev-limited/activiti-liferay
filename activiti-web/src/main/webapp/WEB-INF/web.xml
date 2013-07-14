@@ -22,21 +22,22 @@
 	</servlet-mapping>
 	
 	<!-- Restlet adapter -->  
+<!--Commented until authorization strategy is ready -->
+<!-- 
   <servlet>  
     <servlet-name>RestletServlet</servlet-name>  
     <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>
     <init-param>
-      <!-- Application class name -->
       <param-name>org.restlet.application</param-name>
       <param-value>org.activiti.rest.application.ActivitiRestApplication</param-value>
     </init-param>
   </servlet>
   
-  <!-- Catch all requests -->  
   <servlet-mapping>  
     <servlet-name>RestletServlet</servlet-name>  
     <url-pattern>/activiti-rest/*</url-pattern>  
   </servlet-mapping> 
+ -->	  
 	
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>

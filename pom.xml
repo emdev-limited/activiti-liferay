@@ -6,7 +6,7 @@
   <packaging>pom</packaging>
   
   <properties>
-  	<activiti.version>5.12.1</activiti.version>
+  	<activiti.version>5.13</activiti.version>
 	<liferay.version>6.1.1</liferay.version>
 	<liferay.plugin.version>6.1.1</liferay.plugin.version>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

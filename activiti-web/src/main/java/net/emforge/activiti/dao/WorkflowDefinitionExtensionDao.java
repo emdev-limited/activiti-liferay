@@ -59,4 +59,18 @@ public class WorkflowDefinitionExtensionDao {
         }
 		
 	}
+	
+	/**
+	 * Find all versions
+	 * 
+	 * @param companyId
+	 * @param name
+	 * @return
+	 */
+	public List<ProcessDefinition> find(Long companyId, String name) {
+		RepositoryServiceImpl serviceImpl = (RepositoryServiceImpl) repositoryService;
+    	ExtProcessDefinitionQuery query = new ExtProcessDefinitionQueryImpl(serviceImpl.getCommandExecutor());
+    	query = query.processDefinitionCompanyIdAndName(companyId, name, null);
+    	return query.list();
+	}
 }

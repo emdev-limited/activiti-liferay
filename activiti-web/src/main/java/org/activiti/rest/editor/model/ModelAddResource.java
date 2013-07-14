@@ -15,9 +15,13 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Put;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringPool;
 
 public class ModelAddResource extends SecuredResource {
+	
+	private static Log _log = LogFactoryUtil.getLog(ModelAddResource.class);
 
 	@Put
 	public ModelResponse addResource(Representation entity) {
@@ -30,6 +34,7 @@ public class ModelAddResource extends SecuredResource {
 			JsonNode modelJSON = new ObjectMapper().readTree(modelParams);
 			
 			String name = modelJSON.path("name").getTextValue();
+			_log.info("About to create model with name = " + name);
 			long companyId = modelJSON.path("companyId").getLongValue();
 			String companyIdStr = String.valueOf(companyId);
 			if (StringUtils.isEmpty(companyIdStr)) {
