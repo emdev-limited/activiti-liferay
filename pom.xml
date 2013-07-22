@@ -61,6 +61,11 @@
 			<name>Public online Restlet repository</name>
 			<url>http://maven.restlet.org</url>
 		</repository>
+		<repository>
+			<id>emdev-public</id>
+			<name>EmDev Public</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/emdev-public</url>
+		</repository>
 	</repositories>
 	
 	<scm>

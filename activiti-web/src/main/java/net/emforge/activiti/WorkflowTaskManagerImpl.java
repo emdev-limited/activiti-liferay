@@ -172,6 +172,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
 		workflowLogEntry.setComment(comment);
+		try {
+			workflowLogEntry.setAssigneeUserId(Long.valueOf(task.getAssignee()));
+		} catch (NumberFormatException e) {
+			// no-op
+		}
 		workflowLogEntry.setState(task.getName());
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
