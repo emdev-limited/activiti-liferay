@@ -29,8 +29,10 @@ import org.activiti.engine.history.HistoricActivityInstanceQuery;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricVariableInstance;
 import org.activiti.engine.impl.TaskServiceImpl;
+import org.activiti.engine.impl.util.CollectionUtil;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
@@ -45,7 +47,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
@@ -56,8 +57,6 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -889,37 +888,53 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			return result;
 			// return null;
 		} else {
-			TaskService taskService = processEngine.getTaskService();
-			TaskQuery taskQuery = taskService.createTaskQuery();
+			List<Task> list = getActiveTasksForProcessInstance(userId, workflowInstanceId);
 			
-			if (userId != null && userId != 0l) {
-				taskQuery.taskAssignee(idMappingService.getUserName(userId));
-			}
-			
-			taskQuery.processInstanceId(String.valueOf(workflowInstanceId));
-			
-			/* TODO Ordering is not supported
-			if (orderByComparator != null) {
-    			if (orderByComparator.getOrderByFields().length > 1) {
-    				_log.warn("Method is partially implemented");
-    			} else {
-    				if (orderByComparator.isAscending()) {
-    					taskQuery.orderAsc(orderByComparator.getOrderByFields()[0]);
-    				} else {
-    					taskQuery.orderDesc(orderByComparator.getOrderByFields()[0]);
-    				}
-    			}
-    		}
-    		*/
+			// TODO - do ordering
 			
     		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-    			taskQuery.listPage(start, end - start);
+    			if (end > list.size()) {
+    				end = list.size();
+    			}
+    			
+    			list = list.subList(start, end);
     		}
             
-            List<Task> list = taskQuery.list();
-            
+    		// convert to liferay's workflow tasks
     		return getWorkflowTasks(list);
 		}
+	}
+	
+	/** Get active tasks for specific user (if defined) in process and all subprocesses
+	 * 
+	 * @param userId
+	 * @param workflowInstanceId
+	 * @return
+	 * @throws WorkflowException
+	 */
+	protected List<Task> getActiveTasksForProcessInstance(Long userId, long workflowInstanceId) throws WorkflowException {
+		TaskService taskService = processEngine.getTaskService();
+		TaskQuery taskQuery = taskService.createTaskQuery();
+		
+		if (userId != null && userId != 0l) {
+			taskQuery.taskAssignee(idMappingService.getUserName(userId));
+		}
+		
+		taskQuery.processInstanceId(String.valueOf(workflowInstanceId));
+		List<Task> result = new ArrayList<Task>();
+		result.addAll(taskQuery.list());
+		
+		
+		// go through subprocesses
+		ProcessInstanceQuery processQuery = runtimeService.createProcessInstanceQuery();
+		processQuery.active().superProcessInstanceId(String.valueOf(workflowInstanceId));
+		
+		for (ProcessInstance subProcess : processQuery.list()) {
+			List<Task> subProcessTasks = getActiveTasksForProcessInstance(userId, Long.valueOf(subProcess.getProcessInstanceId())); 
+			result.addAll(subProcessTasks);
+		}
+		
+		return result;
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(String taskId) {
