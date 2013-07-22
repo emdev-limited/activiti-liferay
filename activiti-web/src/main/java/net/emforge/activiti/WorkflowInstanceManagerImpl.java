@@ -52,10 +52,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
+import com.liferay.portal.kernel.workflow.WorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
 
 @Service(value="workflowInstanceManager")
 public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
@@ -123,7 +126,9 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			HistoricProcessInstance hpi = historyService.createHistoricProcessInstanceQuery().processInstanceId(procId).singleResult();
 
 			if (hpi != null) {
-				return getHistoryWorkflowInstance(hpi);
+				WorkflowInstanceImpl completedInstance = (WorkflowInstanceImpl) getHistoryWorkflowInstance(hpi);
+				completedInstance.setState("completed");
+				return completedInstance;
 			} else {
 				_log.error("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + ")");
 				return null;
@@ -614,67 +619,44 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	        inst.setEndDate(historyPI.getEndTime());
 	        inst.setStartDate(historyPI.getStartTime());
 	
-	        /*List<String> activities = new ArrayList<String>();
-	        try {
-	        	activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
-	        } catch (Exception ex) {
-	        	// in case then process has no user tasks - process may be finished just after it is started
-	        	// so - we will not have active activities here.
-	        	_log.debug("Error during getting active activities", ex);
-	        }*/
-	
-	        // activities contains internal ids - need to be converted into names
-			/*List<String> activityNames = new ArrayList<String>(activities.size());
-	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
-	
-			for (String activiti: activities) {
-				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
-				if (findActivity != null)
-					activityNames.add(findActivity.getProperty("name").toString());
-			}
-			inst.setState(StringUtils.join(activityNames, ","));*/
-	
-	        // copy variables
-	
-	
-	        //Postpone this action up to inst.getWorkflowContext invocation
-//			inst.setWorkflowContext(workflowContext);
-	
 			inst.setWorkflowDefinitionName(procDef.getName());
 			inst.setWorkflowDefinitionVersion(procDef.getVersion());
 	
-			/*Long id = idMappingService.getLiferayProcessInstanceId(processInstance.getId());
-			if (id == null) {
-				// not exists in DB - create new
-				Map<String, Serializable> workflowContext = getWorkflowContext(processInstance.getId(), currentWorkflowContext);
-				if (workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK) == null) {
-					// all workflows instances in Liferay should be related to some asset
-					throw new WorkflowException("Process Instance has no asset attached");
-				}
-				ProcessInstanceExtensionImpl procInstImpl = new ProcessInstanceExtensionImpl();
-				procInstImpl.setCompanyId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID)));
-				procInstImpl.setGroupId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID)));
-				procInstImpl.setUserId(userId != null ? userId : 0l);
-				procInstImpl.setClassName((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
-				procInstImpl.setClassPK(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
-				procInstImpl.setProcessInstanceId(processInstance.getId());
-	
-				id = (Long)processInstanceExtensionDao.save(procInstImpl);
-	
-				_log.info("Stored new process instance ext " + processInstance.getId() + " -> " + id);
-			}*/
-	
 			//could do it safety - see DbIdGenerator
-			inst.setWorkflowInstanceId(Long.valueOf(processInstance.getId()));
-	
+			Long processInstanceId = Long.valueOf(processInstance.getProcessInstanceId());
+			
+			long companyId = 0l;
+			if (currentWorkflowContext == null) {
+				Map<String,Object> workflowContext = new HashMap<String,Object>();
+				Execution execution = runtimeService.createExecutionQuery().processInstanceId(processInstance.getProcessInstanceId()).singleResult();
+				workflowContext = runtimeService.getVariablesLocal(execution.getId());
+				companyId = (Long.valueOf((String) workflowContext.get("companyId"))).longValue();
+			} else {
+				companyId = ((Long) currentWorkflowContext.get("companyId")).longValue();
+			}
+			
+			inst.setState(getInstanceStates(companyId, processInstanceId));
+			inst.setWorkflowInstanceId(processInstanceId);
 			return inst;
 		} catch(Exception e) {
 			_log.error("getProcessInstance FAILED: " + processInstance, e);
 			return null;
 		}
+	}
+	
+	protected String getInstanceStates(long companyId, Long processInstanceId) throws WorkflowException {
+		//Find all active wait states for process regardless of user and set comma separated values
+		List<WorkflowTask> activeTasks = WorkflowTaskManagerUtil.getWorkflowTasksByWorkflowInstance(companyId, null
+				, processInstanceId, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+		String state = StringPool.BLANK;
+		if (activeTasks != null && activeTasks.size() > 0) {
+			for (WorkflowTask task : activeTasks) {
+				state += task.getName() + StringPool.COMMA_AND_SPACE;
+			}
+			//remove trailing comma
+			state = state.substring(0, state.length() - 2);
+		}
+		return state;
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(long workflowInstanceId) {
