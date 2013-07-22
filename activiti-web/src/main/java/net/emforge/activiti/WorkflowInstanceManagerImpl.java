@@ -628,11 +628,24 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			long companyId = 0l;
 			if (currentWorkflowContext == null) {
 				Map<String,Object> workflowContext = new HashMap<String,Object>();
-				Execution execution = runtimeService.createExecutionQuery().processInstanceId(processInstance.getProcessInstanceId()).singleResult();
+				List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getProcessInstanceId()).list();
+				Execution execution = null;
+				if (executions.size() == 1) {
+					execution = executions.get(0);
+				} else {
+					//find execution where parent link is null - this is the main
+					for (Execution ex : executions) {
+						ExecutionEntity exEntity = (ExecutionEntity) ex;
+						if (exEntity.getParentId() == null) {
+							execution = ex;
+							break;
+						}
+					}
+				}
 				workflowContext = runtimeService.getVariablesLocal(execution.getId());
 				companyId = (Long.valueOf((String) workflowContext.get("companyId"))).longValue();
 			} else {
-				companyId = ((Long) currentWorkflowContext.get("companyId")).longValue();
+				companyId = (Long.valueOf((String) currentWorkflowContext.get("companyId"))).longValue();
 			}
 			
 			inst.setState(getInstanceStates(companyId, processInstanceId));

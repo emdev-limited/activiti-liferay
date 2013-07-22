@@ -63,8 +63,14 @@ public class LiferayIdentityService {
 		List<User> result = new ArrayList<User>();
 		
 		try {
-			if (parsedName.length == 1) {
-				// regilar group
+			if (parsedName.length == 1 || Long.valueOf(parsedName[0]) == companyId) {
+				if (parsedName.length > 1) {
+					groupName = parsedName[1];
+					if (parsedName.length > 2) {
+						groupName = StringUtils.join(ArrayUtils.subarray(parsedName, 1, parsedName.length), "/");
+					}
+				}
+				// regular group
 				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
 				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
 				

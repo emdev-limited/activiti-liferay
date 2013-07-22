@@ -3,6 +3,8 @@ package net.emforge.activiti;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -11,8 +13,12 @@ import javax.xml.bind.Unmarshaller;
 import com.liferay.portal.kernel.workflow.*;
 import net.emforge.activiti.log.WorkflowLogEntry;
 
+import org.activiti.engine.HistoryService;
+import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.impl.persistence.entity.CommentEntity;
+import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +34,8 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 
 	@Autowired
 	TaskService taskService;
+	@Autowired
+	HistoryService historyService;
 
 	@Autowired
 	IdMappingService idMappingService;
@@ -54,6 +62,24 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 															   int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
 		
 		List<Comment> processInstanceComments = taskService.getProcessInstanceComments(String.valueOf(workflowInstanceId));
+		List<HistoricProcessInstance> subProcessInstances = historyService.createHistoricProcessInstanceQuery().superProcessInstanceId(String.valueOf(workflowInstanceId)).list();
+		if (subProcessInstances != null) {
+			for (HistoricProcessInstance sub : subProcessInstances) {
+				List<Comment> subProcessInstanceComments = taskService.getProcessInstanceComments(sub.getId());
+				if (subProcessInstanceComments != null && !subProcessInstanceComments.isEmpty()) {
+					processInstanceComments.addAll(subProcessInstanceComments);
+				}
+			}
+		}
+		if (processInstanceComments != null && !processInstanceComments.isEmpty()) {
+			//order by date
+			Collections.sort(processInstanceComments, new Comparator<Comment>(){
+				  public int compare(Comment c1, Comment c2) {
+				    return c1.getTime().compareTo(c2.getTime())*(-1);
+				  }
+			});
+		}
+		
 		List<WorkflowLog> workflowLogs = getWorkflowLogsFromComments(processInstanceComments);
 		
 		return workflowLogs;
