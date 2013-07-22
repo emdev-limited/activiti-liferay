@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.emforge.activiti.IdMappingService;
+import net.emforge.activiti.WorkflowUtil;
 
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
@@ -57,46 +58,7 @@ public class LiferayIdentityService {
 	}
 
 	public List<User> findUsersByGroup(long companyId, String groupName) {
-		// first - try to parse group to identify - it is regular group or org/community group
-		String[] parsedName = groupName.split("/");
-		List<com.liferay.portal.model.User> users = null;
-		List<User> result = new ArrayList<User>();
-		
-		try {
-			if (parsedName.length == 1 || Long.valueOf(parsedName[0]) == companyId) {
-				if (parsedName.length > 1) {
-					groupName = parsedName[1];
-					if (parsedName.length > 2) {
-						groupName = StringUtils.join(ArrayUtils.subarray(parsedName, 1, parsedName.length), "/");
-					}
-				}
-				// regular group
-				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
-				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
-				
-				for (com.liferay.portal.model.User user : users) {
-					result.add(new UserImpl(user));
-				}
-			} else {
-				long groupId = Long.valueOf(parsedName[0]);
-				groupName = parsedName[1];
-				
-				if (parsedName.length > 2) {
-					groupName = StringUtils.join(ArrayUtils.subarray(parsedName, 1, parsedName.length), "/");
-				}
-				
-				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
-				List<UserGroupRole> userRoles = UserGroupRoleLocalServiceUtil.getUserGroupRolesByGroupAndRole(groupId, role.getRoleId());
-				
-				for (UserGroupRole userRole : userRoles) {
-					result.add(new UserImpl(userRole.getUser()));
-				}
-			}
-		} catch (Exception ex) {
-			_log.warn("Cannot get group users", ex);
-		}
-		
-		return result;
+		return WorkflowUtil.findUsersByGroup(companyId, groupName);
 	}
 	
 	public Role findRole(long companyId, String groupName) {

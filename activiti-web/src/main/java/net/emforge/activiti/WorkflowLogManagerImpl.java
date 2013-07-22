@@ -11,6 +11,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import com.liferay.portal.kernel.workflow.*;
+
 import net.emforge.activiti.log.WorkflowLogEntry;
 
 import org.activiti.engine.HistoryService;
@@ -20,6 +21,7 @@ import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.impl.persistence.entity.CommentEntity;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Comment;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringPool;
 
 @Service("workflowLogManager")
 public class WorkflowLogManagerImpl implements WorkflowLogManager {
@@ -55,22 +58,45 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 		_log.error("Method is not implemented"); // TODO
 		return 0;
 	}
-
+	
+	private List<Comment> getCommentsRecursively(long workflowInstanceId) throws WorkflowException {
+		HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(String.valueOf(workflowInstanceId)).singleResult();
+		String sProcessInstanceId = processInstance.getSuperProcessInstanceId();
+		if (sProcessInstanceId == null) {
+			return getCommentsRecursivelyDown(processInstance.getId());
+		}
+		String topProcessInstanceId = StringPool.BLANK;
+		while (sProcessInstanceId != null) {
+			topProcessInstanceId = sProcessInstanceId;
+			processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(sProcessInstanceId).singleResult();
+			sProcessInstanceId = processInstance.getSuperProcessInstanceId();
+		}
+		List<Comment> comments = new ArrayList<Comment>();
+		comments.addAll(getCommentsRecursivelyDown(topProcessInstanceId));
+		return comments;
+	}
+	
+	private List<Comment> getCommentsRecursivelyDown(String workflowInstanceId) throws WorkflowException {
+		List<Comment> comments = new ArrayList<Comment>();
+		List<HistoricProcessInstance> subProcessInstances = historyService.createHistoricProcessInstanceQuery().superProcessInstanceId(workflowInstanceId).list();
+		if (subProcessInstances == null || subProcessInstances.isEmpty()) {
+			return comments;
+		}
+		for (HistoricProcessInstance hpi : subProcessInstances) {
+			comments.addAll(getCommentsRecursivelyDown(hpi.getId()));
+			comments.addAll(taskService.getProcessInstanceComments(hpi.getId()));
+		}
+		comments.addAll(taskService.getProcessInstanceComments(workflowInstanceId));
+		
+		return comments;
+	}
+	
 	@Override
 	public List<WorkflowLog> getWorkflowLogsByWorkflowInstance(long companyId, long workflowInstanceId, 
 															   List<Integer> logTypes, 
 															   int start, int end, OrderByComparator orderByComparator) throws WorkflowException {
 		
-		List<Comment> processInstanceComments = taskService.getProcessInstanceComments(String.valueOf(workflowInstanceId));
-		List<HistoricProcessInstance> subProcessInstances = historyService.createHistoricProcessInstanceQuery().superProcessInstanceId(String.valueOf(workflowInstanceId)).list();
-		if (subProcessInstances != null) {
-			for (HistoricProcessInstance sub : subProcessInstances) {
-				List<Comment> subProcessInstanceComments = taskService.getProcessInstanceComments(sub.getId());
-				if (subProcessInstanceComments != null && !subProcessInstanceComments.isEmpty()) {
-					processInstanceComments.addAll(subProcessInstanceComments);
-				}
-			}
-		}
+		List<Comment> processInstanceComments = getCommentsRecursively(workflowInstanceId);
 		if (processInstanceComments != null && !processInstanceComments.isEmpty()) {
 			//order by date
 			Collections.sort(processInstanceComments, new Comparator<Comment>(){
