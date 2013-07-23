@@ -42,6 +42,15 @@ public class CustomSequenceFlowParseHandler extends SequenceFlowParseHandler {
 		    	FormPostProcessorThreadLocalUtil.putToThreadLocal(sourceActivity, destinationActivity, null);
 	    	}
 	    }
+	    //Remove standard Done action name in the Portal
+	    if (destinationActivity != null && !(destinationActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior)
+	    		&& sourceActivity != null && sourceActivity.getActivityBehavior() instanceof UserTaskActivityBehavior) {
+	    	if (!StringUtils.isEmpty(sequenceFlow.getName())) {
+	    		FormPostProcessorWrapper obj = new FormPostProcessorWrapper(sourceActivity, null);
+	    		obj.getOutputTransitionNames().add(sequenceFlow.getName());
+	    		FormPostProcessorThreadLocalUtil.putToThreadLocal(obj);
+	    	}
+	    }
 	    
 	}
 }

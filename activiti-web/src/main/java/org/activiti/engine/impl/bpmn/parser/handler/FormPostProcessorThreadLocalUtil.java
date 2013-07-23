@@ -53,6 +53,13 @@ public class FormPostProcessorThreadLocalUtil {
 		return null;
 	}
 	
+	public static void putToThreadLocal(FormPostProcessorWrapper formWrapper) {
+		if (LOCALS.get() == null) {
+			LOCALS.set(new ArrayList<FormPostProcessorWrapper>());
+		}
+		LOCALS.get().add(formWrapper);
+	}
+	
 	public static void putToThreadLocal(ActivityImpl sourceActivity, ActivityImpl destinationActivity, String name) {
 		if (destinationActivity == null) return;
 		//check if it already exists
