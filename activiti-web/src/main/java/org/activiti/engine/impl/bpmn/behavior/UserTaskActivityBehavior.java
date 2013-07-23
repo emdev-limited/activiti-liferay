@@ -19,12 +19,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import net.emforge.activiti.WorkflowTaskManagerImpl;
 import net.emforge.activiti.WorkflowUtil;
 
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiIllegalArgumentException;
-import org.activiti.engine.RuntimeService;
 import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.delegate.TaskListener;
 import org.activiti.engine.identity.User;
@@ -34,7 +32,6 @@ import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.activiti.engine.impl.task.TaskDefinition;
 import org.activiti.rest.api.ActivitiUtil;
 import org.apache.commons.lang.ArrayUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -54,6 +51,9 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
  */
 public class UserTaskActivityBehavior extends TaskActivityBehavior {
   private static Log _log = LogFactoryUtil.getLog(UserTaskActivityBehavior.class);
+  
+  private static final String WORKFLOW_TASKS_PORTLET_ID = "150";
+  private static final String SO_PORTLET_ID				=  "6_WAR_soportlet";
 	
 
   protected TaskDefinition taskDefinition;
@@ -217,7 +217,7 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
 		notificationEventJSONObject.put("body", task.getName());
 		notificationEventJSONObject.put("entryId", (String) workflowContext.get("entryClassPK"));
 		// workflow tasks portlet id
-		notificationEventJSONObject.put("portletId", 150);
+		notificationEventJSONObject.put("portletId", WORKFLOW_TASKS_PORTLET_ID);
 		notificationEventJSONObject.put("userId", (String) workflowContext.get("userId"));
 		
 		String title = StringPool.BLANK;
@@ -231,7 +231,7 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
 			_log.debug("Before sending notification receiverUserId = " + receiverUserId);
 			notificationEventJSONObject.put("title", title);
 			NotificationEvent notificationEvent = NotificationEventFactoryUtil.createNotificationEvent(
-					System.currentTimeMillis(), "6_WAR_soportlet", notificationEventJSONObject);
+					System.currentTimeMillis(), SO_PORTLET_ID, notificationEventJSONObject);
 			notificationEvent.setDeliveryRequired(0);
 			ChannelHubManagerUtil.sendNotificationEvent(companyId, receiverUserId, notificationEvent);
 			_log.debug("Notification for receiverUserId = " + receiverUserId + " sent");

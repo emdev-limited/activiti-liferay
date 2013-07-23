@@ -289,7 +289,7 @@
 		<dependency>
 			<groupId>net.emforge</groupId>
 			<artifactId>activiti-rest-stubs</artifactId>
-			<version>${project.version}</version>
+			<version>${pom.version}</version>
 		</dependency>
 		
 		<dependency>

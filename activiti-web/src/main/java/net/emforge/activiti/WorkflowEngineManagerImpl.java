@@ -34,7 +34,7 @@ public class WorkflowEngineManagerImpl implements WorkflowEngineManager {
 
 	@Override
 	public String getVersion() {
-		return "5.11";
+		return "5.13";
 	}
 
 }

@@ -175,7 +175,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		try {
 			workflowLogEntry.setAssigneeUserId(Long.valueOf(task.getAssignee()));
 		} catch (NumberFormatException e) {
-			// no-op
+			_log.warn("Assignee id is not of long value.");
 		}
 		workflowLogEntry.setState(task.getName());
 		

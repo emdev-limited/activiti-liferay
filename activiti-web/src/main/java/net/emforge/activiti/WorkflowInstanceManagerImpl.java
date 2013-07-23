@@ -53,6 +53,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
@@ -643,9 +644,9 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 					}
 				}
 				workflowContext = runtimeService.getVariablesLocal(execution.getId());
-				companyId = (Long.valueOf((String) workflowContext.get("companyId"))).longValue();
+				companyId = GetterUtil.getLong(workflowContext.get("companyId"), 0);
 			} else {
-				companyId = (Long.valueOf((String) currentWorkflowContext.get("companyId"))).longValue();
+				companyId = GetterUtil.getLong(currentWorkflowContext.get("companyId"), 0);
 			}
 			
 			inst.setState(getInstanceStates(companyId, processInstanceId));
@@ -661,15 +662,16 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		//Find all active wait states for process regardless of user and set comma separated values
 		List<WorkflowTask> activeTasks = WorkflowTaskManagerUtil.getWorkflowTasksByWorkflowInstance(companyId, null
 				, processInstanceId, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
-		String state = StringPool.BLANK;
+		if (activeTasks == null || activeTasks.isEmpty()) {
+			return StringPool.BLANK;
+		}
+		List<String> statesList = new ArrayList<String>();
 		if (activeTasks != null && activeTasks.size() > 0) {
 			for (WorkflowTask task : activeTasks) {
-				state += task.getName() + StringPool.COMMA_AND_SPACE;
+				statesList.add(task.getName());
 			}
-			//remove trailing comma
-			state = state.substring(0, state.length() - 2);
 		}
-		return state;
+		return StringUtil.merge(statesList);
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(long workflowInstanceId) {
