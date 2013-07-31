@@ -10,18 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import com.liferay.portal.kernel.dao.orm.Disjunction;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
-import com.liferay.portal.util.PortalUtil;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.engine.LiferayTaskService;
 import net.emforge.activiti.log.WorkflowLogEntry;
@@ -47,19 +35,31 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.liferay.portal.kernel.dao.orm.Disjunction;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
+import com.liferay.portal.model.WorkflowInstanceLink;
+import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
+import com.liferay.portal.util.PortalUtil;
 
 @Service(value="workflowInstanceManager")
 public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
@@ -755,11 +755,11 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		workflowInstance.setStartDate(processInstance.getStartTime());
 		workflowInstance.setEndDate(processInstance.getEndTime());
 
+		ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(processDef.getId());
 		if (processInstance.getEndTime() == null) {
 			List<String> activities = runtimeService.getActiveActivityIds(processInstance.getId());
 			// activities contains internal ids - need to be converted into names
 			List<String> activityNames = new ArrayList<String>(activities.size());
-	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(processDef.getId());
 
 			for (String activiti: activities) {
 				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
@@ -771,7 +771,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 //            Map<String, Serializable> workflowContext = getWorkflowContext(processInstance.getProcessInstanceId(), null);
 //	        workflowInstance.setWorkflowContext(workflowContext);
 		} else {
-			workflowInstance.setState(processInstance.getEndActivityId());
+			String endId = processInstance.getEndActivityId();
+			PvmActivity endActivity = readOnlyProcessDefinition.findActivity(endId);
+			if (endActivity != null) {
+				String endName = (String) endActivity.getProperty("name");
+				workflowInstance.setState(StringUtils.isEmpty(endName) ? endId : endName);
+				
+			} else {
+				workflowInstance.setState(endId);
+			}
 
 			// for ended process instance we can restore only limited set of workflow context
 //			workflowInstance.setWorkflowContext(getWorkflowContext(processInstance));
