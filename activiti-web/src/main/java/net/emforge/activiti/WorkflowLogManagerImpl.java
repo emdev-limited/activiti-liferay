@@ -74,15 +74,14 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 	
 	private List<Comment> getCommentsRecursivelyDown(String workflowInstanceId) throws WorkflowException {
 		List<Comment> comments = new ArrayList<Comment>();
+		comments.addAll(taskService.getProcessInstanceComments(workflowInstanceId));
 		List<HistoricProcessInstance> subProcessInstances = historyService.createHistoricProcessInstanceQuery().superProcessInstanceId(workflowInstanceId).list();
 		if (subProcessInstances == null || subProcessInstances.isEmpty()) {
 			return comments;
 		}
 		for (HistoricProcessInstance hpi : subProcessInstances) {
 			comments.addAll(getCommentsRecursivelyDown(hpi.getId()));
-			comments.addAll(taskService.getProcessInstanceComments(hpi.getId()));
 		}
-		comments.addAll(taskService.getProcessInstanceComments(workflowInstanceId));
 		
 		return comments;
 	}
