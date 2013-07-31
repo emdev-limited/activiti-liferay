@@ -167,6 +167,8 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
 		_log.info("Get process instances 3");
+		_log.debug(String.format("Searching instances for definition [%s] and version [%s]" +
+				"with completed state = [%s]", workflowDefinitionName, workflowDefinitionVersion, completed));
 		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
 
 		ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
