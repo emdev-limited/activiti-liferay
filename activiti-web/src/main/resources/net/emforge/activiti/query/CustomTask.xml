@@ -6,7 +6,7 @@
   <!--  Task Search -->
   <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
     ${limitBefore}
-    select distinct RES.*
+    select distinct RES.* ${limitBetween}
     <include refid="customSearchTasksSql"/>
     <!-- comment next because something wrong - if orderBy is null, sql still be with ordey by RES.ID_ asc -->
     <!-- <if test="orderBy != null">
@@ -96,7 +96,7 @@
 
 	<select id="selectTaskByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
 		${limitBefore}
-		select distinct RES.*
+		select distinct RES.* ${limitBetween}
 		<include refid="selectTaskByExtQueryCriteriaSql"/>
 		<if test="orderBy != null">
 			${orderBy}
