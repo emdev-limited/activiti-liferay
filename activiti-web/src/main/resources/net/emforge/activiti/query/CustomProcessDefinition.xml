@@ -7,7 +7,7 @@
   
   	<select id="selectProcessDefinitionByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtProcessDefinitionQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity.processDefinitionResultMap">
 		${limitBefore}
-		select distinct RES.*
+		select distinct RES.* ${limitBetween}
 		<include refid="selectProcessDefinitionByExtQueryCriteriaSql"/>
 		<if test="orderBy != null">
 			${orderBy}
