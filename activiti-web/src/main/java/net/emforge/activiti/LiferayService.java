@@ -36,6 +36,7 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
@@ -76,6 +77,9 @@ import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 public class LiferayService {
 	private static Log _log = LogFactoryUtil.getLog(LiferayService.class);
 	
+	private static String RESERVED_ORG_USER_ROLE 	= "Organization User";
+	private static String RESERVED_SITE_MEMBER_ROLE = "Site Member";
+	
 	public static final String FOLDER_DELIMITER = "/";
 	
 	public String getUserEmail(String userId) {
@@ -109,9 +113,21 @@ public class LiferayService {
 				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
 			} else {
 				// group specific role
-				for (UserGroupRole userGroupRole : 
+				if (roleName.equals(RESERVED_ORG_USER_ROLE) || roleName.equals(RESERVED_SITE_MEMBER_ROLE)) {
+					//add all users of a unit
+					Group group = GroupLocalServiceUtil.getGroup(groupId);
+					if (roleName.equals(RESERVED_ORG_USER_ROLE)) {
+						//get org users
+						users = UserLocalServiceUtil.getOrganizationUsers(group.getClassPK());
+					} else {
+						//get site users
+						users = UserLocalServiceUtil.getGroupUsers(groupId);
+					}
+				} else {
+					for (UserGroupRole userGroupRole : 
 						UserGroupRoleLocalServiceUtil.getUserGroupRolesByGroupAndRole(groupId, role.getRoleId())) {
 					users.add(userGroupRole.getUser());
+				}
 				}
 			}
 			
