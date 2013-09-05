@@ -101,6 +101,24 @@ public class ActivitiLocalServiceUtil {
         return getService().findUniqueUserTaskAssignees(executionIds);
     }
 
+    /**
+    * Returns top level process instances, filtered by active user task.
+    *
+    * @param taskName - user task name
+    * @param assigneeUser - task assignee
+    * @param candidateRole - candidate role for task
+    * @return
+    * @throws SystemException
+    */
+    public static java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService()
+                   .findTopLevelProcessInstances(taskName, assigneeUser,
+            candidateRole);
+    }
+
     public static void clearService() {
         _service = null;
     }

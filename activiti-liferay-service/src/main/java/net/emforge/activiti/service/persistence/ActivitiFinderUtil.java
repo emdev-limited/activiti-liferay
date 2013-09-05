@@ -31,6 +31,19 @@ public class ActivitiFinderUtil {
         return getFinder().findUniqueUserTaskAssignees(execIds);
     }
 
+    public static java.util.List<java.lang.Object[]> findUserTasks(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getFinder().findUserTasks(taskName, assigneeUser, candidateRole);
+    }
+
+    public static java.util.List<java.lang.Object[]> findSuperExecutions(
+        java.util.List<java.lang.String> execIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getFinder().findSuperExecutions(execIds);
+    }
+
     public static ActivitiFinder getFinder() {
         if (_finder == null) {
             _finder = (ActivitiFinder) PortletBeanLocatorUtil.locate(net.emforge.activiti.service.ClpSerializer.getServletContextName(),

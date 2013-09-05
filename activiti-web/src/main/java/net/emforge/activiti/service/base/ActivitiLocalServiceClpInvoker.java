@@ -20,6 +20,8 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes27;
     private String _methodName28;
     private String[] _methodParameterTypes28;
+    private String _methodName29;
+    private String[] _methodParameterTypes29;
 
     public ActivitiLocalServiceClpInvoker() {
         _methodName20 = "getBeanIdentifier";
@@ -51,6 +53,12 @@ public class ActivitiLocalServiceClpInvoker {
         _methodName28 = "findUniqueUserTaskAssignees";
 
         _methodParameterTypes28 = new String[] { "java.util.List" };
+
+        _methodName29 = "findTopLevelProcessInstances";
+
+        _methodParameterTypes29 = new String[] {
+                "java.lang.String", "java.lang.String", "java.lang.String"
+            };
     }
 
     public Object invokeMethod(String name, String[] parameterTypes,
@@ -89,6 +97,12 @@ public class ActivitiLocalServiceClpInvoker {
         if (_methodName28.equals(name) &&
                 Arrays.deepEquals(_methodParameterTypes28, parameterTypes)) {
             return ActivitiLocalServiceUtil.findUniqueUserTaskAssignees((java.util.List<java.lang.String>) arguments[0]);
+        }
+
+        if (_methodName29.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes29, parameterTypes)) {
+            return ActivitiLocalServiceUtil.findTopLevelProcessInstances((java.lang.String) arguments[0],
+                (java.lang.String) arguments[1], (java.lang.String) arguments[2]);
         }
 
         throw new UnsupportedOperationException();

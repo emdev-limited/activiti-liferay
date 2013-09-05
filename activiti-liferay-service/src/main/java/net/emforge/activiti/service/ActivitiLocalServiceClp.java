@@ -19,6 +19,8 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes6;
     private String _methodName7;
     private String[] _methodParameterTypes7;
+    private String _methodName8;
+    private String[] _methodParameterTypes8;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -52,6 +54,12 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         _methodName7 = "findUniqueUserTaskAssignees";
 
         _methodParameterTypes7 = new String[] { "java.util.List" };
+
+        _methodName8 = "findTopLevelProcessInstances";
+
+        _methodParameterTypes8 = new String[] {
+                "java.lang.String", "java.lang.String", "java.lang.String"
+            };
     }
 
     public java.lang.String getBeanIdentifier() {
@@ -243,5 +251,39 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return (java.util.Set) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName8,
+                    _methodParameterTypes8,
+                    new Object[] {
+                        ClpSerializer.translateInput(taskName),
+                        
+                    ClpSerializer.translateInput(assigneeUser),
+                        
+                    ClpSerializer.translateInput(candidateRole)
+                    });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 }

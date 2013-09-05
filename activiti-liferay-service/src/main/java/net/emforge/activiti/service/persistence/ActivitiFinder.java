@@ -16,4 +16,13 @@ public interface ActivitiFinder {
     public java.util.List findUniqueUserTaskAssignees(
         java.util.List<java.lang.String> execIds)
         throws com.liferay.portal.kernel.exception.SystemException;
+
+    public java.util.List<java.lang.Object[]> findUserTasks(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
+    public java.util.List<java.lang.Object[]> findSuperExecutions(
+        java.util.List<java.lang.String> execIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }

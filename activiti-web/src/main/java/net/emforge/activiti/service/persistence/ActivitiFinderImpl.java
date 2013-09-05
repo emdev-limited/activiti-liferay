@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
@@ -23,7 +24,14 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements ActivitiF
 	private static final String FIND_SUB_EXECUTIONS = ActivitiFinderImpl.class.getName() + ".findSubExecutions";
 	private static final String FIND_UNIQUE_TASK_NAMES = ActivitiFinderImpl.class.getName() + ".findUniqueUserTaskNames";
 	private static final String FIND_UNIQUE_TASK_ASSIGNEES = ActivitiFinderImpl.class.getName() + ".findUniqueUserTaskAssignees";
+	private static final String FIND_USER_TASKS = ActivitiFinderImpl.class.getName() + ".findUserTasks";
+	private static final String FIND_SUPER_EXECUTIONS = ActivitiFinderImpl.class.getName() + ".findSuperExecutions";
+	
+	private static final String FIND_USER_TASKS_TASKNAME = " and (t.NAME_ = ?)";
+	private static final String FIND_USER_TASKS_ASSIGNEE = " and (t.ASSIGNEE_ = ?)";
+	private static final String FIND_USER_TASKS_CANDIDATE = " and (l.GROUP_ID_ = ?)";
 
+	@Override
 	public List<String> findTopExecutions(List<String> processInstanceIds) throws SystemException {
         Session session = null;
         try {
@@ -45,6 +53,7 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements ActivitiF
         }     			
 	}
 	
+	@Override
 	public List<String> findSubExecutions(List<String> execIds) throws SystemException {
         Session session = null;
         try {
@@ -66,6 +75,7 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements ActivitiF
         }     			
 	}
 	
+	@Override
 	public List<String> findUniqueUserTaskNames(List<String> execIds) throws SystemException {
         Session session = null;
         try {
@@ -87,6 +97,7 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements ActivitiF
         }     			
 	}
 	
+	@Override
 	public List findUniqueUserTaskAssignees(List<String> execIds) throws SystemException {
         Session session = null;
         try {
@@ -106,5 +117,68 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements ActivitiF
         } finally {
                 closeSession(session);
         }     			
-	}	
+	}
+	
+	@Override
+	public List<Object[]> findUserTasks(String taskName, String assigneeUser, String candidateRole) throws SystemException {
+		
+        Session session = null;
+        try {
+                session = openSession();
+                String sql = CustomSQLUtil.get(FIND_USER_TASKS);
+
+                if (Validator.isNotNull(taskName)) {
+                	sql = sql + FIND_USER_TASKS_TASKNAME;
+                }
+                if (Validator.isNotNull(assigneeUser)) {
+                	sql = sql + FIND_USER_TASKS_ASSIGNEE;
+                }     
+                if (Validator.isNotNull(candidateRole)) {
+                	sql = sql + FIND_USER_TASKS_CANDIDATE;
+                }                 
+                                
+                SQLQuery sqlQuery = session.createSQLQuery(sql);
+                
+                QueryPos qPos = QueryPos.getInstance(sqlQuery);
+                if (Validator.isNotNull(taskName)) {
+                	qPos.add(taskName);
+                }
+                if (Validator.isNotNull(assigneeUser)) {
+                	qPos.add(assigneeUser);
+                }
+                if (Validator.isNotNull(candidateRole)) {
+                	qPos.add(candidateRole);
+                }
+                
+                List<Object[]> itemIds = (List<Object[]>)QueryUtil.list(sqlQuery, getDialect(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);                        
+                
+                return itemIds;                                 
+        } catch (Exception e) {
+                throw new SystemException(e);
+        } finally {
+                closeSession(session);
+        }     			
+	}
+	
+	@Override
+	public List<Object[]> findSuperExecutions(List<String> execIds) throws SystemException {
+        Session session = null;
+        try {
+                session = openSession();
+                String sql = CustomSQLUtil.get(FIND_SUPER_EXECUTIONS);
+
+                String sgrp = "(" + StringUtils.join(execIds, ",") + ")";
+                sql = StringUtil.replace(sql, "[$EXEC_IDS$]", sgrp);                	
+                                
+                SQLQuery sqlQuery = session.createSQLQuery(sql);
+                
+                List<Object[]> itemIds = (List<Object[]>)QueryUtil.list(sqlQuery, getDialect(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);                        
+                
+                return itemIds;                                 
+        } catch (Exception e) {
+                throw new SystemException(e);
+        } finally {
+                closeSession(session);
+        }  		
+	}
 }

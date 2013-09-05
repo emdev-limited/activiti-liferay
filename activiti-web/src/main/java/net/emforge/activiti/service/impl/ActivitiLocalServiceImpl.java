@@ -80,6 +80,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @return
 	 * @throws SystemException
 	 */
+	@Override
 	public List<String> findAllExecutions(List instanceIds) throws SystemException {
 		// convert List<Long> to List<String>
 		ArrayList<String> lstInstIds = new ArrayList<String>(instanceIds.size()); 
@@ -93,9 +94,9 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 		
 		while (true) {
 			List<String> subExecutions = ActivitiFinderUtil.findSubExecutions(topExecutions);
-			if (subExecutions == null || subExecutions.size() == 0)
+			if (subExecutions == null || subExecutions.size() == 0) {
 				break;
-			
+			}
 			allExecutions.addAll(subExecutions);
 			topExecutions = subExecutions;
 		}
@@ -108,6 +109,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @return
 	 * @throws SystemException 
 	 */
+	@Override
 	public Set<String> findUniqueUserTaskNames(List<String> executionIds) throws SystemException {
 		// find uniqie task names
 		List<String> lstTasks = ActivitiFinderUtil.findUniqueUserTaskNames(executionIds);
@@ -122,6 +124,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @param instanceIds
 	 * @return
 	 */	
+	@Override
 	public Set findUniqueUserTaskAssignees(List<String> executionIds) throws SystemException {
 		// find uniqie assignees
 		List lstAsg = ActivitiFinderUtil.findUniqueUserTaskAssignees(executionIds);
@@ -130,4 +133,44 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 
 		return res;		
 	}	
+	
+	/**
+	 * Returns top level process instances, filtered by active user task. 
+	 * @param taskName - user task name
+	 * @param assigneeUser - task assignee
+	 * @param candidateRole - candidate role for task
+	 * @return
+	 * @throws SystemException 
+	 */
+	@Override
+	public List<String> findTopLevelProcessInstances(String taskName, String assigneeUser, String candidateRole) throws SystemException {
+		
+		List<Object[]> lstExec = ActivitiFinderUtil.findUserTasks(taskName, assigneeUser, candidateRole);
+		if (lstExec.size() == 0)
+			return new ArrayList<String>(0);
+		
+		ArrayList<String> lstInstances = new ArrayList<String>(lstExec.size() * 2);
+		extractColumn(lstExec, 1, lstInstances);
+		
+		ArrayList<String> lstSuperExec =  new ArrayList<String>(lstInstances.size());
+		extractColumn(lstExec, 2, lstSuperExec);
+		
+		while (lstSuperExec.size() > 0) {
+			lstExec = ActivitiFinderUtil.findSuperExecutions(lstSuperExec);
+			extractColumn(lstExec, 1, lstInstances);
+			
+			lstSuperExec.clear();
+			extractColumn(lstExec, 2, lstSuperExec);
+		}
+		
+		return lstInstances;
+	}
+	
+	private void extractColumn(List<Object[]> source, int ncol, List dest) {
+		for (Object[] row: source) {
+			if (row[ncol] != null) {
+				dest.add(row[ncol]);		
+			}
+		}
+	}
 }
