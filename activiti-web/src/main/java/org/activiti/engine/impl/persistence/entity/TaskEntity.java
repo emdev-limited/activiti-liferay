@@ -23,11 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.emforge.activiti.LiferayProcessEngineConfiguration;
-
 import org.activiti.engine.ActivitiException;
-import org.activiti.engine.ImplicitListeners;
-import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.DelegateTask;
 import org.activiti.engine.delegate.TaskListener;
@@ -50,6 +46,7 @@ import org.activiti.engine.task.Task;
  * @author Tom Baeyens
  * @author Joram Barrez
  * @author Falko Menge
+ * @author Tijs Rademakers
  */ 
 public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask, Serializable, PersistentObject, HasRevision {
 
@@ -90,6 +87,8 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
   protected boolean isDeleted;
   
   protected String eventName;
+  
+  protected List<VariableInstanceEntity> queryVariables;
   
   public TaskEntity() {
   }
@@ -269,13 +268,13 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
   // task assignment //////////////////////////////////////////////////////////
   
   public IdentityLinkEntity addIdentityLink(String userId, String groupId, String type) {
-    IdentityLinkEntity identityLinkEntity = IdentityLinkEntity.createAndInsert();
+    IdentityLinkEntity identityLinkEntity = new IdentityLinkEntity();
     getIdentityLinks().add(identityLinkEntity);
     identityLinkEntity.setTask(this);
     identityLinkEntity.setUserId(userId);
     identityLinkEntity.setGroupId(groupId);
     identityLinkEntity.setType(type);
-    
+    identityLinkEntity.insert();
     if (userId != null && processInstanceId != null) {
       getProcessInstance().involveUser(userId, IdentityLinkType.PARTICIPANT);
     }
@@ -291,8 +290,8 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
     for (IdentityLinkEntity identityLink: identityLinks) {
       Context
         .getCommandContext()
-        .getDbSqlSession()
-        .delete(identityLink);
+        .getIdentityLinkEntityManager()
+        .deleteIdentityLink(identityLink, true);
     }
   }
   
@@ -381,7 +380,7 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
   }
   
   public String toString() {
-    return "Task["+id+"]";
+    return "Task[id=" + id + ", name=" + name + "]";
   }
   
   // special setters //////////////////////////////////////////////////////////
@@ -520,11 +519,6 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
        this.taskDefinitionKey = taskDefinitionKey;
   }       
 
-  /**
-   * Changed by emdev to implements "implicit listeners" feature. 
-   * Implicit listeners fires after explicet ones. 
-   * @param taskEventName
-   */
   public void fireEvent(String taskEventName) {
     TaskDefinition taskDefinition = getTaskDefinition();
     if (taskDefinition != null) {
@@ -545,28 +539,6 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
         }
       }
     }
-    
-	// fire implicit listeners
-	ProcessEngineConfiguration cfg = Context.getProcessEngineConfiguration();
-	if (!(cfg instanceof ImplicitListeners))
-		return;
-	
-	List<TaskListener> taskEventListeners = ((ImplicitListeners) cfg).getImplicitUserTaskListenersFor(taskEventName);
-      if (taskEventListeners != null) {
-        for (TaskListener taskListener : taskEventListeners) {
-          ExecutionEntity execution = getExecution();
-          if (execution != null) {
-            setEventName(taskEventName);
-          }
-          try {
-            Context.getProcessEngineConfiguration()
-              .getDelegateInterceptor()
-              .handleInvocation(new TaskListenerInvocation(taskListener, (DelegateTask)this));
-          }catch (Exception e) {
-            throw new ActivitiException("Exception while invoking TaskListener: "+e.getMessage(), e);
-          }
-        }
-      }    
   }
   
   @Override
@@ -727,5 +699,33 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
   }
   public boolean isSuspended() {
     return suspensionState == SuspensionState.SUSPENDED.getStateCode();
+  }
+  public Map<String, Object> getTaskLocalVariables() {
+    Map<String, Object> variables = new HashMap<String, Object>();
+    if (queryVariables != null) {
+      for (VariableInstanceEntity variableInstance: queryVariables) {
+        if (variableInstance.getId() != null && variableInstance.getTaskId() != null) {
+          variables.put(variableInstance.getName(), variableInstance.getValue());
+        }
+      }
+    }
+    return variables;
+  }
+  public Map<String, Object> getProcessVariables() {
+    Map<String, Object> variables = new HashMap<String, Object>();
+    if (queryVariables != null) {
+      for (VariableInstanceEntity variableInstance: queryVariables) {
+        if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {
+          variables.put(variableInstance.getName(), variableInstance.getValue());
+        }
+      }
+    }
+    return variables;
+  }
+  public List<VariableInstanceEntity> getQueryVariables() {
+    return queryVariables;
+  }
+  public void setQueryVariables(List<VariableInstanceEntity> queryVariables) {
+    this.queryVariables = queryVariables;
   }
 }
