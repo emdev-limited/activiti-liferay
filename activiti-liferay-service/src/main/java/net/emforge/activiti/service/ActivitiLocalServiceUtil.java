@@ -64,14 +64,29 @@ public class ActivitiLocalServiceUtil {
     }
 
     /**
+    * Returns all execution ids, including sub-process executions
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public static java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findAllExecutions(instanceIds);
+    }
+
+    /**
     * Returns active UserTask names for selected instances.
     *
     * @param instanceIds
     * @return
+    * @throws SystemException
     */
     public static java.util.Set<java.lang.String> findUniqueUserTaskNames(
-        java.util.List<java.lang.Long> instanceIds) {
-        return getService().findUniqueUserTaskNames(instanceIds);
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findUniqueUserTaskNames(executionIds);
     }
 
     /**
@@ -80,9 +95,10 @@ public class ActivitiLocalServiceUtil {
     * @param instanceIds
     * @return
     */
-    public static java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
-        java.util.List<java.lang.Long> instanceIds) {
-        return getService().findUniqueUserTaskAssignees(instanceIds);
+    public static java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findUniqueUserTaskAssignees(executionIds);
     }
 
     public static void clearService() {

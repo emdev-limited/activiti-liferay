@@ -17,6 +17,7 @@ import com.liferay.portal.service.persistence.ResourcePersistence;
 import com.liferay.portal.service.persistence.UserPersistence;
 
 import net.emforge.activiti.service.ActivitiLocalService;
+import net.emforge.activiti.service.persistence.ActivitiFinder;
 
 import javax.sql.DataSource;
 
@@ -36,6 +37,8 @@ public abstract class ActivitiLocalServiceBaseImpl extends BaseLocalServiceImpl
     implements ActivitiLocalService, IdentifiableBean {
     @BeanReference(type = ActivitiLocalService.class)
     protected ActivitiLocalService activitiLocalService;
+    @BeanReference(type = ActivitiFinder.class)
+    protected ActivitiFinder activitiFinder;
     @BeanReference(type = CounterLocalService.class)
     protected CounterLocalService counterLocalService;
     @BeanReference(type = ResourceLocalService.class)
@@ -76,6 +79,24 @@ public abstract class ActivitiLocalServiceBaseImpl extends BaseLocalServiceImpl
     public void setActivitiLocalService(
         ActivitiLocalService activitiLocalService) {
         this.activitiLocalService = activitiLocalService;
+    }
+
+    /**
+     * Returns the activiti finder.
+     *
+     * @return the activiti finder
+     */
+    public ActivitiFinder getActivitiFinder() {
+        return activitiFinder;
+    }
+
+    /**
+     * Sets the activiti finder.
+     *
+     * @param activitiFinder the activiti finder
+     */
+    public void setActivitiFinder(ActivitiFinder activitiFinder) {
+        this.activitiFinder = activitiFinder;
     }
 
     /**

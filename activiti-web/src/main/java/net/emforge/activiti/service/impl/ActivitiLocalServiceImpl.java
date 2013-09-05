@@ -1,9 +1,11 @@
 package net.emforge.activiti.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -14,6 +16,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl;
+import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
 import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
 import net.emforge.activiti.spring.ApplicationContextProvider;
 
@@ -35,6 +38,9 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	
 	@Autowired
 	TaskService taskService;
+	
+	@Autowired
+	RuntimeService runtimeService;	
 	
     /*
      * NOTE FOR DEVELOPERS:
@@ -69,14 +75,47 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	}
 	
 	/**
+	 * Returns all execution ids, including sub-process executions
+	 * @param instanceIds
+	 * @return
+	 * @throws SystemException
+	 */
+	public List<String> findAllExecutions(List instanceIds) throws SystemException {
+		// convert List<Long> to List<String>
+		ArrayList<String> lstInstIds = new ArrayList<String>(instanceIds.size()); 
+		for (Object instanceId: instanceIds)
+			lstInstIds.add(instanceId.toString());
+		
+		// find all executions, including sub-executions
+		List<String> topExecutions = ActivitiFinderUtil.findTopExecutions(lstInstIds);
+		ArrayList<String> allExecutions = new ArrayList<String>(topExecutions.size()*2);
+		allExecutions.addAll(topExecutions);
+		
+		while (true) {
+			List<String> subExecutions = ActivitiFinderUtil.findSubExecutions(topExecutions);
+			if (subExecutions == null || subExecutions.size() == 0)
+				break;
+			
+			allExecutions.addAll(subExecutions);
+			topExecutions = subExecutions;
+		}
+		return allExecutions;
+	}
+	
+	/**
 	 * Returns active UserTask names for selected instances.
 	 * @param instanceIds
 	 * @return
+	 * @throws SystemException 
 	 */
-	public Set<String> findUniqueUserTaskNames(List<Long> instanceIds) 
+	public Set<String> findUniqueUserTaskNames(List<String> executionIds) throws SystemException 
 	{
-		// TODO
-		return new HashSet<String>(0);
+		// find uniqie task names
+		List<String> lstTasks = ActivitiFinderUtil.findUniqueUserTaskNames(executionIds);
+		HashSet<String> res = new HashSet<String>(lstTasks.size());
+		res.addAll(lstTasks);
+
+		return res;
 	}
 
 	/**
@@ -84,9 +123,13 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @param instanceIds
 	 * @return
 	 */	
-	public Set<String> findUniqueUserTaskAssignees(List<Long> instanceIds) 
+	public Set findUniqueUserTaskAssignees(List<String> executionIds) throws SystemException  
 	{
-		// TODO
-		return new HashSet<String>(0);
+		// find uniqie assignees
+		List lstAsg = ActivitiFinderUtil.findUniqueUserTaskAssignees(executionIds);
+		HashSet res = new HashSet(lstAsg.size());
+		res.addAll(lstAsg);
+
+		return res;		
 	}	
 }

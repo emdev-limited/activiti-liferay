@@ -59,13 +59,26 @@ public interface ActivitiLocalService extends BaseLocalService,
             com.liferay.portal.kernel.exception.SystemException;
 
     /**
+    * Returns all execution ids, including sub-process executions
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
+    /**
     * Returns active UserTask names for selected instances.
     *
     * @param instanceIds
     * @return
+    * @throws SystemException
     */
     public java.util.Set<java.lang.String> findUniqueUserTaskNames(
-        java.util.List<java.lang.Long> instanceIds);
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
 
     /**
     * Returns active UserTask assignees for selected instances.
@@ -73,6 +86,7 @@ public interface ActivitiLocalService extends BaseLocalService,
     * @param instanceIds
     * @return
     */
-    public java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
-        java.util.List<java.lang.Long> instanceIds);
+    public java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }
