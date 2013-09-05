@@ -21,15 +21,18 @@ public class CustomSequenceFlowParseHandler extends SequenceFlowParseHandler {
 		ActivityImpl sourceActivity = scope.findActivity(sequenceFlow.getSourceRef());
 	    ActivityImpl destinationActivity = scope.findActivity(sequenceFlow.getTargetRef());
 	    
-	    if (sourceActivity != null && sourceActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior) {
+	    if (sourceActivity != null && sourceActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior && 
+	    		sourceActivity.getOutgoingTransitions().size() > 1) {
 	    	if (StringUtils.isEmpty(sequenceFlow.getConditionExpression())) {
 	    		//Turn flow name into expression
 	    		TransitionImpl transition = bpmnParse.getSequenceFlows().get(sequenceFlow.getId());
-	    		String expression = "${outputTransition == \"" + sequenceFlow.getName() + "\"}";
-	    		sequenceFlow.setConditionExpression(expression);
-	    		Condition expressionCondition = new UelExpressionCondition(bpmnParse.getExpressionManager().createExpression(expression));
-	            transition.setProperty(PROPERTYNAME_CONDITION_TEXT, expression);
-	            transition.setProperty(PROPERTYNAME_CONDITION, expressionCondition);
+	    		if (sequenceFlow.getName() != null) {
+	    			String expression = "${outputTransition == \"" + sequenceFlow.getName() + "\"}";
+		    		sequenceFlow.setConditionExpression(expression);
+		    		Condition expressionCondition = new UelExpressionCondition(bpmnParse.getExpressionManager().createExpression(expression));
+		            transition.setProperty(PROPERTYNAME_CONDITION_TEXT, expression);
+		            transition.setProperty(PROPERTYNAME_CONDITION, expressionCondition);
+	    		}
 	            createExecutionListenersOnTransition(bpmnParse, sequenceFlow.getExecutionListeners(), transition);
 	            FormPostProcessorThreadLocalUtil.putToThreadLocal(null, sourceActivity, sequenceFlow.getName());
 	    	}	
