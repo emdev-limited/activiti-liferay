@@ -520,6 +520,11 @@ public class TaskEntity extends VariableScopeImpl implements Task, DelegateTask,
        this.taskDefinitionKey = taskDefinitionKey;
   }       
 
+  /**
+   * Changed by emdev to implements "implicit listeners" feature. 
+   * Implicit listeners fires after explicet ones. 
+   * @param taskEventName
+   */
   public void fireEvent(String taskEventName) {
     TaskDefinition taskDefinition = getTaskDefinition();
     if (taskDefinition != null) {

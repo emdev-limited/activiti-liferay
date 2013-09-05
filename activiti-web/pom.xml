@@ -114,13 +114,6 @@
 			<artifactId>activiti-engine</artifactId>
 			<version>${activiti.version}</version>
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>org.activiti</groupId>
-			<artifactId>activiti-cdi</artifactId>
-			<version>${activiti-cdi.version}</version>
-		</dependency>
-		-->		
 		<dependency>
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-spring</artifactId>
