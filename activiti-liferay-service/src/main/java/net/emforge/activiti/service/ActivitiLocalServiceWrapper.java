@@ -59,6 +59,28 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     }
 
     /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.Long> instanceIds) {
+        return _activitiLocalService.findUniqueUserTaskNames(instanceIds);
+    }
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
+        java.util.List<java.lang.Long> instanceIds) {
+        return _activitiLocalService.findUniqueUserTaskAssignees(instanceIds);
+    }
+
+    /**
      * @deprecated Renamed to {@link #getWrappedService}
      */
     public ActivitiLocalService getWrappedActivitiLocalService() {

@@ -63,6 +63,28 @@ public class ActivitiLocalServiceUtil {
         return getService().test(s);
     }
 
+    /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public static java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.Long> instanceIds) {
+        return getService().findUniqueUserTaskNames(instanceIds);
+    }
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public static java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
+        java.util.List<java.lang.Long> instanceIds) {
+        return getService().findUniqueUserTaskAssignees(instanceIds);
+    }
+
     public static void clearService() {
         _service = null;
     }

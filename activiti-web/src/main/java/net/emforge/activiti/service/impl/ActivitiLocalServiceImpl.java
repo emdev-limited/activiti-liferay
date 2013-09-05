@@ -1,5 +1,11 @@
 package net.emforge.activiti.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.activiti.engine.TaskService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.liferay.portal.kernel.exception.PortalException;
@@ -26,6 +32,10 @@ import net.emforge.activiti.spring.ApplicationContextProvider;
  * @see net.emforge.activiti.service.ActivitiLocalServiceUtil
  */
 public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
+	
+	@Autowired
+	TaskService taskService;
+	
     /*
      * NOTE FOR DEVELOPERS:
      *
@@ -57,4 +67,26 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
+	
+	/**
+	 * Returns active UserTask names for selected instances.
+	 * @param instanceIds
+	 * @return
+	 */
+	public Set<String> findUniqueUserTaskNames(List<Long> instanceIds) 
+	{
+		// TODO
+		return new HashSet<String>(0);
+	}
+
+	/**
+	 * Returns active UserTask assignees for selected instances.
+	 * @param instanceIds
+	 * @return
+	 */	
+	public Set<String> findUniqueUserTaskAssignees(List<Long> instanceIds) 
+	{
+		// TODO
+		return new HashSet<String>(0);
+	}	
 }

@@ -57,4 +57,22 @@ public interface ActivitiLocalService extends BaseLocalService,
     public java.lang.String test(java.lang.String s)
         throws com.liferay.portal.kernel.exception.PortalException,
             com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.Long> instanceIds);
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
+        java.util.List<java.lang.Long> instanceIds);
 }

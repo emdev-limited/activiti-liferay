@@ -13,6 +13,10 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes3;
     private String _methodName4;
     private String[] _methodParameterTypes4;
+    private String _methodName5;
+    private String[] _methodParameterTypes5;
+    private String _methodName6;
+    private String[] _methodParameterTypes6;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -34,6 +38,14 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         _methodName4 = "test";
 
         _methodParameterTypes4 = new String[] { "java.lang.String" };
+
+        _methodName5 = "findUniqueUserTaskNames";
+
+        _methodParameterTypes5 = new String[] { "java.util.List" };
+
+        _methodName6 = "findUniqueUserTaskAssignees";
+
+        _methodParameterTypes6 = new String[] { "java.util.List" };
     }
 
     public java.lang.String getBeanIdentifier() {
@@ -144,5 +156,49 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return (java.lang.String) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.Long> instanceIds) {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName5,
+                    _methodParameterTypes5,
+                    new Object[] { ClpSerializer.translateInput(instanceIds) });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.Set<java.lang.String>) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.Set<java.lang.String> findUniqueUserTaskAssignees(
+        java.util.List<java.lang.Long> instanceIds) {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName6,
+                    _methodParameterTypes6,
+                    new Object[] { ClpSerializer.translateInput(instanceIds) });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.Set<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 }
