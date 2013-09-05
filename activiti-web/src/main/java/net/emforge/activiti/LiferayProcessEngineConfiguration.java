@@ -5,13 +5,18 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import net.emforge.activiti.engine.impl.LiferayTaskServiceImpl;
 import net.emforge.activiti.hook.LiferayBpmnParser;
 
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.ImplicitListeners;
+import org.activiti.engine.delegate.TaskListener;
 import org.activiti.engine.impl.bpmn.deployer.BpmnDeployer;
 import org.activiti.engine.impl.bpmn.parser.BpmnParseHandlers;
 import org.activiti.engine.impl.bpmn.parser.BpmnParser;
@@ -48,10 +53,14 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
  * @author Oliver Teichmann, PRODYNA AG
  *
  */
-public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfiguration {
+public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfiguration
+	implements ImplicitListeners
+{
 	private static Log _log = LogFactoryUtil.getLog(LiferayProcessEngineConfiguration.class);
 	
 	public static final String EXT_MYBATIS_MAPPING_FILE = "activiti-liferay.ibatis.mem.conf.xml";
+	
+	public Map<String, List<TaskListener>> implicitUserTaskListeners = new HashMap<String, List<TaskListener>>(0);
 	
 	public LiferayProcessEngineConfiguration() {
 		//replace taskService with own implementation 
@@ -178,4 +187,18 @@ public class LiferayProcessEngineConfiguration extends SpringProcessEngineConfig
 		}
 	}
 
+	public List<TaskListener> getImplicitUserTaskListenersFor(String taskEventName) 
+	{
+		List<TaskListener> lst = implicitUserTaskListeners.get(taskEventName);
+		return lst;
+	}
+
+	public Map<String, List<TaskListener>> getImplicitUserTaskListeners() {
+		return implicitUserTaskListeners;
+	}
+
+	public void setImplicitUserTaskListeners(
+			Map<String, List<TaskListener>> implicitUserTaskListeners) {
+		this.implicitUserTaskListeners = implicitUserTaskListeners;
+	}
 }
