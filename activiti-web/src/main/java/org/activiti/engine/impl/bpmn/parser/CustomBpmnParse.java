@@ -56,7 +56,7 @@ public class CustomBpmnParse extends BpmnParse {
 				for (FormPostProcessorWrapper form : forms) {
 					List<String> outpuTransitionNames = form.getOutputTransitionNames();
 					if (form.getSourceActivity() != null && outpuTransitionNames != null 
-							&& !outpuTransitionNames.isEmpty()) {
+							&& !outpuTransitionNames.isEmpty() && outpuTransitionNames.size() > 1) {
 						try {
 							ActivityImpl userTaskActivity = form.getSourceActivity();
 							//get user task
