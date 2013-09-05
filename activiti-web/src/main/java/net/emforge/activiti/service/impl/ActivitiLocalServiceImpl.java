@@ -108,8 +108,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @return
 	 * @throws SystemException 
 	 */
-	public Set<String> findUniqueUserTaskNames(List<String> executionIds) throws SystemException 
-	{
+	public Set<String> findUniqueUserTaskNames(List<String> executionIds) throws SystemException {
 		// find uniqie task names
 		List<String> lstTasks = ActivitiFinderUtil.findUniqueUserTaskNames(executionIds);
 		HashSet<String> res = new HashSet<String>(lstTasks.size());
@@ -123,8 +122,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 	 * @param instanceIds
 	 * @return
 	 */	
-	public Set findUniqueUserTaskAssignees(List<String> executionIds) throws SystemException  
-	{
+	public Set findUniqueUserTaskAssignees(List<String> executionIds) throws SystemException {
 		// find uniqie assignees
 		List lstAsg = ActivitiFinderUtil.findUniqueUserTaskAssignees(executionIds);
 		HashSet res = new HashSet(lstAsg.size());
