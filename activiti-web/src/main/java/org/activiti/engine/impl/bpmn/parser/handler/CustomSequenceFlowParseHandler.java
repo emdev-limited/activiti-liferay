@@ -21,20 +21,19 @@ public class CustomSequenceFlowParseHandler extends SequenceFlowParseHandler {
 		ActivityImpl sourceActivity = scope.findActivity(sequenceFlow.getSourceRef());
 	    ActivityImpl destinationActivity = scope.findActivity(sequenceFlow.getTargetRef());
 	    
-	    if (sourceActivity != null && sourceActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior && 
-	    		sourceActivity.getOutgoingTransitions().size() > 1) {
+	    if (sourceActivity != null && sourceActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior) {
 	    	if (StringUtils.isEmpty(sequenceFlow.getConditionExpression())) {
 	    		//Turn flow name into expression
 	    		TransitionImpl transition = bpmnParse.getSequenceFlows().get(sequenceFlow.getId());
-	    		if (sequenceFlow.getName() != null) {
+	    		if (!StringUtils.isEmpty(sequenceFlow.getName())) {
 	    			String expression = "${outputTransition == \"" + sequenceFlow.getName() + "\"}";
 		    		sequenceFlow.setConditionExpression(expression);
 		    		Condition expressionCondition = new UelExpressionCondition(bpmnParse.getExpressionManager().createExpression(expression));
 		            transition.setProperty(PROPERTYNAME_CONDITION_TEXT, expression);
 		            transition.setProperty(PROPERTYNAME_CONDITION, expressionCondition);
+		            createExecutionListenersOnTransition(bpmnParse, sequenceFlow.getExecutionListeners(), transition);
+		            FormPostProcessorThreadLocalUtil.putToThreadLocal(null, sourceActivity, sequenceFlow.getName());
 	    		}
-	            createExecutionListenersOnTransition(bpmnParse, sequenceFlow.getExecutionListeners(), transition);
-	            FormPostProcessorThreadLocalUtil.putToThreadLocal(null, sourceActivity, sequenceFlow.getName());
 	    	}	
 	    }
 	    
