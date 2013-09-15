@@ -44,6 +44,7 @@ import org.activiti.rest.api.process.ProcessInstanceDiagramResource;
 import org.activiti.rest.api.process.ProcessInstanceHighLightsResource;
 import org.activiti.rest.api.process.ProcessInstanceResource;
 import org.activiti.rest.api.process.ProcessInstanceSignalExecutionResource;
+import org.activiti.rest.api.process.ProcessInstanceTaskResource;
 import org.activiti.rest.api.process.ProcessInstancesResource;
 import org.activiti.rest.api.process.StartProcessInstanceResource;
 import org.activiti.rest.api.process.WorkflowLogResource;
@@ -76,16 +77,7 @@ import org.restlet.routing.Router;
 import org.restlet.security.ChallengeAuthenticator;
 import org.restlet.security.SecretVerifier;
 import org.restlet.security.Verifier;
-import org.restlet.service.Service;
 import org.restlet.service.StatusService;
-import org.activiti.rest.api.process.ProcessInstanceTaskResource;
-import org.activiti.rest.editor.model.ModelAddResource;
-import org.activiti.rest.editor.model.ModelDeleteResource;
-import org.activiti.rest.editor.model.ModelDiagramResource;
-import org.activiti.rest.editor.model.ModelEditorJsonRestResource;
-import org.activiti.rest.editor.model.ModelSaveRestResource;
-import org.activiti.rest.editor.model.ModelSvgResource;
-import org.activiti.rest.editor.model.ModelsResource;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -196,14 +188,6 @@ public class ActivitiRestApplication extends Application {
     router.attach("/management/tables", TablesResource.class);
     router.attach("/management/table/{tableName}", TableResource.class);
     router.attach("/management/table/{tableName}/data", TableDataResource.class);
-    
-    router.attach("/model/{modelId}/json", ModelEditorJsonRestResource.class);
-    router.attach("/model/{modelId}/diagram", ModelDiagramResource.class);
-    router.attach("/model/{modelId}/svg", ModelSvgResource.class);
-    router.attach("/model/{modelId}/save", ModelSaveRestResource.class);
-    router.attach("/model/{companyId}/{modelId}/delete", ModelDeleteResource.class);
-    router.attach("/model", ModelAddResource.class);
-    router.attach("/models", ModelsResource.class);
     
     authenticator.setNext(router);
     
