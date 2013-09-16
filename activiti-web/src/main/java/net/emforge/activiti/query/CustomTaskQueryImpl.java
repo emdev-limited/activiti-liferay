@@ -30,6 +30,8 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	protected Long companyId;
 	
 	protected boolean orderByDueDate;
+	protected boolean orderByCreateDate;
+	
 	
 	public CustomTaskQueryImpl(CommandContext commandContext) {
 		super(commandContext);
@@ -99,6 +101,10 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	public CustomTaskQuery orderByDueDate() {
 		orderByDueDate = true;
 		return orderBy(new TaskQueryProperty("RES.DUE_DATE_"));
+	}
+	public CustomTaskQuery orderByCreateDate() {
+		orderByCreateDate = true;
+		return orderBy(new TaskQueryProperty("RES.CREATE_TIME_"));
 	}
 	
 	@Override
@@ -173,5 +179,9 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	
 	public boolean isOrderByDueDate() {
 		return orderByDueDate;
+	}
+	
+	public boolean isOrderByCreateDate() {
+		return orderByCreateDate;
 	}
 }
