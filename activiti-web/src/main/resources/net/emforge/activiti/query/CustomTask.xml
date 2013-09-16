@@ -8,10 +8,9 @@
     ${limitBefore}
     select distinct RES.* ${limitBetween}
     <include refid="customSearchTasksSql"/>
-    <!-- comment next because something wrong - if orderBy is null, sql still be with ordey by RES.ID_ asc -->
-    <!-- <if test="orderBy != null">
+    <if test="orderBy != null">
       ${orderBy}
-    </if> -->
+    </if>
     ${limitAfter}
   </select>
 
