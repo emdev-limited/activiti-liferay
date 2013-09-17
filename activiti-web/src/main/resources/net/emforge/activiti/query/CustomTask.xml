@@ -36,26 +36,26 @@
 	         
 	    </if> -->
 	    
-	    <if test="groupId != null || companyId != null || entryClassPKs != null">
-	    	inner join ACT_RU_VARIABLE V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_)
+	    <if test="groupId != null">
+	    	inner join ACT_RU_VARIABLE V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId})
 	     </if>
 	    
-	    <if test="groupId != null">
-    	   and V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId}
-	    </if>
-	    
 	    <if test="companyId != null">
-    	   and V1.NAME_= 'companyId' and V1.TEXT_ = #{companyId}
+    	   inner join ACT_RU_VARIABLE V2 on (V2.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V2.NAME_= 'companyId' and V2.TEXT_ = #{companyId})
 	    </if>
 	    
 	    <if test="entryClassPKs != null">
-    	   and V1.NAME_= 'entryClassPK' and V1.TEXT_ in 
+    	   inner join ACT_RU_VARIABLE V3 on (V3.PROC_INST_ID_ = RES.PROC_INST_ID_) and V3.NAME_= 'entryClassPK' and V3.TEXT_ in 
     	   <foreach item="entryClassPKItem" index="index" collection="entryClassPKs" 
 	                     open="(" separator="," close=")">
 	             #{entryClassPKItem}
 			</foreach>
 	    </if>
-	    	    
+	    
+	    <if test="entryClassName != null">
+    	   inner join ACT_RU_VARIABLE V4 on (V4.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V4.NAME_= 'entryClassName' and V4.TEXT_ = #{entryClassName})
+	    </if>
+	    
     	<where>
 	      <if test="nameLike != null">
 	        and lower(RES.NAME_) like #{nameLike}
@@ -85,11 +85,6 @@
 	          </if>
 	        )
 	      </if>
-	      
-	      <if test="entryClassName != null">
-	    	  <!-- and V1.TEXT_ like  #{entryClassName} -->
-	    	  and V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId}
-			</if>
 	    </where>
 	</sql>
 
