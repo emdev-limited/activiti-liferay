@@ -46,6 +46,16 @@
 			</list>
 		</property>
 		<property name="bpmnParseFactory" ref="customBpmnParseFactory" />
+		<property name="implicitUserTaskListeners">
+		    <map>
+		        <entry key="complete">
+		            <list>
+		                <bean class="net.emforge.activiti.task.SaveAssigneeListener">                 
+		                </bean>
+		            </list>
+		        </entry>
+		    </map>
+		</property>		
 	</bean>
 	
 	<bean id="customServiceTaskParseHandler" class="org.activiti.engine.impl.bpmn.parser.handler.CustomServiceTaskParseHandler">

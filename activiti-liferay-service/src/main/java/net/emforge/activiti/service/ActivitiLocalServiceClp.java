@@ -13,6 +13,14 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes3;
     private String _methodName4;
     private String[] _methodParameterTypes4;
+    private String _methodName5;
+    private String[] _methodParameterTypes5;
+    private String _methodName6;
+    private String[] _methodParameterTypes6;
+    private String _methodName7;
+    private String[] _methodParameterTypes7;
+    private String _methodName8;
+    private String[] _methodParameterTypes8;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -34,6 +42,24 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         _methodName4 = "test";
 
         _methodParameterTypes4 = new String[] { "java.lang.String" };
+
+        _methodName5 = "findAllExecutions";
+
+        _methodParameterTypes5 = new String[] { "java.util.List" };
+
+        _methodName6 = "findUniqueUserTaskNames";
+
+        _methodParameterTypes6 = new String[] { "java.util.List" };
+
+        _methodName7 = "findUniqueUserTaskAssignees";
+
+        _methodParameterTypes7 = new String[] { "java.util.List" };
+
+        _methodName8 = "findTopLevelProcessInstances";
+
+        _methodParameterTypes8 = new String[] {
+                "java.lang.String", "java.lang.String", "java.lang.String"
+            };
     }
 
     public java.lang.String getBeanIdentifier() {
@@ -144,5 +170,120 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return (java.lang.String) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName5,
+                    _methodParameterTypes5,
+                    new Object[] { ClpSerializer.translateInput(instanceIds) });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName6,
+                    _methodParameterTypes6,
+                    new Object[] { ClpSerializer.translateInput(executionIds) });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.Set<java.lang.String>) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName7,
+                    _methodParameterTypes7,
+                    new Object[] { ClpSerializer.translateInput(executionIds) });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.Set) ClpSerializer.translateOutput(returnObj);
+    }
+
+    public java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName8,
+                    _methodParameterTypes8,
+                    new Object[] {
+                        ClpSerializer.translateInput(taskName),
+                        
+                    ClpSerializer.translateInput(assigneeUser),
+                        
+                    ClpSerializer.translateInput(candidateRole)
+                    });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 }

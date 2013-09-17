@@ -57,4 +57,50 @@ public interface ActivitiLocalService extends BaseLocalService,
     public java.lang.String test(java.lang.String s)
         throws com.liferay.portal.kernel.exception.PortalException,
             com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Returns all execution ids, including sub-process executions
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Returns top level process instances, filtered by active user task.
+    *
+    * @param taskName - user task name
+    * @param assigneeUser - task assignee
+    * @param candidateRole - candidate role for task
+    * @return
+    * @throws SystemException
+    */
+    public java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }

@@ -6,7 +6,7 @@
   <!--  Task Search -->
   <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="taskResultMap">
   	${limitBefore}
-    select distinct T.*
+    select distinct T.* ${limitBetween}
     <include refid="customSearchTasksSql"/>
     <if test="orderBy != null">
       order by ${orderBy}
@@ -87,7 +87,7 @@
   <!--  Historic Task Search -->
   <select id="customSearchHistoricTaskInstance" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultMap="historicTaskInstanceResultMap">
     ${limitBefore}
-    select *
+    select * ${limitBetween}
     <include refid="customSearchHistoricTaskInstanceSql"/>
     <if test="orderBy != null">
       order by ${orderBy}

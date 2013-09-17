@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
@@ -101,25 +102,28 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 ZipInputStream zipInputStream = new ZipInputStream(bais);
-                try {
-                	deployment = repositoryService.createDeployment().name(strTitle + ".bar")
-                			.addZipInputStream(zipInputStream)
-                    		.category(String.valueOf(companyId)).deploy();
-                	isBar = true;
-                } catch (ActivitiException ae) {
-                    //save exception
-                    activitiException = ae;
+                ZipEntry zipEntry = zipInputStream.getNextEntry();
+                if (zipEntry != null) {
+	                try {
+	                	deployment = repositoryService.createDeployment().name(strTitle + ".bar")
+	                			.addZipInputStream(zipInputStream)
+	                    		.category(String.valueOf(companyId)).deploy();
+	                	isBar = true;
+	                } catch (ActivitiException ae) {
+	                    //save exception
+	                    activitiException = ae;
+	                }
                 }
             }
             
             if (deployment == null) {
                 if (activitiException != null) {
                     _log.error("Unable to deploy worfklow definition", activitiException);
+                    throw new WorkflowException("Cannot deploy definition", activitiException);
                 } else {
                     _log.error("No workflows found");
+                    throw new WorkflowException("Cannot deploy definition");
                 }
-                
-                throw new WorkflowException("Cannot deploy definition");
             }
 
             ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
@@ -236,7 +240,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	
     @Override
     public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
-        _log.info("try to get workflow definition, name: " + name + " , version " + version);
+        _log.debug("try to get workflow definition, name: " + name + " , version " + version);
         
         ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, name, version);
         if (def == null) {

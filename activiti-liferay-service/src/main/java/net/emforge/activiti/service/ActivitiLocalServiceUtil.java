@@ -63,6 +63,62 @@ public class ActivitiLocalServiceUtil {
         return getService().test(s);
     }
 
+    /**
+    * Returns all execution ids, including sub-process executions
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public static java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findAllExecutions(instanceIds);
+    }
+
+    /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public static java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findUniqueUserTaskNames(executionIds);
+    }
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public static java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findUniqueUserTaskAssignees(executionIds);
+    }
+
+    /**
+    * Returns top level process instances, filtered by active user task.
+    *
+    * @param taskName - user task name
+    * @param assigneeUser - task assignee
+    * @param candidateRole - candidate role for task
+    * @return
+    * @throws SystemException
+    */
+    public static java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService()
+                   .findTopLevelProcessInstances(taskName, assigneeUser,
+            candidateRole);
+    }
+
     public static void clearService() {
         _service = null;
     }

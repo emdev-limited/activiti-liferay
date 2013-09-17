@@ -3,24 +3,13 @@ package net.emforge.activiti;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import com.liferay.portal.kernel.dao.orm.Disjunction;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
-import com.liferay.portal.util.PortalUtil;
 import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
 import net.emforge.activiti.engine.LiferayTaskService;
 import net.emforge.activiti.log.WorkflowLogEntry;
@@ -46,15 +35,31 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.liferay.portal.kernel.dao.orm.Disjunction;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
+import com.liferay.portal.kernel.workflow.WorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
+import com.liferay.portal.model.WorkflowInstanceLink;
+import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
+import com.liferay.portal.util.PortalUtil;
 
 @Service(value="workflowInstanceManager")
 public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
@@ -122,7 +127,9 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			HistoricProcessInstance hpi = historyService.createHistoricProcessInstanceQuery().processInstanceId(procId).singleResult();
 
 			if (hpi != null) {
-				return getHistoryWorkflowInstance(hpi);
+				WorkflowInstanceImpl completedInstance = (WorkflowInstanceImpl) getHistoryWorkflowInstance(hpi);
+				completedInstance.setState("completed");
+				return completedInstance;
 			} else {
 				_log.error("Cannot find process instance with id: " + workflowInstanceId + "(" + procId + ")");
 				return null;
@@ -136,20 +143,76 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	public int getWorkflowInstanceCount(long companyId,
 			String workflowDefinitionName, Integer workflowDefinitionVersion,
 			Boolean completed) throws WorkflowException {
-		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+		
+		if (workflowDefinitionVersion == null || workflowDefinitionVersion > 0) {
+			ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+			ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+			query = query.processDefinitionId(def.getId());
 
-		ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-		query = query.processDefinitionId(def.getId());
+			/* TODO
+			if (completed) {
+				query = query.suspended();
+			} else {
+				query = query.notSuspended();
+			}
+			*/
 
-		/* TODO
-		if (completed) {
-			query = query.suspended();
+			return Long.valueOf(query.count()).intValue();
 		} else {
-			query = query.notSuspended();
+			//get all instances for all versions of definition
+			List<ProcessDefinition> defs = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName);
+			
+			//TODO These ugly code should be reworked!!!
+			//Use sql to query 
+			Collection workflowInstanceIds = new ArrayList<Long>();
+			for (ProcessDefinition def : defs) {
+				HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+				query = query.processDefinitionId(def.getId());
+				if (completed) {
+					query.finished();
+		        } else {
+		        	query.unfinished();
+		        }
+				List<HistoricProcessInstance> insts = query.list();
+				for (HistoricProcessInstance inst : insts) {
+					workflowInstanceIds.add(Long.valueOf(inst.getId()));
+				}
+			}
+			
+			if (workflowInstanceIds.isEmpty()) {
+	        	return 0;
+	        }
+			final HistoricProcessInstanceQuery historicProcessInstanceQuery = createWorkflowDefinitionNameQuery(workflowInstanceIds, completed);
+	        
+	        return Long.valueOf(historicProcessInstanceQuery.count()).intValue();
 		}
-		*/
-
-		return Long.valueOf(query.count()).intValue();
+		
+	}
+	
+	private HistoricProcessInstanceQuery createWorkflowDefinitionNameQuery(Collection workflowInstanceIds, Boolean completed) {
+		//we have to narrow ids by those that are stored in Portal...
+		//it is possible to have some excess values in Activiti
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(WorkflowInstanceLink.class, PortalClassLoaderUtil.getClassLoader());
+		dynamicQuery.setProjection(ProjectionFactoryUtil.property("workflowInstanceId"));
+		dynamicQuery.add(PropertyFactoryUtil.forName("workflowInstanceId").in(workflowInstanceIds));
+		try {
+			workflowInstanceIds = WorkflowInstanceLinkLocalServiceUtil.dynamicQuery(dynamicQuery);
+		} catch (SystemException e) {
+			_log.error("Failed to filter instances ids", e);
+		}
+		final HashSet<String> ids = new HashSet<String>(workflowInstanceIds.size());
+        for (Object id :  workflowInstanceIds) {
+            ids.add(String.valueOf((Long) id));
+        }
+        final HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery();
+        historicProcessInstanceQuery.processInstanceIds(ids);
+        if (completed) {
+            historicProcessInstanceQuery.finished();
+        } else {
+            historicProcessInstanceQuery.unfinished();
+        }
+        
+        return historicProcessInstanceQuery;
 	}
 
 	/** Get process instances
@@ -162,32 +225,80 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 			Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
 		_log.info("Get process instances 3");
-		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
+		if (workflowDefinitionVersion == null || workflowDefinitionVersion > 0) {
+			ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName, workflowDefinitionVersion);
 
-		ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-		query = query.processDefinitionId(def.getId());
+			ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+			query = query.processDefinitionId(def.getId());
 
-		/* TODO
-		if (completed) {
-			query = query.suspended();
+			/* TODO
+			if (completed) {
+				query = query.suspended();
+			} else {
+				query = query.notSuspended();
+			}
+			*/
+
+			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+				query.listPage(start, end - start);
+			}
+
+
+			List<ProcessInstance> insts = query.list();
+			List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(insts.size());
+
+			for (ProcessInstance inst : insts) {
+				result.add(getWorkflowInstance(inst, null, null));
+			}
+
+			return result;
 		} else {
-			query = query.notSuspended();
+			//get all instances for all versions of definition
+			List<ProcessDefinition> defs = workflowDefinitionExtensionDao.find(companyId, workflowDefinitionName);
+			
+			//TODO These ugly code should be reworked!!!
+			//Use sql to query 
+			Collection workflowInstanceIds = new ArrayList<Long>();
+			for (ProcessDefinition def : defs) {
+				HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+				query = query.processDefinitionId(def.getId());
+				if (completed) {
+					query.finished();
+		        } else {
+		        	query.unfinished();
+		        }
+				List<HistoricProcessInstance> insts = query.list();
+				for (HistoricProcessInstance inst : insts) {
+					workflowInstanceIds.add(Long.valueOf(inst.getId()));
+				}
+			}
+			
+			if (workflowInstanceIds.isEmpty()) {
+	        	return Collections.emptyList();
+	        }
+			final HistoricProcessInstanceQuery historicProcessInstanceQuery = createWorkflowDefinitionNameQuery(workflowInstanceIds, completed);
+
+	        List<HistoricProcessInstance> historicProcessInstances;
+	        if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+	            historicProcessInstances = historicProcessInstanceQuery.listPage(start, end);
+	        } else {
+	            historicProcessInstances = historicProcessInstanceQuery.list();
+	        }
+
+	        if (_log.isDebugEnabled()) {
+	            _log.debug(String.format("Found results: [%s]", historicProcessInstances == null || historicProcessInstances.isEmpty() ? 0 : historicProcessInstances.size()));
+	        }
+
+	        if (historicProcessInstances != null) {
+	            List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(historicProcessInstances.size());
+	            for (HistoricProcessInstance historicProcessInstance : historicProcessInstances) {
+	                result.add(getWorkflowInstance(historicProcessInstance));
+	            }
+	            return result;
+	        } else {
+	            return Collections.emptyList();
+	        }
 		}
-		*/
-
-		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-			query.listPage(start, end - start);
-		}
-
-
-		List<ProcessInstance> insts = query.list();
-		List<WorkflowInstance> result = new ArrayList<WorkflowInstance>(insts.size());
-
-		for (ProcessInstance inst : insts) {
-			result.add(getWorkflowInstance(inst, null, null));
-		}
-
-		return result;
 	}
 
 	@Override
@@ -509,67 +620,58 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 	        inst.setEndDate(historyPI.getEndTime());
 	        inst.setStartDate(historyPI.getStartTime());
 	
-	        /*List<String> activities = new ArrayList<String>();
-	        try {
-	        	activities = runtimeService.getActiveActivityIds(processInstance.getProcessInstanceId());
-	        } catch (Exception ex) {
-	        	// in case then process has no user tasks - process may be finished just after it is started
-	        	// so - we will not have active activities here.
-	        	_log.debug("Error during getting active activities", ex);
-	        }*/
-	
-	        // activities contains internal ids - need to be converted into names
-			/*List<String> activityNames = new ArrayList<String>(activities.size());
-	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDef.getId());
-	
-			for (String activiti: activities) {
-				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
-				if (findActivity != null)
-					activityNames.add(findActivity.getProperty("name").toString());
-			}
-			inst.setState(StringUtils.join(activityNames, ","));*/
-	
-	        // copy variables
-	
-	
-	        //Postpone this action up to inst.getWorkflowContext invocation
-//			inst.setWorkflowContext(workflowContext);
-	
 			inst.setWorkflowDefinitionName(procDef.getName());
 			inst.setWorkflowDefinitionVersion(procDef.getVersion());
 	
-			/*Long id = idMappingService.getLiferayProcessInstanceId(processInstance.getId());
-			if (id == null) {
-				// not exists in DB - create new
-				Map<String, Serializable> workflowContext = getWorkflowContext(processInstance.getId(), currentWorkflowContext);
-				if (workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME) == null ||
-						workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK) == null) {
-					// all workflows instances in Liferay should be related to some asset
-					throw new WorkflowException("Process Instance has no asset attached");
-				}
-				ProcessInstanceExtensionImpl procInstImpl = new ProcessInstanceExtensionImpl();
-				procInstImpl.setCompanyId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID)));
-				procInstImpl.setGroupId(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID)));
-				procInstImpl.setUserId(userId != null ? userId : 0l);
-				procInstImpl.setClassName((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
-				procInstImpl.setClassPK(GetterUtil.getLong(workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK)));
-				procInstImpl.setProcessInstanceId(processInstance.getId());
-	
-				id = (Long)processInstanceExtensionDao.save(procInstImpl);
-	
-				_log.info("Stored new process instance ext " + processInstance.getId() + " -> " + id);
-			}*/
-	
 			//could do it safety - see DbIdGenerator
-			inst.setWorkflowInstanceId(Long.valueOf(processInstance.getId()));
-	
+			Long processInstanceId = Long.valueOf(processInstance.getProcessInstanceId());
+			
+			long companyId = 0l;
+			if (currentWorkflowContext == null) {
+				Map<String,Object> workflowContext = new HashMap<String,Object>();
+				List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getProcessInstanceId()).list();
+				Execution execution = null;
+				if (executions.size() == 1) {
+					execution = executions.get(0);
+				} else {
+					//find execution where parent link is null - this is the main
+					for (Execution ex : executions) {
+						ExecutionEntity exEntity = (ExecutionEntity) ex;
+						if (exEntity.getParentId() == null) {
+							execution = ex;
+							break;
+						}
+					}
+				}
+				workflowContext = runtimeService.getVariablesLocal(execution.getId());
+				companyId = GetterUtil.getLong(workflowContext.get("companyId"), 0);
+			} else {
+				companyId = GetterUtil.getLong(currentWorkflowContext.get("companyId"), 0);
+			}
+			
+			inst.setState(getInstanceStates(companyId, processInstanceId));
+			inst.setWorkflowInstanceId(processInstanceId);
 			return inst;
 		} catch(Exception e) {
 			_log.error("getProcessInstance FAILED: " + processInstance, e);
 			return null;
 		}
+	}
+	
+	protected String getInstanceStates(long companyId, Long processInstanceId) throws WorkflowException {
+		//Find all active wait states for process regardless of user and set comma separated values
+		List<WorkflowTask> activeTasks = WorkflowTaskManagerUtil.getWorkflowTasksByWorkflowInstance(companyId, null
+				, processInstanceId, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+		if (activeTasks == null || activeTasks.isEmpty()) {
+			return StringPool.BLANK;
+		}
+		List<String> statesList = new ArrayList<String>();
+		if (activeTasks != null && activeTasks.size() > 0) {
+			for (WorkflowTask task : activeTasks) {
+				statesList.add(task.getName());
+			}
+		}
+		return StringUtil.merge(statesList);
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(long workflowInstanceId) {
@@ -653,11 +755,11 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 		workflowInstance.setStartDate(processInstance.getStartTime());
 		workflowInstance.setEndDate(processInstance.getEndTime());
 
+		ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(processDef.getId());
 		if (processInstance.getEndTime() == null) {
 			List<String> activities = runtimeService.getActiveActivityIds(processInstance.getId());
 			// activities contains internal ids - need to be converted into names
 			List<String> activityNames = new ArrayList<String>(activities.size());
-	        ReadOnlyProcessDefinition readOnlyProcessDefinition = ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(processDef.getId());
 
 			for (String activiti: activities) {
 				PvmActivity findActivity = readOnlyProcessDefinition.findActivity(activiti);
@@ -669,7 +771,15 @@ public class WorkflowInstanceManagerImpl implements WorkflowInstanceManager {
 //            Map<String, Serializable> workflowContext = getWorkflowContext(processInstance.getProcessInstanceId(), null);
 //	        workflowInstance.setWorkflowContext(workflowContext);
 		} else {
-			workflowInstance.setState(processInstance.getEndActivityId());
+			String endId = processInstance.getEndActivityId();
+			PvmActivity endActivity = readOnlyProcessDefinition.findActivity(endId);
+			if (endActivity != null) {
+				String endName = (String) endActivity.getProperty("name");
+				workflowInstance.setState(StringUtils.isEmpty(endName) ? endId : endName);
+				
+			} else {
+				workflowInstance.setState(endId);
+			}
 
 			// for ended process instance we can restore only limited set of workflow context
 //			workflowInstance.setWorkflowContext(getWorkflowContext(processInstance));

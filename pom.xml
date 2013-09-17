@@ -6,7 +6,7 @@
   <packaging>pom</packaging>
   
   <properties>
-  	<activiti.version>5.12.1</activiti.version>
+  	<activiti.version>5.13</activiti.version>
 	<liferay.version>6.1.1</liferay.version>
 	<liferay.plugin.version>6.1.1</liferay.plugin.version>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,6 +60,11 @@
 			<id>maven-restlet</id>
 			<name>Public online Restlet repository</name>
 			<url>http://maven.restlet.org</url>
+		</repository>
+		<repository>
+			<id>emdev-public</id>
+			<name>EmDev Public</name>
+			<url>http://build.emdev.ru/nexus/content/repositories/emdev-public</url>
 		</repository>
 	</repositories>
 	

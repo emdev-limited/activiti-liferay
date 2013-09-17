@@ -30,6 +30,8 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	protected Long companyId;
 	
 	protected boolean orderByDueDate;
+	protected boolean orderByCreateDate;
+	
 	
 	public CustomTaskQueryImpl(CommandContext commandContext) {
 		super(commandContext);
@@ -100,6 +102,10 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 		orderByDueDate = true;
 		return orderBy(new TaskQueryProperty("RES.DUE_DATE_"));
 	}
+	public CustomTaskQuery orderByCreateDate() {
+		orderByCreateDate = true;
+		return orderBy(new TaskQueryProperty("RES.CREATE_TIME_"));
+	}
 	
 	@Override
 	public long executeCount(CommandContext commandContext) {
@@ -125,7 +131,7 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	}
 	
 	protected List<String> getGroupsForCandidateUser(String candidateUser) {
-	    List<Group> groups = Context.getCommandContext().getGroupEntityManager().findGroupsByUser(candidateUser);
+	    List<Group> groups = Context.getCommandContext().getGroupIdentityManager().findGroupsByUser(candidateUser);
 	    List<String> groupIds = new ArrayList<String>();
 	    
 	    for (Group group : groups) {
@@ -173,5 +179,9 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 	
 	public boolean isOrderByDueDate() {
 		return orderByDueDate;
+	}
+	
+	public boolean isOrderByCreateDate() {
+		return orderByCreateDate;
 	}
 }

@@ -44,7 +44,7 @@ public class WorkflowDefinitionExtensionDao {
             // return last (active) workflow definition
         	RepositoryServiceImpl serviceImpl = (RepositoryServiceImpl) repositoryService;
         	ExtProcessDefinitionQuery query = new ExtProcessDefinitionQueryImpl(serviceImpl.getCommandExecutor());
-        	query = query.processDefinitionCompanyIdAndName(companyId, name, null);
+        	query = (ExtProcessDefinitionQuery) query.processDefinitionCompanyIdAndName(companyId, name, null).orderByProcessDefinitionId().desc();
         	List<ProcessDefinition> procDefs = query.list();
         	
             if (procDefs.size() == 0) {
@@ -58,5 +58,19 @@ public class WorkflowDefinitionExtensionDao {
             return procDefs.get(0);
         }
 		
+	}
+	
+	/**
+	 * Find all versions
+	 * 
+	 * @param companyId
+	 * @param name
+	 * @return
+	 */
+	public List<ProcessDefinition> find(Long companyId, String name) {
+		RepositoryServiceImpl serviceImpl = (RepositoryServiceImpl) repositoryService;
+    	ExtProcessDefinitionQuery query = new ExtProcessDefinitionQueryImpl(serviceImpl.getCommandExecutor());
+    	query = query.processDefinitionCompanyIdAndName(companyId, name, null);
+    	return query.list();
 	}
 }

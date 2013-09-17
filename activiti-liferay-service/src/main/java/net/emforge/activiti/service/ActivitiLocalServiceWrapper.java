@@ -59,6 +59,61 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     }
 
     /**
+    * Returns all execution ids, including sub-process executions
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public java.util.List<java.lang.String> findAllExecutions(
+        java.util.List instanceIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findAllExecutions(instanceIds);
+    }
+
+    /**
+    * Returns active UserTask names for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    * @throws SystemException
+    */
+    public java.util.Set<java.lang.String> findUniqueUserTaskNames(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findUniqueUserTaskNames(executionIds);
+    }
+
+    /**
+    * Returns active UserTask assignees for selected instances.
+    *
+    * @param instanceIds
+    * @return
+    */
+    public java.util.Set findUniqueUserTaskAssignees(
+        java.util.List<java.lang.String> executionIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findUniqueUserTaskAssignees(executionIds);
+    }
+
+    /**
+    * Returns top level process instances, filtered by active user task.
+    *
+    * @param taskName - user task name
+    * @param assigneeUser - task assignee
+    * @param candidateRole - candidate role for task
+    * @return
+    * @throws SystemException
+    */
+    public java.util.List<java.lang.String> findTopLevelProcessInstances(
+        java.lang.String taskName, java.lang.String assigneeUser,
+        java.lang.String candidateRole)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findTopLevelProcessInstances(taskName,
+            assigneeUser, candidateRole);
+    }
+
+    /**
      * @deprecated Renamed to {@link #getWrappedService}
      */
     public ActivitiLocalService getWrappedActivitiLocalService() {

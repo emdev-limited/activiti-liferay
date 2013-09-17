@@ -56,8 +56,7 @@ public class WorkflowComparatorFactoryImpl implements WorkflowComparatorFactory 
 
 	@Override
 	public OrderByComparator getTaskCreateDateComparator(boolean ascending) {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		return new WorkflowTaskCreateDateComparator(ascending);
 	}
 
 	@Override

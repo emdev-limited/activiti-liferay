@@ -158,7 +158,7 @@ public class SignavioFixer {
                 
                 String type = element.getAttribute("activiti:type");
                 if ("mail".equals(type)) {
-                	_log.info("Mail task got to handle");
+                	_log.debug("Mail task got to handle");
                 	NodeList childNode = element.getElementsByTagName("extensionElements");
                 	if (childNode != null && childNode.getLength() > 0) {
                 		NodeList fields = ((Element) childNode.item(0)).getElementsByTagName("activiti:field");
@@ -170,8 +170,22 @@ public class SignavioFixer {
                                 if (field.getAttribute("name").equals("cc") || field.getAttribute("name").equals("bcc")
                                 		|| field.getAttribute("name").equals("charset") || field.getAttribute("name").equals("from")) {
                                 	//check if empty and remove if so
-                                	String value = field.getAttribute("stringValue");
-                                	if (StringUtils.isEmpty(value)) {
+                                	NodeList fieldsString = field.getElementsByTagName("activiti:string");
+                                	NodeList fieldsExpression = field.getElementsByTagName("activiti:expression");
+                                	boolean isEmpty = true;
+                                	Node checkNode = null;
+                                	if (fieldsString != null && fieldsString.getLength() > 0) {
+                                		//string value
+                                		checkNode = fieldsString.item(0);
+                                	} else if (fieldsExpression != null && fieldsExpression.getLength() > 0) {
+                                		//expression
+                                		checkNode = fieldsExpression.item(0);
+                                	}
+                                	if (checkNode != null) {
+                                		Element fieldString = (Element)checkNode;
+                                		isEmpty = StringUtils.isEmpty(fieldString.getTextContent());
+                                	}
+                                	if (isEmpty) {
                                 		fieldsToRemove.add(field);
                                 	}
                                 }
@@ -197,7 +211,7 @@ public class SignavioFixer {
             Element element = (Element)node;
             
             String candidateGroups = element.getAttribute("activiti:candidateGroups");
-            if (!StringUtils.isEmpty(candidateGroups)) {
+            if (!StringUtils.isEmpty(candidateGroups) && !candidateGroups.startsWith("#{liferayGroups.getGroups(")) {
             	element.removeAttribute("activiti:candidateGroups");
             	_log.debug("Got userTask candidate groups to handle: " + candidateGroups);
             	String attrValue = String.format("#{liferayGroups.getGroups(execution, \" %s \")}", candidateGroups);

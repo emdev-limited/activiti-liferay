@@ -19,4 +19,5 @@ public interface CustomTaskQuery extends Query<CustomTaskQuery, Task> {
 	CustomTaskQuery taskCompanyId(Long companyId);
 	
 	CustomTaskQuery orderByDueDate();
+	CustomTaskQuery orderByCreateDate();
 }

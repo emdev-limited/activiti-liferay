@@ -19,6 +19,9 @@ public class FormPostProcessorThreadLocalUtil {
 		List<FormPostProcessorWrapper> objectList = LOCALS.get();
 		if (objectList != null) {
 			for (FormPostProcessorWrapper obj : objectList) {
+				if (obj == null || obj.getSourceActivity() == null || obj.getDestinationActivity() == null) {
+					continue;
+				}
 				if (obj.getSourceActivity().equals(sourceActivity) && obj.getDestinationActivity().equals(destinationActivity)) {
 					return obj;
 				}
@@ -45,12 +48,22 @@ public class FormPostProcessorThreadLocalUtil {
 		List<FormPostProcessorWrapper> objectList = LOCALS.get();
 		if (objectList != null) {
 			for (FormPostProcessorWrapper obj : objectList) {
+				if (obj == null || obj.getDestinationActivity() == null) {
+					continue;
+				}
 				if (obj.getDestinationActivity().equals(destinationActivity)) {
 					return obj;
 				}
 			}
 		}
 		return null;
+	}
+	
+	public static void putToThreadLocal(FormPostProcessorWrapper formWrapper) {
+		if (LOCALS.get() == null) {
+			LOCALS.set(new ArrayList<FormPostProcessorWrapper>());
+		}
+		LOCALS.get().add(formWrapper);
 	}
 	
 	public static void putToThreadLocal(ActivityImpl sourceActivity, ActivityImpl destinationActivity, String name) {

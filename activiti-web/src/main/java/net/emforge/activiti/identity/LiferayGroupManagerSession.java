@@ -65,12 +65,6 @@ public class LiferayGroupManagerSession extends GroupEntityManager {
 	}
 	
 	@Override
-	public GroupEntity findGroupById(String groupId) {
-		_log.error("Method is not implemented"); // TODO
-		return null;
-	}
-	
-	@Override
 	public List<Group> findGroupsByUser(String userId) {
 		return liferayIdentityService.findGroupsByUser(userId);
 	}

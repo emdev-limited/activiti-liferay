@@ -31,6 +31,7 @@ import org.activiti.engine.history.HistoricVariableInstance;
 import org.activiti.engine.impl.TaskServiceImpl;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
@@ -45,7 +46,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
@@ -53,11 +53,10 @@ import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
+import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskCreateDateComparator;
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -173,6 +172,11 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
 		workflowLogEntry.setComment(comment);
+		try {
+			workflowLogEntry.setAssigneeUserId(Long.valueOf(task.getAssignee()));
+		} catch (NumberFormatException e) {
+			_log.warn("Assignee id is not of long value.");
+		}
 		workflowLogEntry.setState(task.getName());
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
@@ -292,10 +296,32 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Override
 	public int getWorkflowTaskCountByUser(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return 0;
+		return getWorkflowTaskCountByUserImpl(companyId, userId, 0l, completed);
 	}
 
+	protected int getWorkflowTaskCountByUserImpl(long companyId, long userId, long groupId,
+			Boolean completed) throws WorkflowException {
+    	if (completed == null || !completed) {
+    		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
+    		
+    		if (groupId > 0) {
+    			taskQuery.taskGroupId(groupId);
+    		}
+    		
+    		Long count = taskQuery.count();
+    		return count.intValue();
+    	} else {
+    		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(idMappingService.getUserName(userId)).finished();
+    		// TODO 
+    		//taskQuery.taskGroupId(groupId);
+    		
+    		Long count = query.count();
+    		return count.intValue();
+    	}
+		
+	}
+	
+	
 	@Override
 	public int getWorkflowTaskCountByUserRoles(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
@@ -303,6 +329,23 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		return 0;
 	}
 
+	protected int getWorkflowTaskCountByUserRolesImpl(long companyId, long userId, long groupId,
+			Boolean completed) throws WorkflowException {
+    	if (completed == null || !completed) {
+    		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
+    		
+    		if (groupId > 0) {
+    			taskQuery.taskGroupId(groupId);
+    		}
+    		
+    		Long count = taskQuery.count();
+    		return count.intValue();
+    	} else {
+    		_log.warn("Method is partially implemented"); // TODO
+    		return 0;
+    	}
+	}
+	
 	@Override
 	public List<WorkflowTask> getWorkflowTasks(long companyId,
 			Boolean completed, int start, int end,
@@ -323,18 +366,144 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public List<WorkflowTask> getWorkflowTasksByUser(long companyId,
 			long userId, Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		
+		return getWorkflowTasksByUserImpl(companyId, 0l, userId, completed, start, end, orderByComparator);
 	}
 
+	/** Implementation of getting user tasks
+	 * 
+	 * @param companyId
+	 * @param groupId
+	 * @param userId
+	 * @param completed
+	 * @param start
+	 * @param end
+	 * @param orderByComparator
+	 * @return
+	 * @throws WorkflowException
+	 */
+	protected List<WorkflowTask> getWorkflowTasksByUserImpl(long companyId, long groupId,
+			long userId, Boolean completed, int start, int end,
+			OrderByComparator orderByComparator) throws WorkflowException {
+    	if (completed == null || !completed) {
+    		CustomTaskQuery taskQuery = createCustomTaskQuery();
+    		if (userId > 0) {
+    			taskQuery.taskAssignee(idMappingService.getUserName(userId));
+    		}
+    		
+    		if (groupId > 0) {
+    			taskQuery.taskGroupId(groupId);
+    		}
+    		
+    		// is comparator specified
+    		if (orderByComparator != null) {
+    			if (orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+	    		
+	    			if (orderByComparator.isAscending()) {
+	    				taskQuery = taskQuery.orderByDueDate().asc();
+	    			} else {
+	    				taskQuery = taskQuery.orderByDueDate().desc();
+	    			}
+    			} else if (orderByComparator instanceof BaseWorkflowTaskCreateDateComparator) {
+    				if (orderByComparator.isAscending()) {
+	    				taskQuery = taskQuery.orderByCreateDate().asc();
+	    			} else {
+	    				taskQuery = taskQuery.orderByCreateDate().desc();
+	    			}
+    			}
+    		}
+    		List<Task> list = null;
+			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+				list = taskQuery.listPage(start, end - start);
+    		} else {
+    			list = taskQuery.list();
+    		}
+
+            return getWorkflowTasks(list);
+    	} else {
+    		// search for completed tasks in history service
+    		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
+
+    		// TODO taskQuery.taskGroupId(groupId);
+    		if (orderByComparator != null) {
+    			// TODO need to be implemented
+    			_log.warn("Method is partially implemented");
+    		}
+    		List<HistoricTaskInstance> list = null;
+    		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+    			list = query.listPage(start, end - start);
+    		} else {
+    			list = query.list();
+    		}
+    		
+
+    		
+    		return getHistoryWorkflowTasks(list);
+    	}
+	}
+	
 	@Override
 	public List<WorkflowTask> getWorkflowTasksByUserRoles(long companyId,
 			long userId, Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		return getWorkflowTasksByUserRolesImpl(companyId, userId, 0l, completed, start, end, orderByComparator);
 	}
 
+	/** Implementation of getting workflow tasks for user roles
+	 * 
+	 * @param companyId
+	 * @param userId
+	 * @param groupId
+	 * @param completed
+	 * @param start
+	 * @param end
+	 * @param orderByComparator
+	 * @return
+	 * @throws WorkflowException
+	 */
+	protected List<WorkflowTask> getWorkflowTasksByUserRolesImpl(long companyId,
+			long userId, long groupId, Boolean completed, int start, int end,
+			OrderByComparator orderByComparator) throws WorkflowException {
+    	if (completed == null || !completed) {
+    		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
+
+    		if (groupId > 0) {
+    			taskQuery.taskGroupId(groupId);
+    		}
+    		
+    		// is comparator specified
+    		if (orderByComparator != null) {
+    			if (orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+	    		
+	    			if (orderByComparator.isAscending()) {
+	    				taskQuery = taskQuery.orderByDueDate().asc();
+	    			} else {
+	    				taskQuery = taskQuery.orderByDueDate().desc();
+	    			}
+    			} else if (orderByComparator instanceof BaseWorkflowTaskCreateDateComparator) {
+    				if (orderByComparator.isAscending()) {
+	    				taskQuery = taskQuery.orderByCreateDate().asc();
+	    			} else {
+	    				taskQuery = taskQuery.orderByCreateDate().desc();
+	    			}
+    			}
+    		}
+    		
+    		List<Task> list = null;
+			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
+				list = taskQuery.listPage(start, end - start);
+    		} else {
+    			list = taskQuery.list();
+    		}           
+        
+            return getWorkflowTasks(list);
+    	} else {
+    		_log.warn("Method is partially implemented"); // TODO
+    		return new ArrayList<WorkflowTask>();
+    	}
+	}
+
+	
 	@Transactional
 	@Override
 	public List<WorkflowTask> search(long companyId, long userId,
@@ -343,6 +512,8 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			throws WorkflowException {
 		_log.debug("-----> Search Start1 " + start + " end " + end);
 		Long groupId = null;
+		
+		// this is workaround implemented for FS - they needed to be able to get tasks only for specific group
 		if (StringUtils.isNotEmpty(keywords)) {
 			try {
 				groupId = new Long(keywords);
@@ -352,71 +523,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		
         if (searchByUserRoles != null && searchByUserRoles == true) {
-        	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
-
-        		taskQuery.taskGroupId(groupId);
-        		// is comparator specified
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
-        			if (orderByComparator.isAscending()) {
-        				taskQuery = taskQuery.orderByDueDate().asc();
-        			} else {
-        				taskQuery = taskQuery.orderByDueDate().desc();
-        			}
-        		}
-        		List<Task> list = null;
-    			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-    				list = taskQuery.listPage(start, end - start);
-        		} else {
-        			list = taskQuery.list();
-        		}           
-            
-	            return getWorkflowTasks(list);
-        	} else {
-        		_log.warn("Method is partially implemented"); // TODO
-        		return new ArrayList<WorkflowTask>();
-        	}
+        	return getWorkflowTasksByUserRolesImpl(companyId, userId, groupId, completed, start, end, orderByComparator);
         } else {
-        	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
-
-        		taskQuery.taskGroupId(groupId);
-        		// is comparator specified
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
-        			if (orderByComparator.isAscending()) {
-        				taskQuery = taskQuery.orderByDueDate().asc();
-        			} else {
-        				taskQuery = taskQuery.orderByDueDate().desc();
-        			}
-        		}
-        		List<Task> list = null;
-    			if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-    				list = taskQuery.listPage(start, end - start);
-        		} else {
-        			list = taskQuery.list();
-        		}
-
-	            return getWorkflowTasks(list);
-        	} else {
-        		// search for completed tasks in history service
-        		CustomHistoricTaskInstanceQuery query = createCustomHistoricTaskInstanceQuery().taskAssignee(idMappingService.getUserName(userId));
-
-        		// TODO taskQuery.taskGroupId(groupId);
-        		if (orderByComparator != null) {
-        			// TODO need to be implemented
-        			_log.warn("Method is partially implemented");
-	    		}
-        		List<HistoricTaskInstance> list = null;
-        		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-        			list = query.listPage(start, end - start);
-        		} else {
-        			list = query.list();
-        		}
-        		
-
-        		
-        		return getHistoryWorkflowTasks(list);
-        	}
+        	return getWorkflowTasksByUserImpl(companyId, groupId, userId, completed, start, end, orderByComparator);
         }
 	}
 
@@ -434,31 +543,9 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		}
 		
 		if (searchByUserRoles != null && searchByUserRoles == true) {
-        	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskCandidateUser(idMappingService.getUserName(userId));
-        		taskQuery.taskGroupId(groupId);
-        		
-        		Long count = taskQuery.count();
-	    		return count.intValue();
-        	} else {
-        		_log.warn("Method is partially implemented"); // TODO
-        		return 0;
-        	}
+			return getWorkflowTaskCountByUserRolesImpl(companyId, userId, groupId, completed);
         } else {
-        	if (completed == null || !completed) {
-        		CustomTaskQuery taskQuery = createCustomTaskQuery().taskAssignee(idMappingService.getUserName(userId));
-        		taskQuery.taskGroupId(groupId);
-        		
-	    		Long count = taskQuery.count();
-	    		return count.intValue();
-        	} else {
-        		HistoricActivityInstanceQuery query = historyService.createHistoricActivityInstanceQuery().taskAssignee(idMappingService.getUserName(userId)).finished();
-        		// TODO 
-        		//taskQuery.taskGroupId(groupId);
-        		
-        		Long count = query.count();
-	    		return count.intValue();
-        	}
+        	return getWorkflowTaskCountByUserImpl(companyId, userId, groupId, completed);
         }
 	}
 
@@ -889,37 +976,53 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			return result;
 			// return null;
 		} else {
-			TaskService taskService = processEngine.getTaskService();
-			TaskQuery taskQuery = taskService.createTaskQuery();
+			List<Task> list = getActiveTasksForProcessInstance(userId, workflowInstanceId);
 			
-			if (userId != null && userId != 0l) {
-				taskQuery.taskAssignee(idMappingService.getUserName(userId));
-			}
-			
-			taskQuery.processInstanceId(String.valueOf(workflowInstanceId));
-			
-			/* TODO Ordering is not supported
-			if (orderByComparator != null) {
-    			if (orderByComparator.getOrderByFields().length > 1) {
-    				_log.warn("Method is partially implemented");
-    			} else {
-    				if (orderByComparator.isAscending()) {
-    					taskQuery.orderAsc(orderByComparator.getOrderByFields()[0]);
-    				} else {
-    					taskQuery.orderDesc(orderByComparator.getOrderByFields()[0]);
-    				}
-    			}
-    		}
-    		*/
+			// TODO - do ordering
 			
     		if ((start != QueryUtil.ALL_POS) && (end != QueryUtil.ALL_POS)) {
-    			taskQuery.listPage(start, end - start);
+    			if (end > list.size()) {
+    				end = list.size();
+    			}
+    			
+    			list = list.subList(start, end);
     		}
             
-            List<Task> list = taskQuery.list();
-            
+    		// convert to liferay's workflow tasks
     		return getWorkflowTasks(list);
 		}
+	}
+	
+	/** Get active tasks for specific user (if defined) in process and all subprocesses
+	 * 
+	 * @param userId
+	 * @param workflowInstanceId
+	 * @return
+	 * @throws WorkflowException
+	 */
+	protected List<Task> getActiveTasksForProcessInstance(Long userId, long workflowInstanceId) throws WorkflowException {
+		TaskService taskService = processEngine.getTaskService();
+		TaskQuery taskQuery = taskService.createTaskQuery();
+		
+		if (userId != null && userId != 0l) {
+			taskQuery.taskAssignee(idMappingService.getUserName(userId));
+		}
+		
+		taskQuery.processInstanceId(String.valueOf(workflowInstanceId));
+		List<Task> result = new ArrayList<Task>();
+		result.addAll(taskQuery.list());
+		
+		
+		// go through subprocesses
+		ProcessInstanceQuery processQuery = runtimeService.createProcessInstanceQuery();
+		processQuery.active().superProcessInstanceId(String.valueOf(workflowInstanceId));
+		
+		for (ProcessInstance subProcess : processQuery.list()) {
+			List<Task> subProcessTasks = getActiveTasksForProcessInstance(userId, Long.valueOf(subProcess.getProcessInstanceId())); 
+			result.addAll(subProcessTasks);
+		}
+		
+		return result;
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(String taskId) {
