@@ -27,6 +27,7 @@ import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.delegate.TaskListener;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.calendar.DueDateBusinessCalendar;
+import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.impl.persistence.entity.TaskEntity;
 import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.activiti.engine.impl.task.TaskDefinition;
@@ -211,24 +212,36 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
 	}
 	
 	protected void sendPortalNotification(TaskEntity task, List<Long> receiverUserIds, Map<String,Object> workflowContext, boolean isGroup) throws ChannelException {
+		String currentUserId = Authentication.getAuthenticatedUserId();
 		JSONObject notificationEventJSONObject = JSONFactoryUtil.createJSONObject();
 		
 		long companyId = Long.valueOf((String) workflowContext.get("companyId"));
 
 		notificationEventJSONObject.put("body", task.getName());
+        notificationEventJSONObject.put("groupId", (String) workflowContext.get("groupId"));
+        notificationEventJSONObject.put("entryClassName", (String) workflowContext.get("entryClassName"));
 		notificationEventJSONObject.put("entryId", (String) workflowContext.get("entryClassPK"));
 		// workflow tasks portlet id
 		notificationEventJSONObject.put("portletId", WORKFLOW_TASKS_PORTLET_ID);
-		notificationEventJSONObject.put("userId", (String) workflowContext.get("userId"));
+		notificationEventJSONObject.put("userId", currentUserId);
+		notificationEventJSONObject.put("taskId", task.getId());
+		notificationEventJSONObject.put("taskName", task.getName());
+		notificationEventJSONObject.put("isGroup", isGroup);
 		
 		String title = StringPool.BLANK;
 		if (isGroup) {
-			title = "New workflow task " + task.getName() + " has been assigned to your role";
+			title = "New workflow task \"" + task.getName() + "\" has been assigned to your role";
 		} else {
-			title = "New workflow task " + task.getName() + " has been assigned to you";
+			title = "New workflow task \"" + task.getName() + "\" has been assigned to you";
 		}
 		// FIXME localize notifications
-		for (long receiverUserId : receiverUserIds) {
+		for (Long receiverUserId : receiverUserIds) {
+			if (receiverUserId.toString().equals(currentUserId)) {
+				// do not send notification in case action was performed by same user
+				_log.debug("User " + receiverUserId + " skipped from sending notification since it is current user");
+				continue;
+			}
+			
 			_log.debug("Before sending notification receiverUserId = " + receiverUserId);
 			notificationEventJSONObject.put("title", title);
 			NotificationEvent notificationEvent = NotificationEventFactoryUtil.createNotificationEvent(

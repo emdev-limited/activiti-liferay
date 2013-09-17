@@ -240,7 +240,7 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 	
     @Override
     public WorkflowDefinition getWorkflowDefinition(long companyId, String name, int version) throws WorkflowException {
-        _log.info("try to get workflow definition, name: " + name + " , version " + version);
+        _log.debug("try to get workflow definition, name: " + name + " , version " + version);
         
         ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, name, version);
         if (def == null) {
