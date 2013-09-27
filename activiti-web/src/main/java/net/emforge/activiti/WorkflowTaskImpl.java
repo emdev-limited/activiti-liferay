@@ -35,8 +35,10 @@ public class WorkflowTaskImpl extends DefaultWorkflowTask {
 	
 	public Map<String, Serializable> getWorkflowContext(String taskId) {
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-		if (task != null) {
-			return WorkflowUtil.getWorkflowContext(String.valueOf(task.getExecutionId()), new HashMap<String, Serializable>());
+		if (task != null) {		    
+		    Map<String, Serializable> mpContext = WorkflowUtil.getWorkflowContext(String.valueOf(task.getExecutionId()), new HashMap<String, Serializable>());
+		    WorkflowUtil.putTaskVariables(mpContext,  taskService.getVariablesLocal(task.getId()));
+		    return mpContext;
 		} else {
 			//try to search in history
 			HistoricTaskInstance hiTask = historyService.createHistoricTaskInstanceQuery().taskId(taskId).singleResult();

@@ -22,6 +22,7 @@ import net.emforge.activiti.identity.UserImpl;
 
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.runtime.Execution;
@@ -166,4 +167,21 @@ public class WorkflowUtil {
 		
 		return result;
 	}
+
+    /**
+     * Put task local variables into current workflow context
+     * @param mpContext
+     * @param variablesLocal
+     */
+    public static void putTaskVariables(Map<String, Serializable> mpContext,
+            Map<String, Object> variablesLocal) 
+    {
+        mpContext.put("taskLocalVariables", (Serializable)convertFromVars(variablesLocal));
+    }
+    
+    public static void clearCandidateGroups(TaskService taskService, String taskId, List<Role> lstRoles, long companyId) {
+        for (Role arole: lstRoles) {
+            taskService.deleteCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
+        }
+    }
 }
