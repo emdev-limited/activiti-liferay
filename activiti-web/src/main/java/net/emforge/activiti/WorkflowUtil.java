@@ -27,6 +27,8 @@ import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.IdentityLink;
+import org.activiti.engine.task.IdentityLinkType;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -180,8 +182,15 @@ public class WorkflowUtil {
     }
     
     public static void clearCandidateGroups(TaskService taskService, String taskId, List<Role> lstRoles, long companyId) {
+        List<IdentityLink> lstLinks = taskService.getIdentityLinksForTask(taskId);
+        for (IdentityLink link: lstLinks) {
+            if (IdentityLinkType.CANDIDATE.equalsIgnoreCase(link.getType()) && (! StringUtils.isEmpty(link.getGroupId())) )
+                taskService.deleteCandidateGroup(taskId, link.getGroupId());
+        }
+/*        
         for (Role arole: lstRoles) {
             taskService.deleteCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
         }
+*/        
     }
 }

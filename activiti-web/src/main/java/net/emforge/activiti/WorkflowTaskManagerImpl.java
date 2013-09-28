@@ -138,10 +138,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         } catch (Exception ex) {
             throw new WorkflowException("Cannot assign task", ex);
         }
-/*        
-		_log.error("Method is not implemented"); // TODO
-		return null;
-*/		
 	}
 
 	@Transactional

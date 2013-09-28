@@ -5,8 +5,12 @@ import org.activiti.engine.delegate.TaskListener;
 import org.activiti.engine.task.IdentityLink;
 import org.apache.commons.lang.StringUtils;
 
-public class SaveInitialRoleListener implements TaskListener 
-{
+/**
+ * Saves first assigned candidate role name in task local variable.
+ * @author irina
+ *
+ */
+public class SaveInitialRoleListener implements TaskListener {
 	
 	public static final String NAME_INITIAL_COMPANY_ID = "initialCompanyId";
 	public static final String NAME_INITIAL_ROLE_NAME = "initialRoleName";
