@@ -107,7 +107,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
             
             // assign task
             taskService.setAssignee(taskId, null);
-            WorkflowUtil.clearCandidateGroups(taskService, taskId, RoleLocalServiceUtil.getRoles(companyId) ,companyId);
+            WorkflowUtil.clearCandidateGroups(taskService, taskId);
             taskService.addCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
             
             // save log
@@ -131,7 +131,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
             task = taskService.createTaskQuery().taskId(taskId).singleResult();
             WorkflowTask workflowTask = getWorkflowTask(task);
             
-            //return getWorkflowTask(task);
             return workflowTask;
         } catch (WorkflowException ex) {
             throw ex;

@@ -181,16 +181,12 @@ public class WorkflowUtil {
         mpContext.put("taskLocalVariables", (Serializable)convertFromVars(variablesLocal));
     }
     
-    public static void clearCandidateGroups(TaskService taskService, String taskId, List<Role> lstRoles, long companyId) {
+    public static void clearCandidateGroups(TaskService taskService, String taskId) {
         List<IdentityLink> lstLinks = taskService.getIdentityLinksForTask(taskId);
         for (IdentityLink link: lstLinks) {
             if (IdentityLinkType.CANDIDATE.equalsIgnoreCase(link.getType()) && (! StringUtils.isEmpty(link.getGroupId())) )
                 taskService.deleteCandidateGroup(taskId, link.getGroupId());
         }
-/*        
-        for (Role arole: lstRoles) {
-            taskService.deleteCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
-        }
-*/        
+        
     }
 }
