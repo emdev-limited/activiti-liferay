@@ -114,6 +114,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
             WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
             workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
             workflowLogEntry.setRoleId(roleId);
+            workflowLogEntry.setAssigneeUserId(userId);
             
             Long prevUserId = null;
             try {
