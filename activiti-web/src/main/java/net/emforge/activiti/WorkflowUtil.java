@@ -22,10 +22,13 @@ import net.emforge.activiti.identity.UserImpl;
 
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.IdentityLink;
+import org.activiti.engine.task.IdentityLinkType;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -166,4 +169,24 @@ public class WorkflowUtil {
 		
 		return result;
 	}
+
+    /**
+     * Put task local variables into current workflow context
+     * @param mpContext
+     * @param variablesLocal
+     */
+    public static void putTaskVariables(Map<String, Serializable> mpContext,
+            Map<String, Object> variablesLocal) 
+    {
+        mpContext.put("taskLocalVariables", (Serializable)convertFromVars(variablesLocal));
+    }
+    
+    public static void clearCandidateGroups(TaskService taskService, String taskId) {
+        List<IdentityLink> lstLinks = taskService.getIdentityLinksForTask(taskId);
+        for (IdentityLink link: lstLinks) {
+            if (IdentityLinkType.CANDIDATE.equalsIgnoreCase(link.getType()) && (! StringUtils.isEmpty(link.getGroupId())) )
+                taskService.deleteCandidateGroup(taskId, link.getGroupId());
+        }
+        
+    }
 }

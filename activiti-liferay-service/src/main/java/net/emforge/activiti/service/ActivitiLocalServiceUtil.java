@@ -104,9 +104,12 @@ public class ActivitiLocalServiceUtil {
     /**
     * Returns top level process instances, filtered by active user task.
     *
-    * @param taskName - user task name
-    * @param assigneeUser - task assignee
-    * @param candidateRole - candidate role for task
+    * @param taskName
+    - user task name
+    * @param assigneeUser
+    - task assignee
+    * @param candidateRole
+    - candidate role for task
     * @return
     * @throws SystemException
     */
@@ -117,6 +120,33 @@ public class ActivitiLocalServiceUtil {
         return getService()
                    .findTopLevelProcessInstances(taskName, assigneeUser,
             candidateRole);
+    }
+
+    /**
+    * Suspend workflow instance
+    */
+    public static boolean suspendWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return getService()
+                   .suspendWorkflowInstance(companyId, workflowInstanceId);
+    }
+
+    /**
+    * Resume workflow instance
+    */
+    public static boolean resumeWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return getService().resumeWorkflowInstance(companyId, workflowInstanceId);
+    }
+
+    public static boolean stopWorkflowInstance(long companyId, long userId,
+        long workflowInstanceId, java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return getService()
+                   .stopWorkflowInstance(companyId, userId, workflowInstanceId,
+            comment);
     }
 
     public static void clearService() {

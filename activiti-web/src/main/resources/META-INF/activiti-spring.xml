@@ -48,6 +48,12 @@
 		<property name="bpmnParseFactory" ref="customBpmnParseFactory" />
 		<property name="implicitUserTaskListeners">
 		    <map>
+		        <entry key="assignment">
+		            <list>
+		                <bean class="net.emforge.activiti.task.SaveInitialRoleListener">                 
+		                </bean>
+		            </list>
+		        </entry>		        
 		        <entry key="complete">
 		            <list>
 		                <bean class="net.emforge.activiti.task.SaveAssigneeListener">                 

@@ -22,6 +22,12 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes28;
     private String _methodName29;
     private String[] _methodParameterTypes29;
+    private String _methodName32;
+    private String[] _methodParameterTypes32;
+    private String _methodName33;
+    private String[] _methodParameterTypes33;
+    private String _methodName34;
+    private String[] _methodParameterTypes34;
 
     public ActivitiLocalServiceClpInvoker() {
         _methodName20 = "getBeanIdentifier";
@@ -58,6 +64,20 @@ public class ActivitiLocalServiceClpInvoker {
 
         _methodParameterTypes29 = new String[] {
                 "java.lang.String", "java.lang.String", "java.lang.String"
+            };
+
+        _methodName32 = "suspendWorkflowInstance";
+
+        _methodParameterTypes32 = new String[] { "long", "long" };
+
+        _methodName33 = "resumeWorkflowInstance";
+
+        _methodParameterTypes33 = new String[] { "long", "long" };
+
+        _methodName34 = "stopWorkflowInstance";
+
+        _methodParameterTypes34 = new String[] {
+                "long", "long", "long", "java.lang.String"
             };
     }
 
@@ -103,6 +123,26 @@ public class ActivitiLocalServiceClpInvoker {
                 Arrays.deepEquals(_methodParameterTypes29, parameterTypes)) {
             return ActivitiLocalServiceUtil.findTopLevelProcessInstances((java.lang.String) arguments[0],
                 (java.lang.String) arguments[1], (java.lang.String) arguments[2]);
+        }
+
+        if (_methodName32.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes32, parameterTypes)) {
+            return ActivitiLocalServiceUtil.suspendWorkflowInstance(((Long) arguments[0]).longValue(),
+                ((Long) arguments[1]).longValue());
+        }
+
+        if (_methodName33.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes33, parameterTypes)) {
+            return ActivitiLocalServiceUtil.resumeWorkflowInstance(((Long) arguments[0]).longValue(),
+                ((Long) arguments[1]).longValue());
+        }
+
+        if (_methodName34.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes34, parameterTypes)) {
+            return ActivitiLocalServiceUtil.stopWorkflowInstance(((Long) arguments[0]).longValue(),
+                ((Long) arguments[1]).longValue(),
+                ((Long) arguments[2]).longValue(),
+                (java.lang.String) arguments[3]);
         }
 
         throw new UnsupportedOperationException();

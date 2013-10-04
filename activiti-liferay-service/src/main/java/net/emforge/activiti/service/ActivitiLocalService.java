@@ -93,9 +93,12 @@ public interface ActivitiLocalService extends BaseLocalService,
     /**
     * Returns top level process instances, filtered by active user task.
     *
-    * @param taskName - user task name
-    * @param assigneeUser - task assignee
-    * @param candidateRole - candidate role for task
+    * @param taskName
+    - user task name
+    * @param assigneeUser
+    - task assignee
+    * @param candidateRole
+    - candidate role for task
     * @return
     * @throws SystemException
     */
@@ -103,4 +106,22 @@ public interface ActivitiLocalService extends BaseLocalService,
         java.lang.String taskName, java.lang.String assigneeUser,
         java.lang.String candidateRole)
         throws com.liferay.portal.kernel.exception.SystemException;
+
+    /**
+    * Suspend workflow instance
+    */
+    public boolean suspendWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    /**
+    * Resume workflow instance
+    */
+    public boolean resumeWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    public boolean stopWorkflowInstance(long companyId, long userId,
+        long workflowInstanceId, java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException;
 }

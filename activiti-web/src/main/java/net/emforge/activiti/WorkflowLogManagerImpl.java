@@ -9,8 +9,6 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
-import com.liferay.portal.kernel.workflow.*;
-
 import net.emforge.activiti.log.WorkflowLogEntry;
 
 import org.activiti.engine.HistoryService;
@@ -26,6 +24,10 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.workflow.DefaultWorkflowLog;
+import com.liferay.portal.kernel.workflow.WorkflowException;
+import com.liferay.portal.kernel.workflow.WorkflowLog;
+import com.liferay.portal.kernel.workflow.WorkflowLogManager;
 
 @Service("workflowLogManager")
 public class WorkflowLogManagerImpl implements WorkflowLogManager {
@@ -134,7 +136,8 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 			if (commentEntity.getType().equals(CommentEntity.TYPE_EVENT)
 					&& (commentEntity.getAction().equals(WorkflowLogEntry.TASK_ASSIGN)
 						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_COMPLETION) 
-						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_UPDATE))) {
+						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_UPDATE)
+						|| commentEntity.getAction().equals(WorkflowLogEntry.INSTANCE_STOP))) {
 				
 				WorkflowLogEntry workflowLogEntry = null;
 				try {

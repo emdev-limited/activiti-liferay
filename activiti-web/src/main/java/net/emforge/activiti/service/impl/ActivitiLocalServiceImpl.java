@@ -5,46 +5,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.emforge.activiti.engine.LiferayTaskService;
+import net.emforge.activiti.log.WorkflowLogConstants;
+import net.emforge.activiti.log.WorkflowLogEntry;
+import net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl;
+import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
+import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
+import net.emforge.activiti.spring.ApplicationContextProvider;
+
+import org.activiti.engine.RuntimeService;
+import org.activiti.engine.impl.identity.Authentication;
+import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.workflow.WorkflowException;
 
-import net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl;
-import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
-import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
-import net.emforge.activiti.spring.ApplicationContextProvider;
-
-/**
- * The implementation of the activiti local service.
- * 
- * <p>
- * All custom service methods should be put in this class. Whenever methods are
- * added, rerun ServiceBuilder to copy their definitions into the
- * {@link net.emforge.activiti.service.ActivitiLocalService} interface.
- * 
- * <p>
- * This is a local service. Methods of this service will not have security
- * checks based on the propagated JAAS credentials because this service can only
- * be accessed from within the same VM.
- * </p>
- * 
- * @author Brian Wing Shun Chan
- * @see net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl
- * @see net.emforge.activiti.service.ActivitiLocalServiceUtil
- */
 public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
-
-    /*
-     * NOTE FOR DEVELOPERS:
-     * 
-     * Never reference this interface directly. Always use {@link
-     * net.emforge.activiti.service.ActivitiLocalServiceUtil} to access the
-     * activiti local service.
-     */
     private static Log _log = LogFactoryUtil.getLog(ActivitiLocalServiceImpl.class.getName());
+
+    @Autowired
+    RuntimeService runtimeService;    
+	@Autowired
+	LiferayTaskService liferayTaskService;
 
     @Override
     public String createNewModel(String modelName, String modelDescription)
@@ -192,6 +180,97 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
             if (row[ncol] != null) {
                 dest.add(row[ncol]);
             }
+        }
+    }
+    
+    private void checkServices() {
+        if (runtimeService == null) {
+            try {
+                ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+                runtimeService = context.getBean(RuntimeService.class);  
+                liferayTaskService = context.getBean(LiferayTaskService.class);
+            } catch (Exception e) {
+                _log.error(e, e);
+                throw new RuntimeException(e.getMessage());
+            }        
+        }
+    }
+
+    /** Suspend workflow instance
+     * 
+     */
+    @Override
+    public boolean suspendWorkflowInstance(long companyId,
+            long workflowInstanceId) throws WorkflowException {
+        
+        checkServices();
+        
+        String procInstanceId = String.valueOf(workflowInstanceId);
+        ProcessInstanceQuery qry = runtimeService.createProcessInstanceQuery().processInstanceId(procInstanceId);
+        ProcessInstance inst = qry.singleResult();
+        if (inst == null) {
+            return false;
+        } else {
+            if (inst.isSuspended()) {
+                return true;
+            }
+            
+            runtimeService.suspendProcessInstanceById(procInstanceId);
+            inst = qry.singleResult();
+            return inst.isSuspended();
+        }
+    }
+
+    /** Resume workflow instance
+     * 
+     */
+    @Override
+    public boolean resumeWorkflowInstance(long companyId,
+            long workflowInstanceId) throws WorkflowException {
+
+        checkServices();
+        
+        String procInstanceId = String.valueOf(workflowInstanceId);
+        ProcessInstanceQuery qry = runtimeService.createProcessInstanceQuery().processInstanceId(procInstanceId);
+        ProcessInstance inst = qry.singleResult();
+        if (inst == null) {
+            return false;
+        } else {
+            if (! inst.isSuspended()) {
+                return true;
+            }
+            
+            runtimeService.activateProcessInstanceById(procInstanceId);
+            inst = qry.singleResult();
+            return (!inst.isSuspended());
+        }
+        
+    }
+    
+    @Override
+    public boolean stopWorkflowInstance(long companyId, long userId, long workflowInstanceId, String comment) throws WorkflowException {
+        _log.info("User " + userId + " stops workflow instance " + workflowInstanceId + " with reason: " + comment);
+        
+        checkServices();
+        
+        Authentication.setAuthenticatedUserId(String.valueOf(userId));
+        
+        String procInstanceId = String.valueOf(workflowInstanceId);
+        ProcessInstanceQuery qry = runtimeService.createProcessInstanceQuery().processInstanceId(procInstanceId);
+        ProcessInstance inst = qry.singleResult();
+        if (inst == null) {
+            return false;
+        } else {
+    		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+    		workflowLogEntry.setType(WorkflowLogConstants.INSTANCE_STOP);
+    		workflowLogEntry.setComment(comment);
+    		workflowLogEntry.setAssigneeUserId(userId);
+    		workflowLogEntry.setState(null);
+    		
+    		liferayTaskService.addWorkflowLogEntry(null, procInstanceId, workflowLogEntry);
+        	
+            runtimeService.deleteProcessInstance(procInstanceId, comment);
+            return true;
         }
     }
 }

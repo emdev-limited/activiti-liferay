@@ -57,6 +57,7 @@ import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskCreateDateC
 import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.RoleLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
@@ -88,8 +89,55 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public WorkflowTask assignWorkflowTaskToRole(long companyId, long userId,
 			long workflowTaskId, long roleId, String comment, Date dueDate,
 			Map<String, Serializable> context) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+        try {
+            identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
+            Role arole = RoleLocalServiceUtil.getRole(roleId);
+            
+            String taskId = String.valueOf(workflowTaskId);
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            
+            // update due date
+            if (dueDate != null) {
+                task.setDueDate(dueDate);
+            }
+            taskService.saveTask(task);
+            
+            // update assignee
+            String currentAssignee = task.getAssignee();
+            
+            // assign task
+            taskService.setAssignee(taskId, null);
+            WorkflowUtil.clearCandidateGroups(taskService, taskId);
+            taskService.addCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
+            
+            // save log
+            WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+            workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
+            workflowLogEntry.setRoleId(roleId);
+            workflowLogEntry.setAssigneeUserId(userId);
+            
+            Long prevUserId = null;
+            try {
+                prevUserId = Long.valueOf(currentAssignee);
+            } catch (Exception ex) {}
+            
+            if (prevUserId != null) {
+                workflowLogEntry.setPreviousUserId(prevUserId);
+            }
+            workflowLogEntry.setComment(comment);
+            
+            addWorkflowLogEntryToProcess(task, workflowLogEntry);
+            
+            // get new state of task
+            task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            WorkflowTask workflowTask = getWorkflowTask(task);
+            
+            return workflowTask;
+        } catch (WorkflowException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new WorkflowException("Cannot assign task", ex);
+        }
 	}
 
 	@Transactional
