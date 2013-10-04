@@ -1,33 +1,39 @@
 package net.emforge.activiti.log;
 
-import com.liferay.portal.kernel.workflow.WorkflowLog;
+import net.emforge.activiti.log.WorkflowLogConstants;
 
 public class WorkflowLogTypeMapperUtil {
 	
 	public static int mapToLiferayType(String type) {
 		
-		if(type.equals(WorkflowLogEntry.TASK_ASSIGN)) {
-			return WorkflowLog.TASK_ASSIGN;
+		if (type.equals(WorkflowLogEntry.TASK_ASSIGN)) {
+			return WorkflowLogConstants.TASK_ASSIGN;
 		}
-		if(type.equals(WorkflowLogEntry.TASK_COMPLETION)) {
-			return WorkflowLog.TASK_COMPLETION;
+		if (type.equals(WorkflowLogEntry.TASK_COMPLETION)) {
+			return WorkflowLogConstants.TASK_COMPLETION;
 		}
-		if(type.equals(WorkflowLogEntry.TASK_UPDATE)) {
-			return WorkflowLog.TASK_UPDATE;
+		if (type.equals(WorkflowLogEntry.TASK_UPDATE)) {
+			return WorkflowLogConstants.TASK_UPDATE;
+		}
+		if (type.equals(WorkflowLogEntry.INSTANCE_STOP)) {
+			return WorkflowLogConstants.INSTANCE_STOP;
 		}
 		return -1;
 	}
 	
 	public static String mapToActivitiType(int type) {
 		
-		if(type == WorkflowLog.TASK_ASSIGN) {
+		if (type == WorkflowLogConstants.TASK_ASSIGN) {
 			return WorkflowLogEntry.TASK_ASSIGN;
 		}
-		if(type == WorkflowLog.TASK_COMPLETION) {
+		if (type == WorkflowLogConstants.TASK_COMPLETION) {
 			return WorkflowLogEntry.TASK_COMPLETION;
 		}
-		if(type == WorkflowLog.TASK_UPDATE) {
+		if (type == WorkflowLogConstants.TASK_UPDATE) {
 			return WorkflowLogEntry.TASK_UPDATE;
+		}
+		if (type == WorkflowLogConstants.INSTANCE_STOP) {
+			return WorkflowLogEntry.INSTANCE_STOP;
 		}
 		return "";
 	}

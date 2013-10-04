@@ -99,9 +99,12 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     /**
     * Returns top level process instances, filtered by active user task.
     *
-    * @param taskName - user task name
-    * @param assigneeUser - task assignee
-    * @param candidateRole - candidate role for task
+    * @param taskName
+    - user task name
+    * @param assigneeUser
+    - task assignee
+    * @param candidateRole
+    - candidate role for task
     * @return
     * @throws SystemException
     */
@@ -111,6 +114,33 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
         throws com.liferay.portal.kernel.exception.SystemException {
         return _activitiLocalService.findTopLevelProcessInstances(taskName,
             assigneeUser, candidateRole);
+    }
+
+    /**
+    * Suspend workflow instance
+    */
+    public boolean suspendWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return _activitiLocalService.suspendWorkflowInstance(companyId,
+            workflowInstanceId);
+    }
+
+    /**
+    * Resume workflow instance
+    */
+    public boolean resumeWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return _activitiLocalService.resumeWorkflowInstance(companyId,
+            workflowInstanceId);
+    }
+
+    public boolean stopWorkflowInstance(long companyId, long userId,
+        long workflowInstanceId, java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        return _activitiLocalService.stopWorkflowInstance(companyId, userId,
+            workflowInstanceId, comment);
     }
 
     /**
