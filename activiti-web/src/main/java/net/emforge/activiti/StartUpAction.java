@@ -93,7 +93,7 @@ public class StartUpAction extends SimpleAction {
 					"FROM ACT_RE_PROCDEF arp INNER JOIN ACT_GE_BYTEARRAY agb ON arp.DEPLOYMENT_ID_ = agb.DEPLOYMENT_ID_ " +
 					"WHERE agb.NAME_ = concat(arp.ID_,':title'));");
 		} catch (Exception e) {
-			log.error("Failed to fix titles for process definitions", e);
+			log.info("Failed to fix titles for process definitions (may be ignored for new db):" + e.getMessage());
 		}
 	}
 	
