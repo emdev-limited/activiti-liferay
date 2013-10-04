@@ -39,7 +39,7 @@ public class WorkflowComparatorFactoryImpl implements WorkflowComparatorFactory 
 
 	@Override
 	public OrderByComparator getLogCreateDateComparator(boolean ascending) {
-		return new WorkflowLogCreateDateComparator(ascending);
+		return new ActivitiWorkflowLogCreateDateComparator(ascending);
 	}
 
 	@Override
@@ -56,12 +56,12 @@ public class WorkflowComparatorFactoryImpl implements WorkflowComparatorFactory 
 
 	@Override
 	public OrderByComparator getTaskCreateDateComparator(boolean ascending) {
-		return new WorkflowTaskCreateDateComparator(ascending);
+		return new ActivitiWorkflowTaskCreateDateComparator(ascending);
 	}
 
 	@Override
 	public OrderByComparator getTaskDueDateComparator(boolean ascending) {
-		return new WorkflowTaskDueDateDateComparator(ascending);
+		return new ActivitiWorkflowTaskDueDateDateComparator(ascending);
 	}
 
 	@Override

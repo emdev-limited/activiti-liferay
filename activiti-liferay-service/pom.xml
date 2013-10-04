@@ -3,12 +3,12 @@
   <parent>
     <groupId>net.emforge</groupId>
     <artifactId>activiti-liferay</artifactId>
-    <version>6.1.1.13</version>
+    <version>6.2.0.14</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <groupId>net.emforge</groupId>
   <artifactId>activiti-liferay-service</artifactId>
-  <version>6.1.1.13</version>
+  <version>6.2.0.14</version>
   <name>Activiti-web Service</name>
   
   <build>

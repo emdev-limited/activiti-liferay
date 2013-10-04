@@ -53,8 +53,8 @@ import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
-import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskCreateDateComparator;
-import com.liferay.portal.kernel.workflow.comparator.BaseWorkflowTaskDueDateComparator;
+import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskCreateDateComparator;
+import com.liferay.portal.kernel.workflow.comparator.WorkflowTaskDueDateComparator;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.RoleLocalServiceUtil;
@@ -445,14 +445,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
     		
     		// is comparator specified
     		if (orderByComparator != null) {
-    			if (orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+    			if (orderByComparator instanceof WorkflowTaskDueDateComparator) {
 	    		
 	    			if (orderByComparator.isAscending()) {
 	    				taskQuery = taskQuery.orderByDueDate().asc();
 	    			} else {
 	    				taskQuery = taskQuery.orderByDueDate().desc();
 	    			}
-    			} else if (orderByComparator instanceof BaseWorkflowTaskCreateDateComparator) {
+    			} else if (orderByComparator instanceof WorkflowTaskCreateDateComparator) {
     				if (orderByComparator.isAscending()) {
 	    				taskQuery = taskQuery.orderByCreateDate().asc();
 	    			} else {
@@ -521,14 +521,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
     		
     		// is comparator specified
     		if (orderByComparator != null) {
-    			if (orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+    			if (orderByComparator instanceof WorkflowTaskDueDateComparator) {
 	    		
 	    			if (orderByComparator.isAscending()) {
 	    				taskQuery = taskQuery.orderByDueDate().asc();
 	    			} else {
 	    				taskQuery = taskQuery.orderByDueDate().desc();
 	    			}
-    			} else if (orderByComparator instanceof BaseWorkflowTaskCreateDateComparator) {
+    			} else if (orderByComparator instanceof WorkflowTaskCreateDateComparator) {
     				if (orderByComparator.isAscending()) {
 	    				taskQuery = taskQuery.orderByCreateDate().asc();
 	    			} else {
@@ -668,7 +668,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			taskQuery.taskEntryClassPKs(java.util.Arrays.asList(assetPrimaryKey));
         		}
 
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        		if (orderByComparator != null && orderByComparator instanceof WorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
         				taskQuery.orderByDueDate().asc();
         			} else {
@@ -705,7 +705,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			taskQuery.taskEntryClassPKs(java.util.Arrays.asList(assetPrimaryKey));
         		}
 
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        		if (orderByComparator != null && orderByComparator instanceof WorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
         				taskQuery.orderByDueDate().asc();
         			} else {
@@ -776,7 +776,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			taskQuery.taskEntryClassNames(listAssetTypes);
         		}
 
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        		if (orderByComparator != null && orderByComparator instanceof WorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
         				taskQuery.orderByDueDate().asc();
         			} else {
@@ -806,7 +806,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
         			taskQuery.taskEntryClassNames(listAssetTypes);
         		}
 
-        		if (orderByComparator != null && orderByComparator instanceof BaseWorkflowTaskDueDateComparator) {
+        		if (orderByComparator != null && orderByComparator instanceof WorkflowTaskDueDateComparator) {
         			if (orderByComparator.isAscending()) {
         				taskQuery.orderByDueDate().asc();
         			} else {

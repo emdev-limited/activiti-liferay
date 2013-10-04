@@ -36,5 +36,10 @@ public class WorkflowEngineManagerImpl implements WorkflowEngineManager {
 	public String getVersion() {
 		return "5.13";
 	}
-
+	
+	@Override
+	public boolean isDeployed() {
+		return true;
+	}
+	
 }
