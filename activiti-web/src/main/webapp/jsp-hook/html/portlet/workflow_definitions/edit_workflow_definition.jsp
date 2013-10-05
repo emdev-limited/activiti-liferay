@@ -65,6 +65,18 @@ portletURL.setParameter("struts_action", "/workflow_definitions/view");
 			<aui:button href="<%= redirect %>" type="cancel" />
 		</aui:button-row>
 	</aui:fieldset>
+		<%
+		String imgURL = "";
+		try {
+			imgURL = "http://" + request.getServerName() + ":" + request.getServerPort() + "/activiti-web/image?companyId=" + themeDisplay.getCompanyId() + "&" + "workflow=" + workflowDefinition.getName() + "&" + "version=" + workflowDefinition.getVersion();
+		}
+		catch (java.lang.NullPointerException e) {
+			
+		}		
+	%>
+	<img src='<%=imgURL%>' />
+	
+	
 </aui:form>
 
 <%

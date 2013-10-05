@@ -23,4 +23,20 @@
 
 <liferay-ui:error exception="<%= PrincipalException.class %>" message="you-do-not-have-the-required-permissions" />
 <liferay-ui:error exception="<%= RequiredWorkflowDefinitionException.class %>" message="you-cannot-deactivate-or-delete-this-definition" />
-<liferay-ui:error exception="<%= WorkflowException.class %>" message="an-error-occurred-in-the-workflow-engine" />
+<liferay-ui:error exception="<%= WorkflowException.class %>" >
+	<%= LanguageUtil.get(pageContext, "an-error-occurred-in-the-workflow-engine") %>
+	<br/>
+	<%= ((WorkflowException) errorException).getMessage() %>
+	<br/>
+	<br/>
+	<%= ExceptionUtils.getStackTrace((WorkflowException) errorException)  %>
+</liferay-ui:error>
+
+<liferay-ui:error key="unknown-exception" >
+	<%= LanguageUtil.get(pageContext, "an-error-occurred-in-the-workflow-engine") %>
+	<br/>
+	<%= ((Exception) errorException).getMessage() %>
+	<br/>
+	<br/>
+	<%= ExceptionUtils.getStackTrace((Exception)errorException)  %>
+</liferay-ui:error>

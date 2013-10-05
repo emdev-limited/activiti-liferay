@@ -289,6 +289,11 @@ request.setAttribute(WebKeys.WORKFLOW_ASSET_PREVIEW, Boolean.TRUE);
 					userId="<%= user.getUserId() %>"
 				/>
 			</liferay-ui:panel>
+			
+			<liferay-ui:panel defaultState="closed" title="image">
+				<img src='<%="/activiti-web/image?taskId=" + workflowTask.getWorkflowTaskId()  %>' />
+			</liferay-ui:panel>
+			
 		</liferay-ui:panel-container>
 	</aui:col>
 
