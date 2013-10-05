@@ -2,7 +2,10 @@ package net.emforge.activiti.service;
 
 import com.liferay.portal.service.InvokableLocalService;
 
-
+/**
+ * @author Brian Wing Shun Chan
+ * @generated
+ */
 public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private InvokableLocalService _invokableLocalService;
     private String _methodName0;
@@ -82,6 +85,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
             };
     }
 
+    @Override
     public java.lang.String getBeanIdentifier() {
         Object returnObj = null;
 
@@ -102,6 +106,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.lang.String) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public void setBeanIdentifier(java.lang.String beanIdentifier) {
         try {
             _invokableLocalService.invokeMethod(_methodName1,
@@ -119,12 +124,14 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
     }
 
+    @Override
     public java.lang.Object invokeMethod(java.lang.String name,
         java.lang.String[] parameterTypes, java.lang.Object[] arguments)
         throws java.lang.Throwable {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public java.lang.String createNewModel(java.lang.String modelName,
         java.lang.String modelDescription)
         throws com.liferay.portal.kernel.exception.PortalException,
@@ -161,6 +168,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.lang.String) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public java.lang.String test(java.lang.String s)
         throws com.liferay.portal.kernel.exception.PortalException,
             com.liferay.portal.kernel.exception.SystemException {
@@ -192,6 +200,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.lang.String) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public java.util.List<java.lang.String> findAllExecutions(
         java.util.List instanceIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -219,6 +228,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public java.util.Set<java.lang.String> findUniqueUserTaskNames(
         java.util.List<java.lang.String> executionIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -246,6 +256,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.util.Set<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public java.util.Set findUniqueUserTaskAssignees(
         java.util.List<java.lang.String> executionIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -273,6 +284,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.util.Set) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public java.util.List<java.lang.String> findTopLevelProcessInstances(
         java.lang.String taskName, java.lang.String assigneeUser,
         java.lang.String candidateRole)
@@ -307,6 +319,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 
+    @Override
     public boolean suspendWorkflowInstance(long companyId,
         long workflowInstanceId)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
@@ -334,6 +347,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return ((Boolean) returnObj).booleanValue();
     }
 
+    @Override
     public boolean resumeWorkflowInstance(long companyId,
         long workflowInstanceId)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
@@ -361,6 +375,7 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         return ((Boolean) returnObj).booleanValue();
     }
 
+    @Override
     public boolean stopWorkflowInstance(long companyId, long userId,
         long workflowInstanceId, java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException {

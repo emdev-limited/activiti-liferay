@@ -3,12 +3,10 @@ package net.emforge.activiti.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link ActivitiLocalService}.
- * </p>
+ * Provides a wrapper for {@link ActivitiLocalService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       ActivitiLocalService
+ * @author Brian Wing Shun Chan
+ * @see ActivitiLocalService
  * @generated
  */
 public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
@@ -25,6 +23,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     *
     * @return the Spring bean ID for this bean
     */
+    @Override
     public java.lang.String getBeanIdentifier() {
         return _activitiLocalService.getBeanIdentifier();
     }
@@ -34,10 +33,12 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     *
     * @param beanIdentifier the Spring bean ID for this bean
     */
+    @Override
     public void setBeanIdentifier(java.lang.String beanIdentifier) {
         _activitiLocalService.setBeanIdentifier(beanIdentifier);
     }
 
+    @Override
     public java.lang.Object invokeMethod(java.lang.String name,
         java.lang.String[] parameterTypes, java.lang.Object[] arguments)
         throws java.lang.Throwable {
@@ -45,6 +46,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             arguments);
     }
 
+    @Override
     public java.lang.String createNewModel(java.lang.String modelName,
         java.lang.String modelDescription)
         throws com.liferay.portal.kernel.exception.PortalException,
@@ -52,6 +54,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
         return _activitiLocalService.createNewModel(modelName, modelDescription);
     }
 
+    @Override
     public java.lang.String test(java.lang.String s)
         throws com.liferay.portal.kernel.exception.PortalException,
             com.liferay.portal.kernel.exception.SystemException {
@@ -65,6 +68,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     * @return
     * @throws SystemException
     */
+    @Override
     public java.util.List<java.lang.String> findAllExecutions(
         java.util.List instanceIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -78,6 +82,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     * @return
     * @throws SystemException
     */
+    @Override
     public java.util.Set<java.lang.String> findUniqueUserTaskNames(
         java.util.List<java.lang.String> executionIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -90,6 +95,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     * @param instanceIds
     * @return
     */
+    @Override
     public java.util.Set findUniqueUserTaskAssignees(
         java.util.List<java.lang.String> executionIds)
         throws com.liferay.portal.kernel.exception.SystemException {
@@ -108,6 +114,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     * @return
     * @throws SystemException
     */
+    @Override
     public java.util.List<java.lang.String> findTopLevelProcessInstances(
         java.lang.String taskName, java.lang.String assigneeUser,
         java.lang.String candidateRole)
@@ -119,6 +126,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     /**
     * Suspend workflow instance
     */
+    @Override
     public boolean suspendWorkflowInstance(long companyId,
         long workflowInstanceId)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
@@ -129,6 +137,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     /**
     * Resume workflow instance
     */
+    @Override
     public boolean resumeWorkflowInstance(long companyId,
         long workflowInstanceId)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
@@ -136,6 +145,7 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             workflowInstanceId);
     }
 
+    @Override
     public boolean stopWorkflowInstance(long companyId, long userId,
         long workflowInstanceId, java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
@@ -144,24 +154,26 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     }
 
     /**
-     * @deprecated Renamed to {@link #getWrappedService}
+     * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
      */
     public ActivitiLocalService getWrappedActivitiLocalService() {
         return _activitiLocalService;
     }
 
     /**
-     * @deprecated Renamed to {@link #setWrappedService}
+     * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
      */
     public void setWrappedActivitiLocalService(
         ActivitiLocalService activitiLocalService) {
         _activitiLocalService = activitiLocalService;
     }
 
+    @Override
     public ActivitiLocalService getWrappedService() {
         return _activitiLocalService;
     }
 
+    @Override
     public void setWrappedService(ActivitiLocalService activitiLocalService) {
         _activitiLocalService = activitiLocalService;
     }
