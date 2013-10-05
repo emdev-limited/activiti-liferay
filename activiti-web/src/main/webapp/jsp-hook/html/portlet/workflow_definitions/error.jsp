@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,6 @@
  */
 --%>
 
-<%@page import="org.apache.commons.lang.exception.ExceptionUtils"%>
-<%@page import="com.liferay.portal.kernel.language.LanguageUtil"%>
 <%@ include file="/html/portlet/workflow_definitions/init.jsp" %>
 
 <liferay-ui:header
@@ -23,22 +21,6 @@
 	title="error"
 />
 
+<liferay-ui:error exception="<%= PrincipalException.class %>" message="you-do-not-have-the-required-permissions" />
 <liferay-ui:error exception="<%= RequiredWorkflowDefinitionException.class %>" message="you-cannot-deactivate-or-delete-this-definition" />
-<liferay-ui:error exception="<%= PrincipalException.class %>"  message="you-do-not-have-the-required-permissions" />
-<liferay-ui:error exception="<%= WorkflowException.class %>" >
-	<%= LanguageUtil.get(pageContext, "an-error-occurred-in-the-workflow-engine") %>
-	<br/>
-	<%= ((WorkflowException) errorException).getMessage() %>
-	<br/>
-	<br/>
-	<%= ExceptionUtils.getStackTrace((WorkflowException) errorException)  %>
-</liferay-ui:error>
-
-<liferay-ui:error key="unknown-exception" >
-	<%= LanguageUtil.get(pageContext, "an-error-occurred-in-the-workflow-engine") %>
-	<br/>
-	<%= ((Exception) errorException).getMessage() %>
-	<br/>
-	<br/>
-	<%= ExceptionUtils.getStackTrace((Exception)errorException)  %>
-</liferay-ui:error>
+<liferay-ui:error exception="<%= WorkflowException.class %>" message="an-error-occurred-in-the-workflow-engine" />
