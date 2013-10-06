@@ -1,7 +1,5 @@
 package net.emforge.activiti.util;
 
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 import net.emforge.activiti.WorkflowInstanceManagerImpl;
@@ -28,7 +26,6 @@ import com.liferay.portlet.dynamicdatalists.model.DDLRecordSet;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecordVersion;
 import com.liferay.portlet.dynamicdatalists.service.DDLRecordLocalServiceUtil;
 import com.liferay.portlet.dynamicdatalists.service.DDLRecordSetLocalServiceUtil;
-import com.liferay.portlet.dynamicdatalists.service.persistence.DDLRecordVersionUtil;
 
 @Service("bpmCommon")
 public class BPMCommonUtil {
@@ -36,7 +33,6 @@ public class BPMCommonUtil {
 
 	public String getAssetSummary() {
 		try {
-			String summary = null;
 			ExecutionEntity execution = Context.getExecutionContext().getExecution();
 			String entryClassName = (String) execution.getVariable(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME);
 			String entryClassPKStr = (String) execution.getVariable(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK);
@@ -71,7 +67,6 @@ public class BPMCommonUtil {
 	 * Standard Liferay implementation uses asynchronous.
 	 * 
 	 * @param status
-	 * @param workflowContext
 	 */
 	public void updateStatusSynchronously(String status){
 		
