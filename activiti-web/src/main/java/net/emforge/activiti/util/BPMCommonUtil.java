@@ -1,7 +1,12 @@
 package net.emforge.activiti.util;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import net.emforge.activiti.WorkflowInstanceManagerImpl;
 
+import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.springframework.stereotype.Service;
@@ -12,6 +17,8 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowException;
+import com.liferay.portal.kernel.workflow.WorkflowHandler;
+import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowStatusManagerUtil;
 import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
 import com.liferay.portlet.asset.model.AssetRenderer;
@@ -58,4 +65,34 @@ public class BPMCommonUtil {
 			_log.error("Failed to update status", e);
 		}
 	}
+	
+	/**
+	 * This method updates asset status in a synchronous way.
+	 * Standard Liferay implementation uses asynchronous.
+	 * 
+	 * @param status
+	 * @param workflowContext
+	 */
+	public void updateStatusSynchronously(String status){
+		
+		try {
+			ExecutionEntity execution = Context.getExecutionContext().getExecution();
+			
+			if (!(execution instanceof DelegateExecution)) {
+				throw new Exception();
+			}
+			Map<String, Object> vars = execution.getVariables();
+			String className = (String)vars.get(
+					WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME);
+
+			WorkflowHandler workflowHandler = WorkflowHandlerRegistryUtil.getWorkflowHandler(className);
+
+			if (workflowHandler != null) {
+				workflowHandler.updateStatus(WorkflowConstants.toStatus(status), WorkflowInstanceManagerImpl.convertFromVars(vars));
+			}
+		} catch (Exception e) {
+			_log.error("Failed to update status synchronously", e);
+		}
+	}
+	
 }
