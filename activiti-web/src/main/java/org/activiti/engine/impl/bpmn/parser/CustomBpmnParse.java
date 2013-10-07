@@ -15,13 +15,17 @@ package org.activiti.engine.impl.bpmn.parser;
 import java.util.Collection;
 import java.util.List;
 
+import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.FlowElement;
 import org.activiti.bpmn.model.FormProperty;
 import org.activiti.bpmn.model.FormValue;
 import org.activiti.bpmn.model.UserTask;
+import org.activiti.bpmn.model.parse.Problem;
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.impl.bpmn.parser.handler.FormPostProcessorThreadLocalUtil;
 import org.activiti.engine.impl.bpmn.parser.handler.FormPostProcessorWrapper;
 import org.activiti.engine.impl.bpmn.parser.handler.UserTaskParseHandler;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.form.DefaultTaskFormHandler;
 import org.activiti.engine.impl.form.TaskFormHandler;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
@@ -119,4 +123,52 @@ public class CustomBpmnParse extends BpmnParse {
 	    
 	    taskDefinition.setTaskFormHandler(taskFormHandler);
 	}
+	
+	public BpmnParse execute() {
+		try {
+			BpmnXMLConverter converter = new BpmnXMLConverter();
+
+			boolean enableSafeBpmnXml = false;
+			String encoding = null;
+			if (Context.getProcessEngineConfiguration() != null) {
+				enableSafeBpmnXml = Context.getProcessEngineConfiguration()
+						.isEnableSafeBpmnXml();
+				encoding = Context.getProcessEngineConfiguration()
+						.getXmlEncoding();
+			}
+
+			if (encoding != null) {
+				bpmnModel = converter.convertToBpmnModel(streamSource, true,
+						enableSafeBpmnXml, encoding);
+			} else {
+				bpmnModel = converter.convertToBpmnModel(streamSource, true,
+						enableSafeBpmnXml);
+			}
+
+			createImports();
+			createItemDefinitions();
+			createMessages();
+			createOperations();
+			transformProcessDefinitions();
+		} catch (Exception e) {
+			if (e instanceof ActivitiException) {
+				throw (ActivitiException) e;
+			} else {
+				throw new ActivitiException("Error parsing XML", e);
+			}
+		}
+
+		if (bpmnModel.getProblems().size() > 0) {
+			StringBuilder problemBuilder = new StringBuilder();
+			for (Problem error : bpmnModel.getProblems()) {
+				problemBuilder.append(error.toString());
+				problemBuilder.append("\n");
+			}
+			throw new ActivitiException("Errors while parsing:\n"
+					+ problemBuilder.toString());
+		}
+
+		return this;
+	}
+	
 }
