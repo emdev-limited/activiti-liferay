@@ -52,10 +52,35 @@ public class BPMCommonUtil {
 		}
 	}
 	
+	/**
+	 * Tries to update synchronously first, then asynchronously
+	 * 
+	 * @param status
+	 */
 	public void updateStatus(String status){
-		ExecutionEntity execution = Context.getExecutionContext().getExecution();
-		int st = WorkflowConstants.toStatus(status);
 		try {
+			updateStatusSynchronously(status);
+		} catch (Exception e) {
+			_log.error("Failed to update status", e);
+			try {
+				//something goes wrong - try Liferay classic way:
+				updateStatusAsynchronously(status);
+			} catch (Exception e2) {
+				_log.error("Failed to update status Asynchronously", e2);
+			}
+		}
+	}
+	
+	/**
+	 * This method updates asset status in a asynchronous way - standard for Liferay
+	 * 
+	 * @param status
+	 */
+	public void updateStatusAsynchronously(String status){
+		try {
+			ExecutionEntity execution = Context.getExecutionContext().getExecution();
+			int st = WorkflowConstants.toStatus(status);
+			
 			WorkflowStatusManagerUtil.updateStatus(st, WorkflowInstanceManagerImpl.convertFromVars(execution.getVariables()));
 		} catch (WorkflowException e) {
 			_log.error("Failed to update status", e);
@@ -84,6 +109,8 @@ public class BPMCommonUtil {
 
 			if (workflowHandler != null) {
 				workflowHandler.updateStatus(WorkflowConstants.toStatus(status), WorkflowInstanceManagerImpl.convertFromVars(vars));
+			} else {
+				_log.warn("Could not update status cause could not find appropriate workflowHandler");
 			}
 		} catch (Exception e) {
 			_log.error("Failed to update status synchronously", e);
