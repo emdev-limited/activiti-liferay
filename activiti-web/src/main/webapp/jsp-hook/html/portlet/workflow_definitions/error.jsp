@@ -15,6 +15,7 @@
 --%>
 
 <%@ include file="/html/portlet/workflow_definitions/init.jsp" %>
+<%@page import="org.apache.commons.lang.exception.ExceptionUtils"%>
 
 <liferay-ui:header
 	backURL="javascript:history.go(-1);"
