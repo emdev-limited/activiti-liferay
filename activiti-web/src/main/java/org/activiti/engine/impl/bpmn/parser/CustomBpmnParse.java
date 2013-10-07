@@ -138,10 +138,10 @@ public class CustomBpmnParse extends BpmnParse {
 			}
 
 			if (encoding != null) {
-				bpmnModel = converter.convertToBpmnModel(streamSource, true,
+				bpmnModel = converter.convertToBpmnModel(streamSource, false,
 						enableSafeBpmnXml, encoding);
 			} else {
-				bpmnModel = converter.convertToBpmnModel(streamSource, true,
+				bpmnModel = converter.convertToBpmnModel(streamSource, false,
 						enableSafeBpmnXml);
 			}
 
