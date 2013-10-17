@@ -171,6 +171,7 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 					log.setType(workflowLogEntry.getType());
 					log.setRoleId(workflowLogEntry.getRoleId());
                     log.setUserId(workflowLogEntry.getAssigneeUserId());
+                    log.setWorkflowTaskId(workflowLogEntry.getWorkflowTaskId());
 				}
 				
 				return log;
