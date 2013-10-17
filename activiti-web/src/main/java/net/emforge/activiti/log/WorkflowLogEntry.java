@@ -24,6 +24,7 @@ public class WorkflowLogEntry {
 	private long roleId;
 	private String state;
 	private int type;
+	private long workflowTaskId;
 	
 	public String getComment() {
 		return comment;
@@ -80,5 +81,11 @@ public class WorkflowLogEntry {
 
     public void setAssigneeUserId(long assigneeUserId) {
         this.assigneeUserId = assigneeUserId;
+    }
+    public long getWorkflowTaskId() {
+        return workflowTaskId;
+    }
+    public void setWorkflowTaskId(long workflowTaskId) {
+        this.workflowTaskId = workflowTaskId;
     }
 }

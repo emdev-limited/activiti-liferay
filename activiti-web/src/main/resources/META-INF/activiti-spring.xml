@@ -58,6 +58,8 @@
 		            <list>
 		                <bean class="net.emforge.activiti.task.SaveAssigneeListener">                 
 		                </bean>
+		                <bean class="net.emforge.activiti.task.SaveTransitionListener">                 
+		                </bean>		                
 		            </list>
 		        </entry>
 		    </map>
