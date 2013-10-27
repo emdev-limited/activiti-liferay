@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.activiti.engine.EngineServices;
-import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
+import org.activiti.engine.impl.bpmn.parser.BpmnParse;
 import org.activiti.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.db.DbSqlSession;
@@ -39,8 +39,6 @@ import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.activiti.engine.impl.pvm.delegate.ExecutionListenerExecution;
 import org.activiti.engine.impl.pvm.delegate.SignallableActivityBehavior;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
-import org.activiti.engine.impl.pvm.process.Lane;
-import org.activiti.engine.impl.pvm.process.LaneSet;
 import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
 import org.activiti.engine.impl.pvm.process.ScopeImpl;
 import org.activiti.engine.impl.pvm.process.TransitionImpl;
@@ -215,12 +213,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected boolean forcedUpdate;
   
-  protected String laneName = null;
-  
-  protected String laneSetName = null;
-  
   protected List<VariableInstanceEntity> queryVariables;
-
 
   public ExecutionEntity() {
   }
@@ -299,7 +292,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     // Cached entity-state initialized to null, all bits are zore, indicating NO entities present
     cachedEntityState = 0;
     
-    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_TIMER_DECLARATION);
+    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(BpmnParse.PROPERTYNAME_TIMER_DECLARATION);
     if (timerDeclarations!=null) {
       for (TimerDeclarationImpl timerDeclaration : timerDeclarations) {
         TimerEntity timer = timerDeclaration.prepareTimerEntity(this);
@@ -311,29 +304,13 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     }
     
     // create event subscriptions for the current scope
-    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
+    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(BpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
     if(eventSubscriptionDeclarations != null) {
       for (EventSubscriptionDeclaration eventSubscriptionDeclaration : eventSubscriptionDeclarations) {        
         if(!eventSubscriptionDeclaration.isStartEvent()) {
           EventSubscriptionEntity eventSubscriptionEntity = eventSubscriptionDeclaration.prepareEventSubscriptionEntity(this);        
           eventSubscriptionEntity.insert();
         }        
-      }
-    }
-    
-    // lane and laneSet
-    List<LaneSet> laneSets = processDefinition.getLaneSets();
-    if (laneSets != null) {
-      for (LaneSet laneSet : laneSets) {
-        List<Lane> lanes = laneSet.getLanes();
-        for (Lane lane : lanes) {
-          List<String> flowNodeIds = lane.getFlowNodeIds();
-          if (flowNodeIds.indexOf(activityId) >= 0 && lane.getName() != null) {
-        	laneSetName = laneSet.getName();
-            laneName = lane.getName();
-            break;
-          }
-        }
       }
     }
   }
@@ -691,7 +668,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected void ensureProcessInstanceInitialized() {
     if ((processInstance == null) && (processInstanceId != null)) {
-      processInstance =  Context
+      processInstance = Context
         .getCommandContext()
         .getExecutionEntityManager()
         .findExecutionById(processInstanceId);
@@ -1043,7 +1020,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   public Object getPersistentState() {
     Map<String, Object> persistentState = new HashMap<String, Object>();
     persistentState.put("processDefinitionId", this.processDefinitionId);
-    persistentState.put("businessKey", businessKey);
+    persistentState.put("businessKey", this.businessKey);
     persistentState.put("activityId", this.activityId);
     persistentState.put("isActive", this.isActive);
     persistentState.put("isConcurrent", this.isConcurrent);
@@ -1398,35 +1375,36 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   public String getCurrentActivityName() {
     return activityName;
   }
-
-  public String getCurrentLaneSetName() {
-	return laneName;
-  }
-	  
-  public String getCurrentLaneName() {
-	return laneName;
-  }
   
   public Map<String, Object> getProcessVariables() {
-	  Map<String, Object> variables = new HashMap<String, Object>();
-	  if (queryVariables != null) {
-		  for (VariableInstanceEntity variableInstance : queryVariables) {
-			  if (variableInstance.getId() != null
-					  && variableInstance.getTaskId() == null) {
-				  variables.put(variableInstance.getName(),
-						  variableInstance.getValue());
-			  }
-		  }
-	  }
-	  return variables;
-  }
-
-  public List<VariableInstanceEntity> getQueryVariables() {
-	  return queryVariables;
-  }
-
-  public void setQueryVariables(List<VariableInstanceEntity> queryVariables) {
-	  this.queryVariables = queryVariables;
+    Map<String, Object> variables = new HashMap<String, Object>();
+    if (queryVariables != null) {
+      for (VariableInstanceEntity variableInstance: queryVariables) {
+        if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {
+          variables.put(variableInstance.getName(), variableInstance.getValue());
+        }
+      }
+    }
+    return variables;
   }
   
+  public List<VariableInstanceEntity> getQueryVariables() {
+    if(queryVariables == null && Context.getCommandContext() != null) {
+      queryVariables = new VariableInitializingList();
+    }
+    return queryVariables;
+  }
+  
+  public void setQueryVariables(List<VariableInstanceEntity> queryVariables) {
+    this.queryVariables = queryVariables;
+  }
+  
+  public String updateProcessBusinessKey(String bzKey) {
+    if (isProcessInstanceType() && bzKey != null) {
+      setBusinessKey(bzKey);
+      Context.getCommandContext().getHistoryManager().updateProcessBusinessKeyInHistory(this);
+      return bzKey;
+    }
+    return null;
+  }
 }
