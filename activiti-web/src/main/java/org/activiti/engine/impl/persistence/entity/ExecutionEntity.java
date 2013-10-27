@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.activiti.engine.EngineServices;
-import org.activiti.engine.impl.bpmn.parser.BpmnParse;
+import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
 import org.activiti.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.db.DbSqlSession;
@@ -42,6 +42,8 @@ import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
 import org.activiti.engine.impl.pvm.process.ScopeImpl;
 import org.activiti.engine.impl.pvm.process.TransitionImpl;
+import org.activiti.engine.impl.pvm.process.Lane;
+import org.activiti.engine.impl.pvm.process.LaneSet;
 import org.activiti.engine.impl.pvm.runtime.AtomicOperation;
 import org.activiti.engine.impl.pvm.runtime.InterpretableExecution;
 import org.activiti.engine.impl.pvm.runtime.OutgoingExecution;
@@ -215,6 +217,13 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected List<VariableInstanceEntity> queryVariables;
 
+  // EMDEV - swimlanes support
+  protected String laneName = null;
+  
+  protected String laneSetName = null;
+  // end of swimlanes support
+  
+  
   public ExecutionEntity() {
   }
   
@@ -292,7 +301,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     // Cached entity-state initialized to null, all bits are zore, indicating NO entities present
     cachedEntityState = 0;
     
-    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(BpmnParse.PROPERTYNAME_TIMER_DECLARATION);
+    List<TimerDeclarationImpl> timerDeclarations = (List<TimerDeclarationImpl>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_TIMER_DECLARATION);
     if (timerDeclarations!=null) {
       for (TimerDeclarationImpl timerDeclaration : timerDeclarations) {
         TimerEntity timer = timerDeclaration.prepareTimerEntity(this);
@@ -304,7 +313,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     }
     
     // create event subscriptions for the current scope
-    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(BpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
+    List<EventSubscriptionDeclaration> eventSubscriptionDeclarations = (List<EventSubscriptionDeclaration>) scope.getProperty(CustomBpmnParse.PROPERTYNAME_EVENT_SUBSCRIPTION_DECLARATION);
     if(eventSubscriptionDeclarations != null) {
       for (EventSubscriptionDeclaration eventSubscriptionDeclaration : eventSubscriptionDeclarations) {        
         if(!eventSubscriptionDeclaration.isStartEvent()) {
@@ -313,6 +322,22 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         }        
       }
     }
+    
+    // lane and laneSet
+    List<LaneSet> laneSets = processDefinition.getLaneSets();
+    if (laneSets != null) {
+      for (LaneSet laneSet : laneSets) {
+        List<Lane> lanes = laneSet.getLanes();
+        for (Lane lane : lanes) {
+          List<String> flowNodeIds = lane.getFlowNodeIds();
+          if (flowNodeIds.indexOf(activityId) >= 0 && lane.getName() != null) {
+        	laneSetName = laneSet.getName();
+            laneName = lane.getName();
+            break;
+          }
+        }
+      }
+    }    
   }
   
   public void start() {
@@ -1407,4 +1432,14 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     }
     return null;
   }
+  
+  // EMDEV - swimlanes support
+  public String getCurrentLaneSetName() {
+	return laneName;
+  }
+	  
+  public String getCurrentLaneName() {
+	return laneName;
+  }
+  
 }

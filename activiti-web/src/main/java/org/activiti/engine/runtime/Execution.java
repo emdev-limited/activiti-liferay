@@ -42,6 +42,15 @@ public interface Execution {
    * It is the same as {@link #getId()} if this execution is the process instance. */ 
   String getProcessInstanceId();
   
+   /**
+   * Gets the id of the parent of this execution. If null, the execution represents a process-instance.
+  */
+  String getParentId();
+
+  //
+  // Added by EMDEV for swimlanes support
+  // 
+  
   /**
    *  Name of the LaneSet which contains the execution.
    */
@@ -51,9 +60,4 @@ public interface Execution {
    * Name of the Lane which contains the execution.
    */
   String getCurrentLaneName();
-  
-  /**
-   * Gets the id of the parent of this execution. If null, the execution represents a process-instance.
-  */
-  String getParentId();
 }
