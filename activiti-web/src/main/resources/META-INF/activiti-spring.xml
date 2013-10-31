@@ -48,10 +48,18 @@
 		<property name="bpmnParseFactory" ref="customBpmnParseFactory" />
 		<property name="implicitUserTaskListeners">
 		    <map>
+                <entry key="create">
+                    <list>
+                        <bean class="net.emforge.activiti.task.SendNotificationMessageCreateTaskListener">
+                        </bean>
+                    </list>
+                </entry>
 		        <entry key="assignment">
 		            <list>
 		                <bean class="net.emforge.activiti.task.SaveInitialRoleListener">                 
 		                </bean>
+                        <bean class="net.emforge.activiti.task.SendNotificationMessageAssignmentTaskListener">
+                        </bean>
 		            </list>
 		        </entry>		        
 		        <entry key="complete">
@@ -59,7 +67,9 @@
 		                <bean class="net.emforge.activiti.task.SaveAssigneeListener">                 
 		                </bean>
 		                <bean class="net.emforge.activiti.task.SaveTransitionListener">                 
-		                </bean>		                
+		                </bean>
+                        <bean class="net.emforge.activiti.task.SendNotificationMessageCompleteTaskListener">
+                        </bean>
 		            </list>
 		        </entry>
 		    </map>
