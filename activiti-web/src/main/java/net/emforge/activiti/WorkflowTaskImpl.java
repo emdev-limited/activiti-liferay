@@ -18,7 +18,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.DefaultWorkflowTask;
 
-public class WorkflowTaskImpl extends DefaultWorkflowTask {
+public class WorkflowTaskImpl extends DefaultWorkflowTask implements WorkflowTaskExt {
 	private static Log _log = LogFactoryUtil.getLog(WorkflowTaskImpl.class);
 	
 	private TaskService taskService = ProcessEngines.getDefaultProcessEngine().getTaskService();
@@ -26,11 +26,19 @@ public class WorkflowTaskImpl extends DefaultWorkflowTask {
 	
 	@Override
 	public Map<String, Serializable> getOptionalAttributes() {
-		if (super.getOptionalAttributes() != null && !super.getOptionalAttributes().isEmpty()) {
-			return super.getOptionalAttributes();
+	    Map<String, Serializable> mpRes = new HashMap<String, Serializable>(3);
+	    Map<String, Serializable> mpSuper = super.getOptionalAttributes();
+		if (mpSuper != null && ! mpSuper.isEmpty()) {
+		    mpRes.putAll(mpSuper);
 		}
+		
 		String taskId = String.valueOf(getWorkflowTaskId());
-		return getWorkflowContext(taskId);
+		Map<String, Serializable> mpCon = getWorkflowContext(taskId);
+        if (mpCon != null && ! mpCon.isEmpty()) {
+            mpRes.putAll(mpCon);
+        }
+		
+        return mpRes;
 	}
 	
 	public Map<String, Serializable> getWorkflowContext(String taskId) {
@@ -65,5 +73,12 @@ public class WorkflowTaskImpl extends DefaultWorkflowTask {
 	public String getProcessDefinitionId() {
 		return getWorkflowDefinitionName() + StringPool.COLON + getWorkflowDefinitionVersion() + StringPool.COLON + getWorkflowDefinitionId();
 	}
+
+    @Override
+    public String getOutputTransition() {
+        String taskId = String.valueOf(getWorkflowTaskId());
+        Map<String, Object> mpVars = taskService.getVariablesLocal(taskId);
+        return (String) mpVars.get(WorkflowConstants.NAME_TASK_OUTPUT_TRANSITION);
+    }
 	
 }

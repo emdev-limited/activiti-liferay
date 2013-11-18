@@ -39,11 +39,11 @@ import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.activiti.engine.impl.pvm.delegate.ExecutionListenerExecution;
 import org.activiti.engine.impl.pvm.delegate.SignallableActivityBehavior;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
-import org.activiti.engine.impl.pvm.process.Lane;
-import org.activiti.engine.impl.pvm.process.LaneSet;
 import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
 import org.activiti.engine.impl.pvm.process.ScopeImpl;
 import org.activiti.engine.impl.pvm.process.TransitionImpl;
+import org.activiti.engine.impl.pvm.process.Lane;
+import org.activiti.engine.impl.pvm.process.LaneSet;
 import org.activiti.engine.impl.pvm.runtime.AtomicOperation;
 import org.activiti.engine.impl.pvm.runtime.InterpretableExecution;
 import org.activiti.engine.impl.pvm.runtime.OutgoingExecution;
@@ -215,13 +215,15 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected boolean forcedUpdate;
   
+  protected List<VariableInstanceEntity> queryVariables;
+
+  // EMDEV - swimlanes support
   protected String laneName = null;
   
   protected String laneSetName = null;
+  // end of swimlanes support
   
-  protected List<VariableInstanceEntity> queryVariables;
-
-
+  
   public ExecutionEntity() {
   }
   
@@ -335,7 +337,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
           }
         }
       }
-    }
+    }    
   }
   
   public void start() {
@@ -691,7 +693,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   
   protected void ensureProcessInstanceInitialized() {
     if ((processInstance == null) && (processInstanceId != null)) {
-      processInstance =  Context
+      processInstance = Context
         .getCommandContext()
         .getExecutionEntityManager()
         .findExecutionById(processInstanceId);
@@ -1043,7 +1045,7 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   public Object getPersistentState() {
     Map<String, Object> persistentState = new HashMap<String, Object>();
     persistentState.put("processDefinitionId", this.processDefinitionId);
-    persistentState.put("businessKey", businessKey);
+    persistentState.put("businessKey", this.businessKey);
     persistentState.put("activityId", this.activityId);
     persistentState.put("isActive", this.isActive);
     persistentState.put("isConcurrent", this.isConcurrent);
@@ -1398,35 +1400,46 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   public String getCurrentActivityName() {
     return activityName;
   }
-
+  
+  public Map<String, Object> getProcessVariables() {
+    Map<String, Object> variables = new HashMap<String, Object>();
+    if (queryVariables != null) {
+      for (VariableInstanceEntity variableInstance: queryVariables) {
+        if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {
+          variables.put(variableInstance.getName(), variableInstance.getValue());
+        }
+      }
+    }
+    return variables;
+  }
+  
+  public List<VariableInstanceEntity> getQueryVariables() {
+    if(queryVariables == null && Context.getCommandContext() != null) {
+      queryVariables = new VariableInitializingList();
+    }
+    return queryVariables;
+  }
+  
+  public void setQueryVariables(List<VariableInstanceEntity> queryVariables) {
+    this.queryVariables = queryVariables;
+  }
+  
+  public String updateProcessBusinessKey(String bzKey) {
+    if (isProcessInstanceType() && bzKey != null) {
+      setBusinessKey(bzKey);
+      Context.getCommandContext().getHistoryManager().updateProcessBusinessKeyInHistory(this);
+      return bzKey;
+    }
+    return null;
+  }
+  
+  // EMDEV - swimlanes support
   public String getCurrentLaneSetName() {
 	return laneName;
   }
 	  
   public String getCurrentLaneName() {
 	return laneName;
-  }
-  
-  public Map<String, Object> getProcessVariables() {
-	  Map<String, Object> variables = new HashMap<String, Object>();
-	  if (queryVariables != null) {
-		  for (VariableInstanceEntity variableInstance : queryVariables) {
-			  if (variableInstance.getId() != null
-					  && variableInstance.getTaskId() == null) {
-				  variables.put(variableInstance.getName(),
-						  variableInstance.getValue());
-			  }
-		  }
-	  }
-	  return variables;
-  }
-
-  public List<VariableInstanceEntity> getQueryVariables() {
-	  return queryVariables;
-  }
-
-  public void setQueryVariables(List<VariableInstanceEntity> queryVariables) {
-	  this.queryVariables = queryVariables;
   }
   
 }
