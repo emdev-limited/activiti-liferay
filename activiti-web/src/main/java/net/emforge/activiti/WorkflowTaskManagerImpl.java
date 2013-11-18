@@ -115,6 +115,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
             workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
             workflowLogEntry.setRoleId(roleId);
             workflowLogEntry.setAssigneeUserId(userId);
+            workflowLogEntry.setWorkflowTaskId(workflowTaskId);
             
             Long prevUserId = null;
             try {
@@ -168,6 +169,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 			workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
             workflowLogEntry.setAssigneeUserId(assigneeUserId);
+            workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 			
 			Long prevUserId = null;
 			try {
@@ -220,6 +222,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
 		workflowLogEntry.setComment(comment);
+		workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 		try {
 			workflowLogEntry.setAssigneeUserId(Long.valueOf(task.getAssignee()));
 		} catch (NumberFormatException e) {
@@ -612,6 +615,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_UPDATE);
 		workflowLogEntry.setComment(comment);
+		workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
 		

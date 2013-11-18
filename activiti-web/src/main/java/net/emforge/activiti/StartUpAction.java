@@ -8,6 +8,7 @@ import javax.servlet.ServletContext;
 
 import net.emforge.activiti.spring.ContextLoaderListener;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.web.context.ContextLoader;
 
 import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
@@ -158,7 +159,8 @@ public class StartUpAction extends SimpleAction {
 			if(workflowDefinitionCount < 1) { 
 				InputStream resourceAsStream = StartUpAction.class.getClassLoader().getResourceAsStream("/META-INF/resources/" + PROCDEF_SINGLE_APPROVER_BY_SCRIPT + ".bar");
 				if(resourceAsStream != null) {
-					WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_SINGLE_APPROVER_BY_SCRIPT, resourceAsStream);
+					byte bytes[] = IOUtils.toByteArray(resourceAsStream);
+					WorkflowDefinitionManagerUtil.deployWorkflowDefinition(companyId, adminUser.getUserId(), PROCDEF_SINGLE_APPROVER_BY_SCRIPT, bytes);
 				}
 			}
 			

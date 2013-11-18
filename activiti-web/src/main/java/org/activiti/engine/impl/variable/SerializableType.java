@@ -31,6 +31,12 @@ public class SerializableType extends ByteArrayType {
 			return cachedObject;
 		}
 		byte[] bytes = (byte[]) super.getValue(valueFields);
+		if (bytes == null) {
+			//this situation is possible for historic variables - 
+			//when you do e.g. execution.removeVariable in a Script task the var is finally removed from ACT_RU_VARIABLE
+			//but it remains with null value in the ACT_HI_VARINST(in ACT_GE_BYTEARRAY)
+			return null;
+		}
 		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 		Object deserializedObject;
 		try {
