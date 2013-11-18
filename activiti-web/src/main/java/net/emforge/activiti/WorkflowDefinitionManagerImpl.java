@@ -61,6 +61,13 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
      */
     private Map<String, ProcessDefinition> processDefMap = new HashMap<String, ProcessDefinition>();
     
+    
+	@Override
+	public void validateWorkflowDefinition(byte[] bytes) throws WorkflowException {
+		// TODO Auto-generated method stub
+		
+	}
+    
     /** Deploy new workflow
      * 
      * TODO Currently we supporting only deployment of jpdl.xml - need add support for whole par deployment
@@ -69,15 +76,12 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
     public WorkflowDefinition deployWorkflowDefinition(long companyId,
                                                        long userId, 
                                                        String title, 
-                                                       InputStream inputStream) throws WorkflowException {
+                                                       byte[] bytes) throws WorkflowException {
         try {
         	boolean isBar = false;
             String strTitle = LocalizationUtil.getLocalization(title, "en_US", true);
             _log.info("Try to deploy process " + strTitle);
     
-            // since we may need to reuse this input stream - lets copy it into bytes and user ByteInputStream
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            
             // try to fix xml
             SignavioFixer fixer = new SignavioFixer(strTitle);
             byte[] xmlBytes = fixer.fixSignavioXml(bytes);
@@ -445,4 +449,5 @@ public class WorkflowDefinitionManagerImpl implements WorkflowDefinitionManager 
 		}
 		return limit;
 	}
+
 }
