@@ -115,7 +115,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
             workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
             workflowLogEntry.setRoleId(roleId);
             workflowLogEntry.setAssigneeUserId(userId);
-            workflowLogEntry.setWorkflowTaskId(workflowTaskId);
             
             Long prevUserId = null;
             try {
@@ -169,7 +168,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 			workflowLogEntry.setType(WorkflowLog.TASK_ASSIGN);
             workflowLogEntry.setAssigneeUserId(assigneeUserId);
-            workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 			
 			Long prevUserId = null;
 			try {
@@ -222,7 +220,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_COMPLETION);
 		workflowLogEntry.setComment(comment);
-		workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 		try {
 			workflowLogEntry.setAssigneeUserId(Long.valueOf(task.getAssignee()));
 		} catch (NumberFormatException e) {
@@ -615,7 +612,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
 		workflowLogEntry.setType(WorkflowLog.TASK_UPDATE);
 		workflowLogEntry.setComment(comment);
-		workflowLogEntry.setWorkflowTaskId(workflowTaskId);
 		
 		addWorkflowLogEntryToProcess(task, workflowLogEntry);
 		
@@ -1013,7 +1009,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 																 OrderByComparator orderByComparator) throws WorkflowException {
 		if (completed == null || completed) {
 			//_log.warn("Method is partially implemented"); // TODO
-			List<HistoricTaskInstance> hiList = historyService.createHistoricTaskInstanceQuery().processInstanceId(String.valueOf(workflowInstanceId)).list();
+			List<HistoricTaskInstance> hiList = null;
+			if (completed == null) {
+				//return all possible tasks
+				hiList = historyService.createHistoricTaskInstanceQuery().processInstanceId(String.valueOf(workflowInstanceId)).list();
+			} else if (completed) {
+				//return only completed
+				hiList = historyService.createHistoricTaskInstanceQuery().processInstanceId(String.valueOf(workflowInstanceId)).finished().list();
+			}
 			List<WorkflowTask> result = new ArrayList<WorkflowTask>(hiList.size());
 			
 			for (HistoricTaskInstance hiTask : hiList) {
