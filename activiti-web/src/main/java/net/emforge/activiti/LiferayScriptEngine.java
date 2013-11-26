@@ -82,15 +82,9 @@ public class LiferayScriptEngine implements ScriptEngine {
 	private Map<String, Serializable> toWorkflowContext(Bindings bindings) {
 		Map<String, Serializable> workflowContext = new HashMap<String, Serializable>();
 		
-		workflowContext.put(WorkflowConstants.CONTEXT_COMPANY_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_COMPANY_ID));
-		workflowContext.put(WorkflowConstants.CONTEXT_GROUP_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_GROUP_ID));
-		workflowContext.put(WorkflowConstants.CONTEXT_USER_ID, (Serializable)bindings.get(WorkflowConstants.CONTEXT_USER_ID));
-		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME));
-		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
-		workflowContext.put(WorkflowConstants.CONTEXT_ENTRY_TYPE, (Serializable)bindings.get(WorkflowConstants.CONTEXT_ENTRY_TYPE));
-		workflowContext.put(WorkflowConstants.CONTEXT_SERVICE_CONTEXT, (Serializable)bindings.get(WorkflowConstants.CONTEXT_SERVICE_CONTEXT));
-		workflowContext.put("latestActivitiUserId", (Serializable)bindings.get("latestActivitiUserId"));
-
+		for (String key : bindings.keySet()) {
+			workflowContext.put(key, (Serializable)bindings.get(key));
+		}
 			
 		return workflowContext;
 	}
