@@ -376,7 +376,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	@Override
 	public int getWorkflowTaskCountByUserRoles(long companyId, long userId,
 			Boolean completed) throws WorkflowException {
-		_log.error("Method is not implemented"); // TODO
+		getWorkflowTaskCountByUserRolesImpl(companyId, userId, 0l, completed);
 		return 0;
 	}
 
