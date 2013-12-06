@@ -32,8 +32,14 @@ public class DatabaseClassloader extends ClassLoader {
 		// Try to load class form deployment resources
 		String fileName = "classes/" + className.replace('.', '/') + ".class";
 		
-		ResourceEntity resource = Context.getExecutionContext().getDeployment()
+		ResourceEntity resource = null;
+		
+		try {
+			resource = Context.getExecutionContext().getDeployment()
 				.getResource(fileName);
+		} catch (Exception ex) {
+			// just ignore it
+		}
 
 		if(resource != null) {
 			byte[] classBytes = resource.getBytes();
