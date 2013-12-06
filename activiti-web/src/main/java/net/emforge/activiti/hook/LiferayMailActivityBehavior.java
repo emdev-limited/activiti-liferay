@@ -10,8 +10,11 @@ import org.activiti.engine.impl.bpmn.behavior.MailActivityBehavior;
 import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 
 import com.liferay.mail.service.MailServiceUtil;
+import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mail.MailMessage;
@@ -26,6 +29,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
  *
  */
 public class LiferayMailActivityBehavior extends MailActivityBehavior  {
+	private static final long serialVersionUID = 4581033173970339063L;
 	private static Log _log = LogFactoryUtil.getLog(LiferayMailActivityBehavior.class);
 
 	@Override
@@ -50,12 +54,42 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 	    String body = StringUtils.isNotBlank(htmlStr) ? htmlStr : textStr;
 	    boolean isHtml = StringUtils.isNotBlank(htmlStr);
 	    
+	    // call velocity engine for body to substitute variables
+	    body = processBody(body, execution);
+	    
 	    sendEmail(internetAddressFrom, internetAddressesTo, internetAddressesCc, internetAddressesBcc, subjectStr, body, isHtml);
 	    
 	    leave(execution);
 	}
 	
 	
+	private String processBody(String body, ActivityExecution execution) {
+	    // evaluate template
+	    try {
+			Velocity.init();
+
+			VelocityContext velocityContext = new VelocityContext();
+	    	
+		    // copy variables from execution
+		    for (String variableName : execution.getVariableNames()) {
+		    	velocityContext.put(variableName, execution.getVariable(variableName));
+		    }
+	    
+			UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
+
+			Velocity.evaluate(velocityContext, unsyncStringWriter, this.getClass().getName(), body);	    	
+	    	
+	    	String result = unsyncStringWriter.toString();
+	    	return result;
+	    } catch (Exception ex) {
+	    	_log.warn("Cannot process body: " + ex.getMessage());
+	    	_log.debug("Cannot process body",ex);
+	    	
+	    	return body;
+	    }
+	}
+
+
 	protected InternetAddress[] getEmailAddresses(String str) {
 		if (StringUtils.isBlank(str)) {
 			return null;

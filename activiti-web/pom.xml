@@ -196,12 +196,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.liferay.portal</groupId>
-			<artifactId>portal-impl</artifactId>
-			<version>${liferay.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.liferay.portal</groupId>
 			<artifactId>portal-service</artifactId>
 			<version>${liferay.version}</version>
 			<scope>provided</scope>
@@ -290,6 +284,13 @@
 			<groupId>net.emforge</groupId>
 			<artifactId>activiti-rest-stubs</artifactId>
 			<version>${pom.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.6.4</version>
+			<scope>provided</scope>
 		</dependency>
 		
 	</dependencies>
