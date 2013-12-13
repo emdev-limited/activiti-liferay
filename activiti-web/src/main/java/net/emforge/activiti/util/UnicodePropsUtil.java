@@ -3,6 +3,7 @@ package net.emforge.activiti.util;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 
 import java.io.BufferedReader;
@@ -44,14 +45,23 @@ public class UnicodePropsUtil {
     }
 
     private static String readFile(final String file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        StringBuilder sb = new StringBuilder();
+    	BufferedReader reader = null;
+    	StringBuilder sb = null;
+    	try {
+    		reader = new BufferedReader(new FileReader(file));
+            String line;
+            sb = new StringBuilder();
 
-        while((line = reader.readLine()) != null) {
-            sb.append(line);
-            sb.append(System.getProperty("line.separator"));
-        }
-        return sb.toString();
+            while((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append(System.getProperty("line.separator"));
+            }
+		} finally {
+			if (reader != null) {
+				reader.close();
+			}
+		}
+        
+        return sb == null ? StringPool.BLANK : sb.toString();
     }
 }
