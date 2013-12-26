@@ -74,7 +74,7 @@
 	<%
 		String imgURL = "";
 		try {
-			imgURL = "http://" + request.getServerName() + ":" + request.getServerPort() + "/activiti-web/image?companyId=" + companyId + "&" + "workflow=" + workflowDefinition.getName() + "&" + "version=" + workflowDefinition.getVersion();
+			imgURL = PortalUtil.getPortalURL(request) + "/activiti-web/image?companyId=" + companyId + "&" + "workflow=" + workflowDefinition.getName() + "&" + "version=" + workflowDefinition.getVersion();
 		}
 		catch (java.lang.NullPointerException e) {
 			
