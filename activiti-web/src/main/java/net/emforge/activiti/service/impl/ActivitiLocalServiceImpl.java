@@ -76,9 +76,10 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
             throws SystemException {
         // convert List<Long> to List<String>
         ArrayList<String> lstInstIds = new ArrayList<String>(instanceIds.size());
-        for (Object instanceId : instanceIds)
+        for (Object instanceId : instanceIds) {
             lstInstIds.add(instanceId.toString());
-
+        }
+        
         // find all executions, including sub-executions
         List<String> topExecutions = ActivitiFinderUtil
                 .findTopExecutions(lstInstIds);
@@ -86,18 +87,29 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
                 topExecutions.size() * 2);
         allExecutions.addAll(topExecutions);
 
-        while (true) {
-            List<String> subExecutions = ActivitiFinderUtil
-                    .findSubExecutions(topExecutions);
-            if (subExecutions == null || subExecutions.size() == 0) {
-                break;
-            }
-            allExecutions.addAll(subExecutions);
-            topExecutions = subExecutions;
-        }
+        allExecutions.addAll(getSubExecutions(topExecutions));
+        
         return allExecutions;
     }
 
+    
+    private List<String> getSubExecutions(List<String> topExecutions) throws SystemException {
+    	if (topExecutions.isEmpty()) {
+    		return new ArrayList<String>();
+    	}
+    	
+    	// not empty
+    	List<String> allSubExecutions = new ArrayList<String>(topExecutions.size() * 2);
+    	List<String> subExecutions = ActivitiFinderUtil.findSubExecutions(topExecutions);
+    	
+    	allSubExecutions.addAll(subExecutions);
+    	
+    	// iterate
+    	allSubExecutions.addAll(getSubExecutions(subExecutions));
+    	
+    	return allSubExecutions;
+    }
+    
     /**
      * Returns active UserTask names for selected instances.
      * 
@@ -163,7 +175,8 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
         ArrayList<String> lstSuperExec = new ArrayList<String>(
                 lstInstances.size());
         extractColumn(lstExec, 2, lstSuperExec);
-
+        extractColumn(lstExec, 3, lstSuperExec);
+        
         while (lstSuperExec.size() > 0) {
             lstExec = ActivitiFinderUtil.findSuperExecutions(lstSuperExec);
             extractColumn(lstExec, 1, lstInstances);
