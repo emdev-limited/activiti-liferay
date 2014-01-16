@@ -8,7 +8,7 @@
         
         <sql id="net.emforge.activiti.service.persistence.ActivitiFinderImpl.findSubExecutions">
          <![CDATA[
-		SELECT ID_ FROM ACT_RU_EXECUTION where SUPER_EXEC_ in [$EXEC_IDS$]
+		SELECT ID_ FROM ACT_RU_EXECUTION where SUPER_EXEC_ in [$EXEC_IDS$] or PARENT_ID_ in [$EXEC_IDS$]
          ]]>
         </sql>
         
@@ -26,7 +26,7 @@
         
         <sql id="net.emforge.activiti.service.persistence.ActivitiFinderImpl.findUserTasks">
          <![CDATA[
-         SELECT e.ID_, e.PROC_INST_ID_, e.SUPER_EXEC_ FROM ACT_RU_TASK t left outer join ACT_RU_IDENTITYLINK l on (l.TASK_ID_ = t.ID_ and l.TYPE_ = 'candidate') inner join ACT_RU_EXECUTION e on (t.EXECUTION_ID_ = e.ID_) where (1=1)
+         SELECT e.ID_, e.PROC_INST_ID_, e.SUPER_EXEC_, e.PARENT_ID_ FROM ACT_RU_TASK t left outer join ACT_RU_IDENTITYLINK l on (l.TASK_ID_ = t.ID_ and l.TYPE_ = 'candidate') inner join ACT_RU_EXECUTION e on (t.EXECUTION_ID_ = e.ID_) where (1=1)
          ]]>
         </sql>
         
