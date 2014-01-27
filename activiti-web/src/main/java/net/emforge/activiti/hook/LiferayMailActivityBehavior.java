@@ -129,10 +129,10 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 				mailMessage.setBCC(internetAddressesBcc);
 			}
 			
-			_log.debug(String.format("Sending message with: subject=[%s], " +
-					"body=[%s], htmlFormat=[%s], fromAddress=[%s], fromName=[%s]"
-					, mailMessage.getSubject(), mailMessage.getBody(), mailMessage.getHTMLFormat()
-					, mailMessage.getFrom().getAddress(), mailMessage.getFrom().getPersonal()));
+			_log.info("Sending message with: subject=["+ mailMessage.getSubject() + "], " +
+					"body=[" + mailMessage.getBody() + "], htmlFormat=[" + mailMessage.getHTMLFormat() + "], " +
+					"fromAddress=[" + mailMessage.getFrom().getAddress() + "], " +
+					"fromName=[" + mailMessage.getFrom().getPersonal() + "]");
 			MailServiceUtil.sendEmail(mailMessage);
 		}
 
