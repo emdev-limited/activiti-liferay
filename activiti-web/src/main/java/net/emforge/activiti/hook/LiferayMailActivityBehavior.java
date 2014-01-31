@@ -6,6 +6,8 @@ import java.util.List;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
+import net.emforge.activiti.util.UnicodePropsUtil;
+
 import org.activiti.engine.impl.bpmn.behavior.MailActivityBehavior;
 import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.apache.commons.lang.ArrayUtils;
@@ -94,7 +96,7 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 
 		if (internetAddressFrom == null) {
 			String fromAddr = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
-			String fromName = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_NAME);
+			String fromName = UnicodePropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_NAME);
 
 			try {
 				internetAddressFrom = new InternetAddress(fromAddr, fromName);
@@ -126,6 +128,11 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 			if (internetAddressesBcc != null) {
 				mailMessage.setBCC(internetAddressesBcc);
 			}
+			
+			_log.info("Sending message with: subject=["+ mailMessage.getSubject() + "], " +
+					"body=[" + mailMessage.getBody() + "], htmlFormat=[" + mailMessage.getHTMLFormat() + "], " +
+					"fromAddress=[" + mailMessage.getFrom().getAddress() + "], " +
+					"fromName=[" + mailMessage.getFrom().getPersonal() + "]");
 			MailServiceUtil.sendEmail(mailMessage);
 		}
 
