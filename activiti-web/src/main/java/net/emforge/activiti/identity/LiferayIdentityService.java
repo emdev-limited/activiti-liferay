@@ -39,15 +39,28 @@ public class LiferayIdentityService {
 			// conert from site roles to the groups
 			List<Group> groups = new ArrayList<Group>();
 			for (Role role : roles) {
-				GroupImpl groupImpl = new GroupImpl(role);
-				groups.add(groupImpl);
+				try {
+					GroupImpl groupImpl = new GroupImpl(role);
+					groups.add(groupImpl);
+				} catch (Exception e) {
+					_log.warn("Cannot make group for role: " + role.getRoleId() + " and user " + userName + " : " + e.getMessage());
+					_log.debug("Cannot make group for role: " + role.getRoleId() + " and user " + userName, e);
+					// ignore error
+				}
 			}
 			
 			// get group roles for specified user
 			List<UserGroupRole> groupRoles = UserGroupRoleLocalServiceUtil.getUserGroupRoles(idMappingService.getUserId(userName));
 			for (UserGroupRole groupRole : groupRoles) {
-				GroupImpl groupImpl = new GroupImpl(groupRole);
-				groups.add(groupImpl);
+				try {
+					GroupImpl groupImpl = new GroupImpl(groupRole);
+					groups.add(groupImpl);
+				} catch (Exception e) {
+					_log.warn("Cannot make group for user " + userName + " : " + e.getMessage());
+					_log.debug("Cannot make group for user " + userName, e);
+					// ignore error
+				}
+
 			}
 			
 			return groups;
