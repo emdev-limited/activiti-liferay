@@ -153,6 +153,15 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             workflowInstanceId, comment);
     }
 
+    @Override
+    public void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        _activitiLocalService.addWorkflowInstanceComment(companyId, userId,
+            workflowInstanceId, workflowTaskId, logType, comment);
+    }
+
     /**
      * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
      */

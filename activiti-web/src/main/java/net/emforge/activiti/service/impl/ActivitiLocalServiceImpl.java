@@ -286,4 +286,33 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
             return true;
         }
     }
+    
+    @Override
+    public void addWorkflowInstanceComment(long companyId, long userId, long workflowInstanceId, 
+    		long workflowTaskId, int logType, String comment) throws WorkflowException {
+    	_log.info("User " + userId + " adds comment to workflow instance " + 
+    		workflowInstanceId + " and workflow task id = " + workflowTaskId + ": " + comment);
+        
+        checkServices();
+        
+        Authentication.setAuthenticatedUserId(String.valueOf(userId));
+        
+        String procInstanceId = String.valueOf(workflowInstanceId);
+        String procTaskId = null;
+        if (workflowTaskId > 0) {
+        	procTaskId = String.valueOf(workflowTaskId);
+        }
+        ProcessInstanceQuery qry = runtimeService.createProcessInstanceQuery().processInstanceId(procInstanceId);
+        ProcessInstance inst = qry.singleResult();
+        if (inst != null) {
+        	WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
+    		workflowLogEntry.setType(logType);
+    		workflowLogEntry.setComment(comment);
+    		workflowLogEntry.setAssigneeUserId(userId);
+    		workflowLogEntry.setState(null);
+    		
+    		liferayTaskService.addWorkflowLogEntry(procTaskId, procInstanceId, workflowLogEntry);
+        }
+        
+    }
 }

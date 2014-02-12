@@ -150,6 +150,15 @@ public class ActivitiLocalServiceUtil {
             comment);
     }
 
+    public static void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        getService()
+            .addWorkflowInstanceComment(companyId, userId, workflowInstanceId,
+            workflowTaskId, logType, comment);
+    }
+
     public static void clearService() {
         _service = null;
     }

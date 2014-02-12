@@ -124,4 +124,9 @@ public interface ActivitiLocalService extends BaseLocalService,
     public boolean stopWorkflowInstance(long companyId, long userId,
         long workflowInstanceId, java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    public void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException;
 }

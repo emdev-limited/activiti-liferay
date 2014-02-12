@@ -1,5 +1,7 @@
 package net.emforge.activiti.query;
 
+import java.util.List;
+
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.query.Query;
 
