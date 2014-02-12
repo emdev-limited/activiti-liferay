@@ -285,14 +285,6 @@
 			<artifactId>activiti-rest-stubs</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
-		<dependency>
-			<groupId>org.apache.velocity</groupId>
-			<artifactId>velocity</artifactId>
-			<version>1.6.4</version>
-			<scope>provided</scope>
-		</dependency>
-		
 	</dependencies>
 
 </project>
