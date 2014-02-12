@@ -180,7 +180,7 @@
 		<dependency>
 			<groupId>net.emforge</groupId>
 			<artifactId>activiti-liferay-service</artifactId>
-			<version>${pom.version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.portlet</groupId>
@@ -289,7 +289,7 @@
 		<dependency>
 			<groupId>net.emforge</groupId>
 			<artifactId>activiti-rest-stubs</artifactId>
-			<version>${pom.version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		
 	</dependencies>

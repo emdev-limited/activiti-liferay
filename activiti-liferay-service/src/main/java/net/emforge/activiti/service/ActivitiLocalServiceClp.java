@@ -30,6 +30,8 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes10;
     private String _methodName11;
     private String[] _methodParameterTypes11;
+    private String _methodName12;
+    private String[] _methodParameterTypes12;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -82,6 +84,12 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
 
         _methodParameterTypes11 = new String[] {
                 "long", "long", "long", "java.lang.String"
+            };
+
+        _methodName12 = "addWorkflowInstanceComment";
+
+        _methodParameterTypes12 = new String[] {
+                "long", "long", "long", "long", "int", "java.lang.String"
             };
     }
 
@@ -409,5 +417,42 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return ((Boolean) returnObj).booleanValue();
+    }
+
+    @Override
+    public void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        try {
+            _invokableLocalService.invokeMethod(_methodName12,
+                _methodParameterTypes12,
+                new Object[] {
+                    companyId,
+                    
+                userId,
+                    
+                workflowInstanceId,
+                    
+                workflowTaskId,
+                    
+                logType,
+                    
+                ClpSerializer.translateInput(comment)
+                });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.workflow.WorkflowException) {
+                throw (com.liferay.portal.kernel.workflow.WorkflowException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
     }
 }

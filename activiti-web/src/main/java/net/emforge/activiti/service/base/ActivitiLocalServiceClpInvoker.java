@@ -31,6 +31,8 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes29;
     private String _methodName30;
     private String[] _methodParameterTypes30;
+    private String _methodName31;
+    private String[] _methodParameterTypes31;
 
     public ActivitiLocalServiceClpInvoker() {
         _methodName16 = "getBeanIdentifier";
@@ -81,6 +83,12 @@ public class ActivitiLocalServiceClpInvoker {
 
         _methodParameterTypes30 = new String[] {
                 "long", "long", "long", "java.lang.String"
+            };
+
+        _methodName31 = "addWorkflowInstanceComment";
+
+        _methodParameterTypes31 = new String[] {
+                "long", "long", "long", "long", "int", "java.lang.String"
             };
     }
 
@@ -148,6 +156,18 @@ public class ActivitiLocalServiceClpInvoker {
                 ((Long) arguments[1]).longValue(),
                 ((Long) arguments[2]).longValue(),
                 (java.lang.String) arguments[3]);
+        }
+
+        if (_methodName31.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes31, parameterTypes)) {
+            ActivitiLocalServiceUtil.addWorkflowInstanceComment(((Long) arguments[0]).longValue(),
+                ((Long) arguments[1]).longValue(),
+                ((Long) arguments[2]).longValue(),
+                ((Long) arguments[3]).longValue(),
+                ((Integer) arguments[4]).intValue(),
+                (java.lang.String) arguments[5]);
+
+            return null;
         }
 
         throw new UnsupportedOperationException();

@@ -137,7 +137,9 @@ public class WorkflowLogManagerImpl implements WorkflowLogManager {
 					&& (commentEntity.getAction().equals(WorkflowLogEntry.TASK_ASSIGN)
 						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_COMPLETION) 
 						|| commentEntity.getAction().equals(WorkflowLogEntry.TASK_UPDATE)
-						|| commentEntity.getAction().equals(WorkflowLogEntry.INSTANCE_STOP))) {
+						|| commentEntity.getAction().equals(WorkflowLogEntry.INSTANCE_STOP)
+						|| commentEntity.getAction().equals(WorkflowLogEntry.SERVICE)
+						|| commentEntity.getAction().equals(WorkflowLogEntry.COMMENT))) {
 				
 				WorkflowLogEntry workflowLogEntry = null;
 				try {

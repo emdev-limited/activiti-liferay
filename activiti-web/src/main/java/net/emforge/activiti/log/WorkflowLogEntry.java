@@ -14,6 +14,8 @@ public class WorkflowLogEntry {
 	public static final String TASK_COMPLETION = "LiferayTaskCompletion";
 	public static final String TASK_UPDATE = "LiferayTaskUpdate";
 	public static final String INSTANCE_STOP = "LiferayInstanceStop";
+	public static final String SERVICE = "LiferayService";
+	public static final String COMMENT = "LiferayComment";
 	
 	private String comment;
 	private Date createDate;
