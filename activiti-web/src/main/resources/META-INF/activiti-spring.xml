@@ -110,7 +110,7 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
-				<value>classpath:portal.properties</value>
+				<value>classpath:portal-ext.properties</value>
 			</list>
 		</property>
 	</bean> 
