@@ -54,8 +54,11 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 	    String body = StringUtils.isNotBlank(htmlStr) ? htmlStr : textStr;
 	    boolean isHtml = StringUtils.isNotBlank(htmlStr);
 	    
+	    // call velocity engine to process subject
+	    subjectStr = processBody(subjectStr, execution);
 	    // call velocity engine for body to substitute variables
 	    body = processBody(body, execution);
+	    
 	    
 	    sendEmail(internetAddressFrom, internetAddressesTo, internetAddressesCc, internetAddressesBcc, subjectStr, body, isHtml);
 	    
