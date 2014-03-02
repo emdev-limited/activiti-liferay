@@ -18,8 +18,10 @@ import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mail.MailMessage;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 /** This is implementation of Mail Behavior implemented sending email via Liferay Service
  * 
@@ -59,8 +61,12 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 	    // call velocity engine for body to substitute variables
 	    body = processBody(body, execution);
 	    
+	    Long companyId = null;
+	    try {
+	    	companyId = Long.valueOf((String)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
+	    } catch (Exception ex) {}
 	    
-	    sendEmail(internetAddressFrom, internetAddressesTo, internetAddressesCc, internetAddressesBcc, subjectStr, body, isHtml);
+	    sendEmail(internetAddressFrom, internetAddressesTo, internetAddressesCc, internetAddressesBcc, subjectStr, body, isHtml, companyId);
 	    
 	    leave(execution);
 	}
@@ -127,18 +133,26 @@ public class LiferayMailActivityBehavior extends MailActivityBehavior  {
 								InternetAddress[] internetAddressesTo, 
 								 InternetAddress[] internetAddressesCc,
 								 InternetAddress[] internetAddressesBcc,
-								 String subject, String body, boolean isHtml) {
+								 String subject, 
+								 String body, 
+								 boolean isHtml,
+								 Long companyId) {
 
 		if (internetAddressFrom == null) {
-			String fromAddr = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
-			String fromName = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_NAME);
-
 			try {
+				String fromAddr = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
+				String fromName = PropsUtil.get(PropsKeys.ADMIN_EMAIL_FROM_NAME);
+				
+				if (companyId != null && companyId > 0l) {
+					fromAddr = PrefsPropsUtil.getString(companyId, PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
+	                fromName = PrefsPropsUtil.getString(companyId, PropsKeys.ADMIN_EMAIL_FROM_NAME);
+				}
+			
+			
 				internetAddressFrom = new InternetAddress(fromAddr, fromName);
 			} catch (Exception e) {
 				_log.error(String
-						.format("Error occured, while trying to create internet address using [%s]: %s",
-								fromAddr, e.getMessage()));
+						.format("Error occured, while trying to create internet address: %s", e.getMessage()));
 				return;
 			}
 		}
