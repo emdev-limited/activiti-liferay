@@ -129,4 +129,8 @@ public interface ActivitiLocalService extends BaseLocalService,
         long workflowInstanceId, long workflowTaskId, int logType,
         java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    public java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }

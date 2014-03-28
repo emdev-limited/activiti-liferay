@@ -27,6 +27,7 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements
     private static final String FIND_UNIQUE_TASK_ASSIGNEES = ActivitiFinderImpl.class.getName() + ".findUniqueUserTaskAssignees";
     private static final String FIND_USER_TASKS         = ActivitiFinderImpl.class.getName() + ".findUserTasks";
     private static final String FIND_SUPER_EXECUTIONS     = ActivitiFinderImpl.class.getName() + ".findSuperExecutions";
+    private static final String FIND_HI_ACTIVITIES     = ActivitiFinderImpl.class.getName() + ".findHiActivities";
 
     private static final String FIND_USER_TASKS_TASKNAME   = " and (t.NAME_ = ?)";
     private static final String FIND_USER_TASKS_ASSIGNEE   = " and (t.ASSIGNEE_ = ?)";
@@ -194,4 +195,31 @@ public class ActivitiFinderImpl extends BasePersistenceImpl implements
             closeSession(session);
         }
     }
+    
+    @Override
+    public List<String> findHiActivities(String activityName, List<String> execIds)
+            throws SystemException {
+        Session session = null;
+        try {
+            session = openSession();
+            String sql = CustomSQLUtil.get(FIND_HI_ACTIVITIES);
+
+            String sgrp = "(" + StringUtils.join(execIds, ",") + ")";
+            sql = StringUtil.replace(sql, "[$EXEC_IDS$]", sgrp);
+
+            SQLQuery sqlQuery = session.createSQLQuery(sql);
+            
+            QueryPos qPos = QueryPos.getInstance(sqlQuery);
+            qPos.add(activityName);
+
+            List<String> itemIds = (List<String>) QueryUtil.list(sqlQuery,
+                    getDialect(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+            return itemIds;
+        } catch (Exception e) {
+            throw new SystemException(e);
+        } finally {
+            closeSession(session);
+        }
+    }    
 }

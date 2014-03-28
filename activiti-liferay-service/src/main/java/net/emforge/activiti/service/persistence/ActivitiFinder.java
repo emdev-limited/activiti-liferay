@@ -25,4 +25,8 @@ public interface ActivitiFinder {
     public java.util.List<java.lang.Object[]> findSuperExecutions(
         java.util.List<java.lang.String> execIds)
         throws com.liferay.portal.kernel.exception.SystemException;
+
+    public java.util.List<java.lang.String> findHiActivities(
+        java.lang.String activityName, java.util.List<java.lang.String> execIds)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }

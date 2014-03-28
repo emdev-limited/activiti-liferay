@@ -162,6 +162,14 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             workflowInstanceId, workflowTaskId, logType, comment);
     }
 
+    @Override
+    public java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findHistoricActivityByName(topProcessInstanceId,
+            activityName);
+    }
+
     /**
      * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
      */
