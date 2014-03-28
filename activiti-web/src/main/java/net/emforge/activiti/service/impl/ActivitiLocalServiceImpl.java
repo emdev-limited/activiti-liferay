@@ -13,10 +13,13 @@ import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
 import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
 import net.emforge.activiti.spring.ApplicationContextProvider;
 
+import org.activiti.engine.HistoryService;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.activiti.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -33,6 +36,10 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     RuntimeService runtimeService;    
 	@Autowired
 	LiferayTaskService liferayTaskService;
+	@Autowired
+	TaskService taskService;
+	@Autowired
+	HistoryService historyService;
 
     @Override
     public String createNewModel(String modelName, String modelDescription)
@@ -314,5 +321,23 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     		liferayTaskService.addWorkflowLogEntry(procTaskId, procInstanceId, workflowLogEntry);
         }
         
+    }
+    
+    @Override
+    public List<String> findHistoricActivityByName(String topProcessInstanceId, String activityName) throws SystemException {
+    	List<String> instanceIds = new ArrayList<String>(1);
+    	instanceIds.add(topProcessInstanceId);
+    	
+        // find all executions, including sub-executions
+        List<String> topExecutions = ActivitiFinderUtil.findTopExecutions(instanceIds);
+        ArrayList<String> allExecutions = new ArrayList<String>(
+                topExecutions.size() * 2);
+        allExecutions.addAll(topExecutions);
+
+        allExecutions.addAll(getSubExecutions(topExecutions));
+    	        
+        List<String> actIds = ActivitiFinderUtil.findHiActivities(activityName, allExecutions);
+    	// TODO
+    	return actIds;
     }
 }

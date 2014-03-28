@@ -159,6 +159,14 @@ public class ActivitiLocalServiceUtil {
             workflowTaskId, logType, comment);
     }
 
+    public static java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService()
+                   .findHistoricActivityByName(topProcessInstanceId,
+            activityName);
+    }
+
     public static void clearService() {
         _service = null;
     }

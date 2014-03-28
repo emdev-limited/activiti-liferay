@@ -32,6 +32,8 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes11;
     private String _methodName12;
     private String[] _methodParameterTypes12;
+    private String _methodName13;
+    private String[] _methodParameterTypes13;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -90,6 +92,12 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
 
         _methodParameterTypes12 = new String[] {
                 "long", "long", "long", "long", "int", "java.lang.String"
+            };
+
+        _methodName13 = "findHistoricActivityByName";
+
+        _methodParameterTypes13 = new String[] {
+                "java.lang.String", "java.lang.String"
             };
     }
 
@@ -454,5 +462,37 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
                     " is not a valid exception");
             }
         }
+    }
+
+    @Override
+    public java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        Object returnObj = null;
+
+        try {
+            returnObj = _invokableLocalService.invokeMethod(_methodName13,
+                    _methodParameterTypes13,
+                    new Object[] {
+                        ClpSerializer.translateInput(topProcessInstanceId),
+                        
+                    ClpSerializer.translateInput(activityName)
+                    });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+
+        return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 }

@@ -44,6 +44,12 @@ public class ActivitiFinderUtil {
         return getFinder().findSuperExecutions(execIds);
     }
 
+    public static java.util.List<java.lang.String> findHiActivities(
+        java.lang.String activityName, java.util.List<java.lang.String> execIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getFinder().findHiActivities(activityName, execIds);
+    }
+
     public static ActivitiFinder getFinder() {
         if (_finder == null) {
             _finder = (ActivitiFinder) PortletBeanLocatorUtil.locate(net.emforge.activiti.service.ClpSerializer.getServletContextName(),
