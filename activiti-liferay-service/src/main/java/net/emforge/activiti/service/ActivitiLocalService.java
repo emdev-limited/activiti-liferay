@@ -107,6 +107,9 @@ public interface ActivitiLocalService extends BaseLocalService,
         java.lang.String candidateRole)
         throws com.liferay.portal.kernel.exception.SystemException;
 
+    public java.lang.String findTopLevelProcess(java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
     /**
     * Suspend workflow instance
     */

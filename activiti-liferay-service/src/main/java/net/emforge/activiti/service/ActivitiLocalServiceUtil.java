@@ -123,6 +123,11 @@ public class ActivitiLocalServiceUtil {
             candidateRole);
     }
 
+    public static java.lang.String findTopLevelProcess(java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getService().findTopLevelProcess(taskId);
+    }
+
     /**
     * Suspend workflow instance
     */

@@ -194,6 +194,32 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 
         return lstInstances;
     }
+    
+    @Override
+    public String findTopLevelProcess(String taskId) throws SystemException  {
+    	List<Object[]> lstExec = ActivitiFinderUtil.findExecByTask(taskId);
+        if (lstExec.size() == 0)
+            return null;
+        
+        ArrayList<String> lstInstances = new ArrayList<String>(
+                lstExec.size() * 2);
+        extractColumn(lstExec, 1, lstInstances);
+
+        ArrayList<String> lstSuperExec = new ArrayList<String>(
+                lstInstances.size());
+        extractColumn(lstExec, 2, lstSuperExec);
+        extractColumn(lstExec, 3, lstSuperExec);
+        
+        while (lstSuperExec.size() > 0) {
+            lstExec = ActivitiFinderUtil.findSuperExecutions(lstSuperExec);
+            extractColumn(lstExec, 1, lstInstances);
+
+            lstSuperExec.clear();
+            extractColumn(lstExec, 2, lstSuperExec);
+        }
+
+        return lstInstances.get(0);        
+    }
 
     private void extractColumn(List<Object[]> source, int ncol, List dest) {
         for (Object[] row : source) {
