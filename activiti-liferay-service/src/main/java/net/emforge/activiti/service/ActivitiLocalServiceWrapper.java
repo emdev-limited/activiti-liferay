@@ -123,6 +123,12 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             assigneeUser, candidateRole);
     }
 
+    @Override
+    public java.lang.String findTopLevelProcess(java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findTopLevelProcess(taskId);
+    }
+
     /**
     * Suspend workflow instance
     */

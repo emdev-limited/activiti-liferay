@@ -25,8 +25,8 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes25;
     private String _methodName26;
     private String[] _methodParameterTypes26;
-    private String _methodName29;
-    private String[] _methodParameterTypes29;
+    private String _methodName27;
+    private String[] _methodParameterTypes27;
     private String _methodName30;
     private String[] _methodParameterTypes30;
     private String _methodName31;
@@ -35,6 +35,8 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes32;
     private String _methodName33;
     private String[] _methodParameterTypes33;
+    private String _methodName34;
+    private String[] _methodParameterTypes34;
 
     public ActivitiLocalServiceClpInvoker() {
         _methodName16 = "getBeanIdentifier";
@@ -73,29 +75,33 @@ public class ActivitiLocalServiceClpInvoker {
                 "java.lang.String", "java.lang.String", "java.lang.String"
             };
 
-        _methodName29 = "suspendWorkflowInstance";
+        _methodName27 = "findTopLevelProcess";
 
-        _methodParameterTypes29 = new String[] { "long", "long" };
+        _methodParameterTypes27 = new String[] { "java.lang.String" };
 
-        _methodName30 = "resumeWorkflowInstance";
+        _methodName30 = "suspendWorkflowInstance";
 
         _methodParameterTypes30 = new String[] { "long", "long" };
 
-        _methodName31 = "stopWorkflowInstance";
+        _methodName31 = "resumeWorkflowInstance";
 
-        _methodParameterTypes31 = new String[] {
+        _methodParameterTypes31 = new String[] { "long", "long" };
+
+        _methodName32 = "stopWorkflowInstance";
+
+        _methodParameterTypes32 = new String[] {
                 "long", "long", "long", "java.lang.String"
             };
 
-        _methodName32 = "addWorkflowInstanceComment";
+        _methodName33 = "addWorkflowInstanceComment";
 
-        _methodParameterTypes32 = new String[] {
+        _methodParameterTypes33 = new String[] {
                 "long", "long", "long", "long", "int", "java.lang.String"
             };
 
-        _methodName33 = "findHistoricActivityByName";
+        _methodName34 = "findHistoricActivityByName";
 
-        _methodParameterTypes33 = new String[] {
+        _methodParameterTypes34 = new String[] {
                 "java.lang.String", "java.lang.String"
             };
     }
@@ -146,28 +152,33 @@ public class ActivitiLocalServiceClpInvoker {
                 (java.lang.String) arguments[1], (java.lang.String) arguments[2]);
         }
 
-        if (_methodName29.equals(name) &&
-                Arrays.deepEquals(_methodParameterTypes29, parameterTypes)) {
-            return ActivitiLocalServiceUtil.suspendWorkflowInstance(((Long) arguments[0]).longValue(),
-                ((Long) arguments[1]).longValue());
+        if (_methodName27.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes27, parameterTypes)) {
+            return ActivitiLocalServiceUtil.findTopLevelProcess((java.lang.String) arguments[0]);
         }
 
         if (_methodName30.equals(name) &&
                 Arrays.deepEquals(_methodParameterTypes30, parameterTypes)) {
-            return ActivitiLocalServiceUtil.resumeWorkflowInstance(((Long) arguments[0]).longValue(),
+            return ActivitiLocalServiceUtil.suspendWorkflowInstance(((Long) arguments[0]).longValue(),
                 ((Long) arguments[1]).longValue());
         }
 
         if (_methodName31.equals(name) &&
                 Arrays.deepEquals(_methodParameterTypes31, parameterTypes)) {
+            return ActivitiLocalServiceUtil.resumeWorkflowInstance(((Long) arguments[0]).longValue(),
+                ((Long) arguments[1]).longValue());
+        }
+
+        if (_methodName32.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes32, parameterTypes)) {
             return ActivitiLocalServiceUtil.stopWorkflowInstance(((Long) arguments[0]).longValue(),
                 ((Long) arguments[1]).longValue(),
                 ((Long) arguments[2]).longValue(),
                 (java.lang.String) arguments[3]);
         }
 
-        if (_methodName32.equals(name) &&
-                Arrays.deepEquals(_methodParameterTypes32, parameterTypes)) {
+        if (_methodName33.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes33, parameterTypes)) {
             ActivitiLocalServiceUtil.addWorkflowInstanceComment(((Long) arguments[0]).longValue(),
                 ((Long) arguments[1]).longValue(),
                 ((Long) arguments[2]).longValue(),
@@ -178,8 +189,8 @@ public class ActivitiLocalServiceClpInvoker {
             return null;
         }
 
-        if (_methodName33.equals(name) &&
-                Arrays.deepEquals(_methodParameterTypes33, parameterTypes)) {
+        if (_methodName34.equals(name) &&
+                Arrays.deepEquals(_methodParameterTypes34, parameterTypes)) {
             return ActivitiLocalServiceUtil.findHistoricActivityByName((java.lang.String) arguments[0],
                 (java.lang.String) arguments[1]);
         }

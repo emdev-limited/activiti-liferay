@@ -30,6 +30,12 @@
          ]]>
         </sql>
         
+        <sql id="net.emforge.activiti.service.persistence.ActivitiFinderImpl.findExecByTask">
+         <![CDATA[
+         SELECT e.ID_, e.PROC_INST_ID_, e.SUPER_EXEC_, e.PARENT_ID_ FROM ACT_RU_TASK t inner join ACT_RU_EXECUTION e on (t.EXECUTION_ID_ = e.ID_) where (t.ID_ = ?)
+         ]]>
+        </sql>        
+        
         <sql id="net.emforge.activiti.service.persistence.ActivitiFinderImpl.findSuperExecutions">
          <![CDATA[
 		SELECT ID_, PROC_INST_ID_, SUPER_EXEC_  FROM ACT_RU_EXECUTION where ID_ in [$EXEC_IDS$]
