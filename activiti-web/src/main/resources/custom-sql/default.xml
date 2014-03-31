@@ -44,7 +44,7 @@
         
         <sql id="net.emforge.activiti.service.persistence.ActivitiFinderImpl.findHiActivities">
          <![CDATA[
-		SELECT ID_ FROM ACT_HI_ACTINST where (ACT_NAME_ = ?) and (EXECUTION_ID_ in [$EXEC_IDS$])
+		SELECT ID_ FROM ACT_HI_ACTINST where (ACT_NAME_ = ?) and (PROC_INST_ID_ in [$EXEC_IDS$])
          ]]>
         </sql>      
 </custom-sql>
