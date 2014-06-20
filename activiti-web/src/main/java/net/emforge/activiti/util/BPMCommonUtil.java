@@ -81,7 +81,7 @@ public class BPMCommonUtil {
 					_log.debug(">> Setting permissions for role = " + roleName);
 					try {
 						Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
-						if ("com.liferay.portlet.journal.model.JournalArticle".equals(entryClassName)) {
+						if (JournalArticle.class.getName().equals(entryClassName)) {
 							//hack for it cause id and resourcePrimKey are different..
 							JournalArticle art = JournalArticleLocalServiceUtil.getArticle(Long.valueOf(entryClassPKStr));
 							entryClassPKStr = String.valueOf(art.getResourcePrimKey());
