@@ -24,8 +24,10 @@ public class LiferayScriptEngine implements ScriptEngine {
 	private static Log _log = LogFactoryUtil.getLog(LiferayScriptEngine.class);
 
 	private String liferayScriptName;
+	private ScriptEngineFactory factory;
 	
-	public LiferayScriptEngine(String liferayScriptName) {
+	public LiferayScriptEngine(ScriptEngineFactory factory, String liferayScriptName) {
+		this.factory = factory;
 		this.liferayScriptName = liferayScriptName;
 	}
 	
@@ -148,8 +150,7 @@ public class LiferayScriptEngine implements ScriptEngine {
 
 	@Override
 	public ScriptEngineFactory getFactory() {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+		return factory;
 	}
 
 	@Override

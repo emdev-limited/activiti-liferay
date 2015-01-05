@@ -87,7 +87,7 @@ public class LiferayScriptEngineFactory implements ScriptEngineFactory {
 
 	@Override
 	public ScriptEngine getScriptEngine() {
-		return new LiferayScriptEngine(liferayScriptName);
+		return new LiferayScriptEngine(this, liferayScriptName);
 	}
 
 }
