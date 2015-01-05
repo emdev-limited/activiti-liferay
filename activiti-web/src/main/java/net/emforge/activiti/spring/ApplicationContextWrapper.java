@@ -238,4 +238,15 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	public boolean isTypeMatch(String arg0, Class<?> arg1) throws NoSuchBeanDefinitionException {
 		return applicationContext.isTypeMatch(arg0, arg1);
 	}
+
+	@Override
+	public String[] getBeanNamesForAnnotation(Class<? extends Annotation> arg0) {
+		return applicationContext.getBeanNamesForAnnotation(arg0);
+	}
+
+	@Override
+	public String getApplicationName() {
+		return applicationContext.getApplicationName();
+	}
+
 }

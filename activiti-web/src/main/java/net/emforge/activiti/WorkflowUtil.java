@@ -6,18 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
-import com.liferay.portal.model.Role;
-import com.liferay.portal.model.UserGroupRole;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portal.service.RoleLocalServiceUtil;
-import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
-import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
-
 import net.emforge.activiti.identity.UserImpl;
 
 import org.activiti.engine.ProcessEngines;
@@ -29,11 +17,29 @@ import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.IdentityLinkType;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.workflow.WorkflowHandler;
+import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.UserGroupRole;
+import com.liferay.portal.model.WorkflowInstanceLink;
+import com.liferay.portal.service.CompanyLocalServiceUtil;
+import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
+import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
 
 public class WorkflowUtil {
 	private static Log _log = LogFactoryUtil.getLog(WorkflowUtil.class);
@@ -62,7 +68,7 @@ public class WorkflowUtil {
         return workflowContext;
     }
 
-	private static Map<String, Serializable> convertFromVars(Map<String, Object> variables) {
+	public static Map<String, Serializable> convertFromVars(Map<String, Object> variables) {
 		if (variables == null) {
 			return new HashMap<String, Serializable>();
 		}
@@ -74,6 +80,50 @@ public class WorkflowUtil {
 		}
 
 		return workflowContext;
+	}
+	
+	public static Map<String, Object> convertFromContext(Map<String, Serializable> workflowContext) {
+		Map<String, Object> variables = new HashMap<String, Object>();
+		if (workflowContext != null) {
+			variables.putAll(workflowContext);
+		}		
+		return variables;
+	}
+	
+	/**
+	 * <p>
+	 * Deserializes keywords string into a map.
+	 * <p>
+	 * Keywords should be serialized like this:
+	 * <blockquote><pre>
+	 *     Map<String, Object> map = new HashMap<String, Object>();
+	 *     map.put("groupId", 100);
+	 *     String keywords = JSONFactoryUtil.serialize(map);
+	 * </pre></blockquote>
+	 * <p>
+	 * May be the beter way is use some marshaller because of Long variables may be converted into Integer variables
+	 * 
+	 * @param keywords
+	 * 			{@code String} serialized by {@code JSONFactoryUtil}
+	 * @return {@code Map<String, Object>} if it can be converted to or {@code null} otherwise.
+	 * 
+	 * @author Dmitry Farafonov
+	 */
+	public static Map<String, Object> convertValueToParameterValue(String keywords) {
+		if (keywords == null) {
+			return MapUtils.EMPTY_MAP;
+		}
+		try{
+			Object obj = JSONFactoryUtil.deserialize(keywords);
+			if (obj instanceof Map) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> res = (Map<String, Object>) obj;
+				return res;
+			}
+		} catch (Exception e) {
+			// skip
+		}
+		return MapUtils.EMPTY_MAP;
 	}
 	
 	protected static Map<String, Object> getAllProcessInstanceVars(String executionId) {
@@ -109,6 +159,43 @@ public class WorkflowUtil {
 
         return result;
     }
+	
+	public static ExecutionEntity getTopProcessInstance(Execution execution){
+		do {
+			//String superExecutionId = ((ExecutionEntity)execution).getSuperExecutionId();
+			//ExecutionEntity superExecution = (ExecutionEntity)runtimeService.createExecutionQuery().executionId(superExecutionId).singleResult();
+//			ExecutionEntity superExecution = ((ExecutionEntity)execution).getSuperExecution();
+			ExecutionEntity superExecution = ((ExecutionEntity)execution).getProcessInstance().getSuperExecution();
+			if (superExecution == null) {
+				return (ExecutionEntity) execution;
+			}
+			execution = superExecution;
+		} while (true);
+	}
+	
+	public static ExecutionEntity getTopProcessInstance(String executionId){
+		do {
+			//ExecutionEntity execution = (ExecutionEntity)runtimeService.createExecutionQuery().executionId(executionId).singleResult();
+			ExecutionEntity execution = (ExecutionEntity)runtimeService.createProcessInstanceQuery().processInstanceId(executionId).singleResult();
+			String superExecutionId = execution.getSuperExecutionId();
+			if (superExecutionId == null) {
+				return execution;
+			}
+			try {
+				ExecutionEntity superExecution = (ExecutionEntity)runtimeService.createExecutionQuery().executionId(superExecutionId).singleResult();
+				executionId = superExecution.getProcessInstanceId();
+			} catch(Exception e) {
+				return execution;
+			}
+		} while (true);
+	}
+	
+	public static Map<String, Object> getTopWorkflowContext(String executionId) {
+        ExecutionEntity executionEntity = (ExecutionEntity)runtimeService.createExecutionQuery().executionId(executionId).singleResult();
+        ExecutionEntity topexecution = getTopProcessInstance(executionEntity);
+        Map<String, Object> topWorkflowContext = topexecution.getVariables();
+        return topWorkflowContext;
+	}
 
     public static WorkflowInstanceLink findByProcessInstanceId(String processInstanceId) {
         try {
@@ -189,4 +276,37 @@ public class WorkflowUtil {
         }
         
     }
+
+    /**
+     * This method could be used to define asset class name by asset type via workflow handler
+     * 
+     * @param assetType
+     * @return
+     */
+    public static String getAssetClassName(String assetType) {
+		String type = assetType.substring(1, assetType.length() - 1);
+
+		// find it in workflow handlers
+		List<WorkflowHandler> workflowHhandlers = WorkflowHandlerRegistryUtil.getWorkflowHandlers();
+
+		for (WorkflowHandler workflowHandler : workflowHhandlers) {
+			String workflowHandlerType = workflowHandler.getType(LocaleUtil.getDefault());
+
+			// compare by handler type
+			if (workflowHandlerType.equalsIgnoreCase(type)) {
+				return workflowHandler.getClassName();
+			}
+		}
+
+		return assetType;
+	}
+
+	public static int getCompaniesCount() {
+		try {
+			return CompanyLocalServiceUtil.getCompaniesCount();
+		} catch (SystemException e) {
+			_log.error(e);
+		}
+		return 1;
+	}
 }

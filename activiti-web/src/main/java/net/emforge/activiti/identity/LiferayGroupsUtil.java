@@ -10,7 +10,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import net.emforge.activiti.WorkflowUtil;
+
 import org.activiti.engine.delegate.DelegateExecution;
+import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
+import org.activiti.engine.runtime.Execution;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +54,10 @@ public class LiferayGroupsUtil {
 		_log.info("Convert groups : " + groups);
 		//check if friendly url is not null then use it to find group 
 		//else pick group up from the execution
-		long companyId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
+		//long companyId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
+		ExecutionEntity topExecution = WorkflowUtil.getTopProcessInstance((Execution) execution);
+		long companyId = GetterUtil.getLong((Serializable)topExecution.getVariable(WorkflowConstants.CONTEXT_COMPANY_ID));
+		
 		long groupId = 0;
 		if (StringUtils.isNotEmpty(groupFriendlyUrl)) {
 			try {
@@ -59,10 +66,10 @@ public class LiferayGroupsUtil {
 			} catch (Exception e) {
 				_log.warn(String.format("Could not get group by friendly url = [%s]. Using from execution instead", groupFriendlyUrl));
 				//use common way
-				groupId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
+				groupId = GetterUtil.getLong((Serializable)topExecution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
 			}
 		} else {
-			groupId = GetterUtil.getLong((Serializable)execution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
+			groupId = GetterUtil.getLong((Serializable)topExecution.getVariable(WorkflowConstants.CONTEXT_GROUP_ID));
 		}
 		
 		List<String> resultGroupList = new ArrayList<String>(groups.size());

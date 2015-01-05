@@ -1,0 +1,23 @@
+#set ( $workflowEngineManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil') )
+
+<h3>Engine</h3>
+#set( $key = $workflowEngineManagerUtil.getKey() )
+#set( $name = $workflowEngineManagerUtil.getName() )
+#set( $optionalAttributes = $workflowEngineManagerUtil.getOptionalAttributes() )
+#set( $version = $workflowEngineManagerUtil.getVersion() )
+#set( $isDeployed = $workflowEngineManagerUtil.isDeployed() )
+
+key: $key<br />
+name: $name<br />
+version: $version<br />
+isDeployed: $isDeployed<br />
+<br />
+attributes:
+<ul>
+#foreach($key in $optionalAttributes.keySet())
+    #if ($key != "processEngine")
+        #set( $optionalAttribute = $optionalAttributes.get("$key") )
+        <li><b>$key</b>: $optionalAttribute</li>
+    #end
+#end
+</ul>

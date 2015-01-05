@@ -3,124 +3,145 @@ package net.emforge.activiti.query;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.identity.Group;
-import org.activiti.engine.impl.AbstractQuery;
 import org.activiti.engine.impl.Page;
-import org.activiti.engine.impl.TaskQueryProperty;
+import org.activiti.engine.impl.TaskQueryImpl;
+import org.activiti.engine.impl.TaskServiceImpl;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
+import org.activiti.engine.impl.variable.VariableTypes;
 import org.activiti.engine.task.Task;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** Implements additional queries we need to Activiti <-> Liferay integration
+/**
+ * Implements additional queries we need to Activiti <-> Liferay integration
  * 
  * @author akakunin
- *
+ * @author Dmitry Farafonov
  */
-public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> implements CustomTaskQuery {
+public class CustomTaskQueryImpl extends TaskQueryImpl implements CustomTaskQuery, CustomTaskInfoQuery<CustomTaskQuery>{
 
-	protected String candidateUser;
-	protected String assignee;
-	protected String nameLike;
+	private static final long serialVersionUID = 1L;
+
+	static Logger logger = LoggerFactory.getLogger(CustomTaskQueryImpl.class);
+
 	protected String entryClassPK;
 	protected List<Long> entryClassPKs;
 	protected String entryClassName;
 	protected List<String> entryClassNames;
 	protected Long groupId;
-	protected Long companyId;
-	
+
+	protected String variableInName;
+	protected List<String> variableInValues;
+
+	protected List<QueryVariableValueIn> queryVariableValuesIn = new ArrayList<QueryVariableValueIn>();
+
 	protected boolean orderByDueDate;
 	protected boolean orderByCreateDate;
-	
-	
-	public CustomTaskQueryImpl(CommandContext commandContext) {
-		super(commandContext);
+
+
+	public CustomTaskQueryImpl(CommandExecutor commandExecutor,
+			String databaseType) {
+		super(commandExecutor, databaseType);
 	}
 
-	public CustomTaskQueryImpl(CommandExecutor commandExecutor) {
-		super(commandExecutor);
+	public static CustomTaskQueryImpl create() {
+		/*CommandExecutor commandExecutor = ((TaskServiceImpl)taskService).getCommandExecutor(); 
+		String databaseType = processEngine.getProcessEngineConfiguration().getDatabaseType();*/
+
+		CommandExecutor commandExecutor = ((TaskServiceImpl)getProcessEngine().getTaskService()).getCommandExecutor(); 
+		String databaseType = getProcessEngine().getProcessEngineConfiguration().getDatabaseType();
+
+		return new CustomTaskQueryImpl(commandExecutor, databaseType);
 	}
-	
-	public CustomTaskQuery taskCandidateUser(String userId) {
-		try {
-			if (Long.parseLong(userId) <= 0) 
-				return this;
-		} catch (Exception e) {
-			return this;
-		}
-		this.candidateUser = userId;
-		return this;
+
+	private static ProcessEngine getProcessEngine() {
+		ProcessEngine defaultProcessEngine = ProcessEngines.getDefaultProcessEngine();
+		return defaultProcessEngine;
 	}
-	
-	public CustomTaskQuery taskNameLike(String taskName) {
-		this.nameLike = taskName; 
-		return this;
-	}
-	
+
 	public CustomTaskQuery taskEntryClassPK(String entryClassPK) {
 		this.entryClassPK = entryClassPK;
 		return this;
 	}
-	
+
 	public CustomTaskQuery taskEntryClassPKs(List<Long> entryClassPKs) {
 		this.entryClassPKs = entryClassPKs;
 		return this;
 	}
-	
+
 	public CustomTaskQuery taskEntryClassName(String entryClassName) {
 		this.entryClassName = entryClassName;
 		return this;
 	}
-	
+
 	public CustomTaskQuery taskEntryClassNames(List<String> entryClassNames) {
 		this.entryClassNames = entryClassNames;
 		return this;
 	}
-	
-	public CustomTaskQuery taskAssignee(String assignee) {
-		try {
-			if (Long.parseLong(assignee) <= 0) 
-				return this;
-		} catch (Exception e) {
-			return this;
-		}
-		this.assignee = assignee;
-		return this;
-	}
-	
+
 	public CustomTaskQuery taskGroupId(Long groupId) {
 		this.groupId = groupId;
 		return this;
 	}
-	
-	public CustomTaskQuery taskCompanyId(Long companyId) {
-		this.companyId = companyId;
-		return this;
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public CustomTaskQuery taskVariableValueIn(String name, List value) {
+		/**
+		 * TODO: implement logic for "localScope=true|false" in CustomTask.xml mapping.
+		 */
+		boolean localScope = true; 
+
+		queryVariableValuesIn.add(new QueryVariableValueIn(name, value, localScope));
+		return (CustomTaskQuery) this;
 	}
-	
-	public CustomTaskQuery orderByDueDate() {
-		orderByDueDate = true;
-		return orderBy(new TaskQueryProperty("RES.DUE_DATE_"));
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public CustomTaskQuery processVariableValueIn(String name, List value) {
+		boolean localScope = false;
+
+		queryVariableValuesIn.add(new QueryVariableValueIn(name, value, localScope));
+		return (CustomTaskQuery) this;
 	}
-	public CustomTaskQuery orderByCreateDate() {
-		orderByCreateDate = true;
-		return orderBy(new TaskQueryProperty("RES.CREATE_TIME_"));
-	}
-	
+
+	//results ////////////////////////////////////////////////////////////////
+
 	@Override
 	public long executeCount(CommandContext commandContext) {
-		return (Long) commandContext.getDbSqlSession().selectOne("customSearchTasksCount", this);
+		ensureVariablesInitialized();
+		ensureVariablesInInitialized();
+		checkQueryOk();
+		return (Long) commandContext.getDbSqlSession().selectOne("customSelectTaskCountByQueryCriteria", this);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Task> executeList(CommandContext commandContext, Page page) {
-		// TODO Auto-generated method stub
-		
-		String statement = "customSearchTasks";
-		
-		return commandContext.getDbSqlSession().selectList(statement, this, page);
+		ensureVariablesInitialized();
+		ensureVariablesInInitialized();
+		checkQueryOk();
+
+		if (includeTaskLocalVariables || includeProcessVariables) {
+			return commandContext.getDbSqlSession().selectList("customSelectTaskWithVariablesByQueryCriteria", this, page);
+		} else {
+			return commandContext.getDbSqlSession().selectList("customSelectTaskByQueryCriteria", this, page);
+		}
 	}
+
+	protected void ensureVariablesInInitialized() {
+		VariableTypes types = Context.getProcessEngineConfiguration().getVariableTypes();
+		for (QueryVariableValueIn queryVariableValue : queryVariableValuesIn) {
+			queryVariableValue.initialize(types);
+		}
+	}
+
+	//getters ////////////////////////////////////////////////////////////////
 
 	public List<String> getCandidateGroups() {
 		if (candidateUser != null) {
@@ -129,58 +150,42 @@ public class CustomTaskQueryImpl extends AbstractQuery<CustomTaskQuery, Task> im
 			return null;
 		}
 	}
-	
+
 	protected List<String> getGroupsForCandidateUser(String candidateUser) {
-	    List<Group> groups = Context.getCommandContext().getGroupIdentityManager().findGroupsByUser(candidateUser);
-	    List<String> groupIds = new ArrayList<String>();
-	    
-	    for (Group group : groups) {
-	    	groupIds.add(group.getId());
-	    }
-	    
-	    return groupIds;
+		List<Group> groups = Context.getCommandContext().getGroupIdentityManager().findGroupsByUser(candidateUser);
+		List<String> groupIds = new ArrayList<String>();
+
+		for (Group group : groups) {
+			groupIds.add(group.getId());
+		}
+
+		return groupIds;
 	}
-	
-	public String getAssignee() {
-		return assignee;
-	}
-	
-	public String getCandidateUser() {
-		return candidateUser;
-	}
-	
-	public String getNameLike() {
-		return nameLike;
-	}
-	
+
 	public String getEntryClassPK() {
 		return entryClassPK;
 	}
-	
+
 	public List<Long> getEntryClassPKs() {
 		return entryClassPKs;
 	}
-	
+
 	public String getEntryClassName() {
 		return entryClassName;
 	}
-	
+
 	public List<String> getEntryClassNames() {
 		return entryClassNames;
 	}
-	
+
 	public Long getGroupId() {
 		return groupId;
 	}
-	
-	public Long getCompanyId() {
-		return companyId;
-	}
-	
+
 	public boolean isOrderByDueDate() {
 		return orderByDueDate;
 	}
-	
+
 	public boolean isOrderByCreateDate() {
 		return orderByCreateDate;
 	}

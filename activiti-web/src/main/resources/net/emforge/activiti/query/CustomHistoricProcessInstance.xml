@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity">
+
+	<!-- Process Search -->
+	<select id="customSelectHistoricProcessInstancesByQueryCriteria"
+			parameterType="net.emforge.activiti.query.CustomHistoricProcessInstanceQueryImpl"
+			resultMap="org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity.historicProcessInstanceResultMap">
+		${limitBefore}
+		select RES.* ${limitBetween}
+		<include refid="customSelectHistoricProcessInstancesByQueryCriteriaSql" />
+		${orderBy}
+		${limitAfter}
+	</select>
+	
+	<select id="customSelectHistoricProcessInstanceCountByQueryCriteria"
+			parameterType="net.emforge.activiti.query.CustomHistoricProcessInstanceQueryImpl"
+			resultType="long">
+		select distinct count(RES.ID_)
+		<include refid="customSelectHistoricProcessInstancesByQueryCriteriaSql"/>
+	</select>
+	
+	<sql id="customSelectHistoricProcessInstancesByQueryCriteriaSql">
+		from ${prefix}ACT_HI_PROCINST RES
+		<include refid="customCommonSelectHistoricProcessInstancesByQueryCriteriaSql" />
+	</sql>
+	
+
+  <select id="customSelectHistoricProcessInstancesWithVariablesByQueryCriteria"
+		parameterType="net.emforge.activiti.query.CustomHistoricProcessInstanceQueryImpl"
+		resultMap="org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity.historicProcessInstanceAndVariablesResultMap">
+    ${limitBefore}
+    select distinct RES.*,
+    VAR.ID_ as VAR_ID_, VAR.NAME_ as VAR_NAME_, VAR.VAR_TYPE_ as VAR_TYPE_, VAR.REV_ as VAR_REV_,
+    VAR.PROC_INST_ID_ as VAR_PROC_INST_ID_, VAR.EXECUTION_ID_ as VAR_EXECUTION_ID_, VAR.TASK_ID_ as VAR_TASK_ID_,
+    VAR.BYTEARRAY_ID_ as VAR_BYTEARRAY_ID_, VAR.DOUBLE_ as VAR_DOUBLE_, 
+    VAR.TEXT_ as VAR_TEXT_, VAR.TEXT2_ as VAR_TEXT2_, VAR.LAST_UPDATED_TIME_ as VAR_LAST_UPDATED_TIME_, VAR.LONG_ as VAR_LONG_
+    ${limitBetween}
+    <include refid="customSelectProcessInstanceWithVariablesByQueryCriteriaSql"/> 
+    ${orderBy}
+    ${limitAfter}
+  </select>
+  	
+  <sql id="customSelectProcessInstanceWithVariablesByQueryCriteriaSql">  
+    from ${prefix}ACT_HI_PROCINST RES
+    <if test="includeProcessVariables">
+      left outer join ${prefix}ACT_HI_VARINST VAR ON RES.PROC_INST_ID_ = VAR.EXECUTION_ID_ and VAR.TASK_ID_ is null
+    </if>
+    <include refid="customCommonSelectHistoricProcessInstancesByQueryCriteriaSql"/>
+  </sql>
+  	
+  <sql id="customCommonSelectHistoricProcessInstancesByQueryCriteriaSql">
+      <include refid="org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity.commonSelectHistoricProcessInstancesByQueryCriteriaSqlJoin"/>
+      <include refid="customCommonSelectHistoricProcessInstancesByQueryCriteriaSqlJoin"/>
+      <trim prefix="WHERE" prefixOverrides="WHERE |AND |OR |WHERE\n|AND\n|OR\n|WHERE\r|AND\r|OR\r|WHERE\t|AND\t|OR\t">
+        <include refid="org.activiti.engine.impl.persistence.entity.HistoricProcessInstanceEntity.commonSelectHistoricProcessInstancesByQueryCriteriaSqlWhere"/>
+        <include refid="customCommonSelectHistoricProcessInstancesByQueryCriteriaSqlWhere"/>
+      </trim>
+  </sql>
+
+  <sql id="customCommonSelectHistoricProcessInstancesByQueryCriteriaSqlJoin">
+  	<if test="userId != null || entryClassNameId != null || entryClassNameIds != null || entryClassPK != null">
+  		inner join WORKFLOWINSTANCELINK W on RES.ID_ = W.workflowInstanceId
+  	</if>
+  </sql>
+
+  <sql id="customCommonSelectHistoricProcessInstancesByQueryCriteriaSqlWhere">
+    <!-- <if test="processDefinitionVersion != null">
+      and P.VERSION_ = #{processDefinitionVersion}
+    </if>
+    <if test="processDefinitionVersion == null &amp;&amp; processDefinitionLatestVersion">
+        and P.VERSION_ = (select max(VERSION_) from ${prefix}ACT_RE_PROCDEF where KEY_ = P.KEY_)
+    </if> -->
+    <if test="userId != null">
+    	and W.USERID = #{userId}
+    </if>
+    <if test="entryClassNameId != null">
+    	and W.CLASSNAMEID = #{entryClassNameId}
+    </if>
+    <if test="entryClassNameIds != null">
+    	and W.CLASSNAMEID IN
+    	<foreach item="entryClassNameIdItem" collection="entryClassNameIds" index="index" open="("
+			separator="," close=")">
+			#{entryClassNameIdItem}
+    	</foreach>
+    </if>
+    <if test="entryClassPK != null">
+    	and W.CLASSPK = #{entryClassPK}
+    </if>
+  </sql>
+
+</mapper>

@@ -1,0 +1,40 @@
+#set ( $workflowDefinitionManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil') )
+#set ( $workflowTaskManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil') )
+#set ( $workflowInstanceManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil') )
+#set ( $obcFactoryUtil = $portal.getClass().forName('com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil') )
+
+#set( $companyId = $company.companyId )
+
+<h3>all tasks</h3>
+#set( $workflowTaskCount = $workflowTaskManagerUtil.getWorkflowTaskCount($companyId, $null) )
+#set( $workflowTasks = $workflowTaskManagerUtil.getWorkflowTasks($companyId, $null, 0, 5, $null) )
+count: $workflowTaskCount<br />
+<ul>
+#foreach($workflowTask in $workflowTasks)
+    <li>$workflowTask</li>
+#end
+</ul>
+
+
+<h3>active tasks</h3>
+#set( $workflowTaskCount = $workflowTaskManagerUtil.getWorkflowTaskCount($companyId, false) )
+#set( $workflowTasks = $workflowTaskManagerUtil.getWorkflowTasks($companyId, false, 0, 5, $null) )
+count: $workflowTaskCount<br />
+<ul>
+#foreach($workflowTask in $workflowTasks)
+    <li>$workflowTask<br />
+        optionalAttributes: $workflowTask.optionalAttributes
+    </li>
+#end
+</ul>
+
+
+<h3>completed tasks</h3>
+#set( $workflowTaskCount = $workflowTaskManagerUtil.getWorkflowTaskCount($companyId, true) )
+#set( $workflowTasks = $workflowTaskManagerUtil.getWorkflowTasks($companyId, true, 0, 5, $null) )
+count: $workflowTaskCount<br />
+<ul>
+#foreach($workflowTask in $workflowTasks)
+    <li>$workflowTask</li>
+#end
+</ul>

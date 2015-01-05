@@ -12,89 +12,131 @@
  */
 package org.activiti.engine.impl.bpmn.parser;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
-import org.activiti.bpmn.converter.BpmnXMLConverter;
+import org.activiti.bpmn.model.ExclusiveGateway;
 import org.activiti.bpmn.model.FlowElement;
 import org.activiti.bpmn.model.FormProperty;
 import org.activiti.bpmn.model.FormValue;
+import org.activiti.bpmn.model.SequenceFlow;
 import org.activiti.bpmn.model.UserTask;
-import org.activiti.bpmn.model.parse.Problem;
 import org.activiti.engine.ActivitiException;
-import org.activiti.engine.impl.bpmn.parser.handler.FormPostProcessorThreadLocalUtil;
-import org.activiti.engine.impl.bpmn.parser.handler.FormPostProcessorWrapper;
+import org.activiti.engine.impl.bpmn.behavior.ExclusiveGatewayActivityBehavior;
 import org.activiti.engine.impl.bpmn.parser.handler.UserTaskParseHandler;
-import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.form.DefaultTaskFormHandler;
 import org.activiti.engine.impl.form.TaskFormHandler;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
+import org.activiti.engine.impl.pvm.process.TransitionImpl;
 import org.activiti.engine.impl.task.TaskDefinition;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Specific parsing of one BPMN 2.0 XML file, created by the {@link BpmnParser}.
  * 
  * @author Tijs Rademakers
  * @author Joram Barrez
+ * @author Dmitry Farafonov
  */
 public class CustomBpmnParse extends BpmnParse {
-	
+
+	protected static final Logger LOGGER = LoggerFactory.getLogger(CustomBpmnParse.class);
+
 	private static final String OUTPUT_TRANSITION = "outputTransition";
+	private static final String DEFAULT_OUTPUT_TRANSITION_NAME = "default";
+
+	private Collection<FlowElement> flowElements = null;
 
 	public CustomBpmnParse(BpmnParser parser) {
 		super(parser);
 	}
-
 	@Override
-	public void processFlowElements(Collection<FlowElement> flowElements) {
+	public void processFlowElements(Collection<FlowElement> _flowElements) {
+		flowElements = _flowElements;
 		super.processFlowElements(flowElements);
-		
-		handleUserTaskForms(flowElements);
+
+		for (FlowElement flowElement : flowElements) {
+			if (flowElement instanceof UserTask) {
+				handleUserTaskForms((UserTask)flowElement);
+			}
+		}
 	}
-  
-	public void handleUserTaskForms(Collection<FlowElement> flowElements) {
+
+	public void handleUserTaskForms(UserTask userTask) {
 		try {
-			List<FormPostProcessorWrapper> forms = FormPostProcessorThreadLocalUtil.getFromThreadLocal();
-			if (forms != null && !forms.isEmpty()) {
-				for (FormPostProcessorWrapper form : forms) {
-					List<String> outpuTransitionNames = form.getOutputTransitionNames();
-					if (form.getSourceActivity() != null && outpuTransitionNames != null 
-							&& !outpuTransitionNames.isEmpty()) {
-						try {
-							ActivityImpl userTaskActivity = form.getSourceActivity();
-							//get user task
-							UserTask userTask = null;
-							for (FlowElement flowElement : flowElements) {
-								if (flowElement instanceof UserTask && flowElement.getId().equals(userTaskActivity.getId())) {
-									userTask = (UserTask) flowElement;
-									break;
-								}
-							}
-							if (userTask != null) {
-								addOutputTransitionToTaskForm(userTask, userTaskActivity, outpuTransitionNames);
-							}
-						} catch (Exception e) {
-							LOGGER.error("Failed to improve user task form", e);
-						}
+			List<SequenceFlow> outgoingFlows = userTask.getOutgoingFlows();
+			String defaultSequenceFlow = null;
+
+			// Skip if user task has no outgoing flows
+			if (outgoingFlows.size() == 0) {
+				return;
+			} else if (outgoingFlows.size() == 1) {
+				String targetRef = outgoingFlows.get(0).getTargetRef();
+				ActivityImpl outgoingActivity = getCurrentScope().findActivity(targetRef);
+				if (!(outgoingActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior)) {
+					return;
+				}
+				FlowElement outgoingFlowElement = findFlowElement(flowElements, targetRef);
+
+				outgoingFlows = ((ExclusiveGateway)outgoingFlowElement).getOutgoingFlows();
+				// Skip if exclusive gateway has only one outgoing flow
+				if (outgoingFlows.size() <= 1) {
+					return;
+				}
+				defaultSequenceFlow = (String) outgoingActivity.getProperty("default");
+			}
+
+			List<String> outputTransitionNames = new ArrayList<String>();
+
+			for (SequenceFlow sequenceFlow : outgoingFlows) {
+				boolean isDefaultFlow = defaultSequenceFlow != null && sequenceFlow.getId() != null && sequenceFlow.getId().equals(defaultSequenceFlow);
+				TransitionImpl transition = getSequenceFlows().get(sequenceFlow.getId());
+				Boolean automaticGeneratedCondition = (Boolean) transition.getProperty("automaticGeneratedCondition");
+
+				if (Boolean.TRUE.equals(automaticGeneratedCondition)) {
+					// TODO: Do we need to collect transition names just for automatic generated conditions?
+					outputTransitionNames.add(sequenceFlow.getName());
+				}
+				if (isDefaultFlow) {
+					// TODO: What about default transition?
+					if (StringUtils.isNotEmpty(sequenceFlow.getName())) {
+						outputTransitionNames.add(sequenceFlow.getName());
+					} else {
+						outputTransitionNames.add(DEFAULT_OUTPUT_TRANSITION_NAME);
 					}
 				}
-				//clean up thread local
-				try {
-					FormPostProcessorThreadLocalUtil.cleanUp();
-				} catch (Exception e) {
-					LOGGER.error("Failed to clean up FormPostProcessorThreadLocal ", e);
-				}
+				LOGGER.debug("*{} id: {}, name: {}, expresion: {}{}", ((Boolean.TRUE.equals(automaticGeneratedCondition))? "!":" "), sequenceFlow.getId(), sequenceFlow.getName(), sequenceFlow.getConditionExpression(), ((isDefaultFlow)?", isDefault":""));
+			}
+
+			if (!outputTransitionNames.isEmpty()) {
+				addOutputTransitionToTaskForm(userTask, outputTransitionNames);
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to improve user tasks form", e);
 		}
 	}
-	
-	protected void addOutputTransitionToTaskForm(UserTask userTask, ActivityImpl userTaskActivity, List<String> outpuTransitionNames) {
-		
+
+	private FlowElement findFlowElement(Collection<FlowElement> flowElements, String elementId) {
+		for (FlowElement flowElement : flowElements) {
+			if (flowElement.getId().equals(elementId)) {
+				return flowElement;
+			}
+		}
+		return null;
+	}
+
+	protected void addOutputTransitionToTaskForm(UserTask userTask, List<String> outpuTransitionNames) {
+		ActivityImpl userTaskActivity = getCurrentScope().findActivity(userTask.getId());
 		TaskDefinition taskDefinition = (TaskDefinition) userTaskActivity.getProperty(UserTaskParseHandler.PROPERTY_TASK_DEFINITION);
-		
+
+		// TODO: what about original handler?
+		// DefaultTaskFormHandler originalTaskFormHandler = (DefaultTaskFormHandler) taskDefinition.getTaskFormHandler();
+
 		TaskFormHandler taskFormHandler = new DefaultTaskFormHandler();
 		List<FormProperty> formProperties = userTask.getFormProperties();
 		for (FormProperty formProperty : formProperties) {
@@ -117,51 +159,24 @@ public class CustomBpmnParse extends BpmnParse {
 		formProperty.setWriteable(true);
 		formProperty.setVariable(null);
 		userTask.getFormProperties().add(formProperty);
-		
-	    taskFormHandler.parseConfiguration(userTask.getFormProperties(), userTask.getFormKey(), this.getDeployment()
-	    		, (ProcessDefinitionEntity) this.getCurrentScope().getProcessDefinition());
-	    
-	    taskDefinition.setTaskFormHandler(taskFormHandler);
+
+		taskFormHandler.parseConfiguration(userTask.getFormProperties(), userTask.getFormKey(), this.getDeployment()
+				, (ProcessDefinitionEntity) this.getCurrentScope().getProcessDefinition());
+
+		taskDefinition.setTaskFormHandler(taskFormHandler);
 	}
-	
+
 	public BpmnParse execute() {
-		try {
-			BpmnXMLConverter converter = new BpmnXMLConverter();
+		// validateSchema = false;
+		super.execute();
 
-			boolean enableSafeBpmnXml = false;
-			String encoding = null;
-			if (Context.getProcessEngineConfiguration() != null) {
-				enableSafeBpmnXml = Context.getProcessEngineConfiguration()
-						.isEnableSafeBpmnXml();
-				encoding = Context.getProcessEngineConfiguration()
-						.getXmlEncoding();
-			}
-
-			if (encoding != null) {
-				bpmnModel = converter.convertToBpmnModel(streamSource, false,
-						enableSafeBpmnXml, encoding);
-			} else {
-				bpmnModel = converter.convertToBpmnModel(streamSource, false,
-						enableSafeBpmnXml);
-			}
-
-			createImports();
-			createItemDefinitions();
-			createMessages();
-			createOperations();
-			transformProcessDefinitions();
-		} catch (Exception e) {
-			if (e instanceof ActivitiException) {
-				throw (ActivitiException) e;
-			} else {
-				throw new ActivitiException("Error parsing XML", e);
-			}
-		}
-
-		if (bpmnModel.getProblems().size() > 0) {
+		if (bpmnModel.getErrors().size() > 0) {
 			StringBuilder problemBuilder = new StringBuilder();
-			for (Problem error : bpmnModel.getProblems()) {
-				problemBuilder.append(error.toString());
+			Map<String, String> errors = bpmnModel.getErrors();
+			for (String errorKey : errors.keySet()) {
+				problemBuilder.append(errorKey);
+				problemBuilder.append(": ");
+				problemBuilder.append(errors.get(errorKey));
 				problemBuilder.append("\n");
 			}
 			throw new ActivitiException("Errors while parsing:\n"
@@ -170,5 +185,5 @@ public class CustomBpmnParse extends BpmnParse {
 
 		return this;
 	}
-	
+
 }

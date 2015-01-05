@@ -11,23 +11,22 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.emforge.activiti.dao.WorkflowDefinitionExtensionDao;
-
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.HistoryService;
+import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
-import org.activiti.engine.impl.bpmn.diagram.ProcessDiagramGenerator;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmTransition;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
-import org.activiti.rest.api.ActivitiUtil;
+import org.activiti.image.ProcessDiagramGenerator;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -114,10 +113,15 @@ public class ImageServlet extends HttpServlet {
 		String defId = task.getProcessDefinitionId();
 		
 		// it is important to use this way to get ProcessDEfinition - since in this case readed all required for image generation data
-		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity)(ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(defId);
+		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(defId);
 		
-		BpmnModel bpmnModel = ActivitiUtil.getRepositoryService().getBpmnModel(processDefinition.getId());
-        InputStream resource = ProcessDiagramGenerator.generateDiagram(bpmnModel, "png", taskIds);
+		BpmnModel bpmnModel = getProcessEngine()
+	            .getRepositoryService()
+	            .getBpmnModel(processDefinition.getId());
+		ProcessDiagramGenerator processDiagramGenerator = getProcessEngine()
+			.getProcessEngineConfiguration()
+			.getProcessDiagramGenerator();
+        InputStream resource = processDiagramGenerator.generateDiagram(bpmnModel, "png", taskIds);
 		
 		return resource;
 	}
@@ -133,10 +137,19 @@ public class ImageServlet extends HttpServlet {
 		HistoryService historyService = (HistoryService)applicationContext.getBean(HistoryService.class);
 		_log.debug("Get app context and beans");
 		
+		/*
+		// FIXME: we can use this code to determine activiti services
+		_log.info("Get activiti services");
+		ProcessEngine processEngine = getProcessEngine();
+		runtimeService = processEngine.getRuntimeService();
+		repositoryService = processEngine.getRepositoryService();
+		historyService = processEngine.getHistoryService();
+		*/
+		
 		String procId = String.valueOf(processInstanceId);
 
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(procId).singleResult();
-		
+
 		if (inst == null){
 			_log.error("Process instance " + procId + " not found");
 			return null;
@@ -152,9 +165,14 @@ public class ImageServlet extends HttpServlet {
 	    		highLightedFlows = getHighLightedFlows(historyService, processDefinition, procId, highLightedActivities);
 	    		_log.debug("> procId:" + procId + ", flows: " + highLightedFlows);
 	    	}
-	    	
-		    BpmnModel bpmnModel = ActivitiUtil.getRepositoryService().getBpmnModel(processDefinition.getId());
-	        InputStream resource = ProcessDiagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivities, highLightedFlows);
+
+		    BpmnModel bpmnModel = getProcessEngine()
+		            .getRepositoryService()
+		            .getBpmnModel(processDefinition.getId());
+		    ProcessDiagramGenerator processDiagramGenerator = getProcessEngine()
+					.getProcessEngineConfiguration()
+					.getProcessDiagramGenerator();
+	        InputStream resource = processDiagramGenerator.generateDiagram(bpmnModel, "png", highLightedActivities, highLightedFlows);
 		    
 		    return resource;
 	    } 
@@ -162,6 +180,11 @@ public class ImageServlet extends HttpServlet {
 	    return null;
 	}
 	
+	private ProcessEngine getProcessEngine() {
+		ProcessEngine defaultProcessEngine = ProcessEngines.getDefaultProcessEngine();
+		return defaultProcessEngine;
+	}
+
 	private List<String> getHighLightedFlows(HistoryService historyService, ProcessDefinitionEntity processDefinition, String procId, List<String> highLightedActivities) {
 		//List<String> highLightedFlows = new ArrayList<String>();
 		List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery().processInstanceId(procId).orderByHistoricActivityInstanceStartTime().asc()/*.orderByActivityId().asc()*/.list();
@@ -223,17 +246,20 @@ public class ImageServlet extends HttpServlet {
 		ApplicationContext applicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
 
 		// get beans
-		WorkflowDefinitionExtensionDao workflowDefinitionExtensionDao = (WorkflowDefinitionExtensionDao)applicationContext.getBean("workflowDefinitionExtensionDao");
 		RepositoryService repositoryService = (RepositoryService)applicationContext.getBean(RepositoryService.class);
 		_log.debug("Get app context and beans");
-		
+
 		// get workflow definition
-		ProcessDefinition def = workflowDefinitionExtensionDao.find(companyId, workflowName, workflowVersion);
-		
-		_log.debug("WorkflowDefExt: " + def);
+		ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+				.processDefinitionTenantId(String.valueOf(companyId))
+				.processDefinitionName(workflowName)
+				.processDefinitionVersion(workflowVersion)
+				.singleResult();
+
+		_log.debug("processDefinition: " + processDefinition);
 	
-		if (def != null) {
-			defId = def.getId();
+		if (processDefinition != null) {
+			defId = processDefinition.getId();
 		}
 	
 		_log.debug("Definition Id: " + defId);

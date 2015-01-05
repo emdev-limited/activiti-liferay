@@ -14,27 +14,29 @@
 package org.activiti.engine.impl.bpmn.helper;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.delegate.BpmnError;
-import org.activiti.engine.delegate.DelegateExecution;
+import org.activiti.engine.delegate.event.ActivitiEventType;
+import org.activiti.engine.delegate.event.impl.ActivitiEventBuilder;
 import org.activiti.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.EventSubProcessStartEventActivityBehavior;
+import org.activiti.engine.impl.bpmn.parser.BpmnParse;
 import org.activiti.engine.impl.bpmn.parser.CustomBpmnParse;
 import org.activiti.engine.impl.bpmn.parser.ErrorEventDefinition;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
 import org.activiti.engine.impl.pvm.PvmProcessDefinition;
 import org.activiti.engine.impl.pvm.PvmScope;
-import org.activiti.engine.impl.pvm.delegate.ActivityBehavior;
 import org.activiti.engine.impl.pvm.delegate.ActivityExecution;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.impl.pvm.process.ProcessDefinitionImpl;
 import org.activiti.engine.impl.pvm.process.ScopeImpl;
 import org.activiti.engine.impl.pvm.runtime.AtomicOperation;
 import org.activiti.engine.impl.pvm.runtime.InterpretableExecution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -46,34 +48,34 @@ import org.activiti.engine.impl.pvm.runtime.InterpretableExecution;
  * 
  * @author Falko Menge
  * @author Daniel Meyer
+ * @author Saeid Mirzaei
  */
 public class ErrorPropagation {
 
-  private static final Logger LOG = Logger.getLogger(ErrorPropagation.class.getName());
+  private static final Logger LOG = LoggerFactory.getLogger(ErrorPropagation.class);
 
   public static void propagateError(BpmnError error, ActivityExecution execution) throws Exception {    
     propagateError(error.getErrorCode(), execution);
   }
   
   public static void propagateError(String errorCode, ActivityExecution execution) throws Exception {
-    // find local error handler
-    String eventHandlerId = findLocalErrorEventHandler(execution, errorCode);  
-
-    // TODO: merge two approaches (super process / regular process approach)
-    if(eventHandlerId != null) {
-      executeCatch(eventHandlerId, execution, null);
-    }else {
-      ActivityExecution superExecution = getSuperExecution(execution);
-      if (superExecution != null) {
-        executeCatchInSuperProcess(errorCode, superExecution, execution);
-      } else {
-        LOG.info(execution.getActivity().getId() + " throws error event with errorCode '"
-                + errorCode + "', but no catching boundary event was defined. "
-                +   "Execution will simply be ended (none end event semantics).");
-        execution.end();
-      }
-    }
+	  ActivityExecution originalExecution = execution;
+	  while (execution != null) {
+		    String eventHandlerId = findLocalErrorEventHandler(execution, errorCode);
+		    // FIXME: superExecution may be null?
+		    //ActivityExecution superExecution = getSuperExecution(execution);
+		    if (eventHandlerId != null) {
+		    	 executeCatch(eventHandlerId, execution, errorCode, originalExecution);
+		    	 break;
+		    }
+		    execution = getSuperExecution(execution);
+	  }
+    if (execution == null) {
+		  throw new BpmnError(errorCode, "No catching boundary event found for error with errorCode '" 
+	                + errorCode + "', neither in same process nor in parent process");		  
+	  }
   }
+
 
   private static String findLocalErrorEventHandler(ActivityExecution execution, String errorCode) {
     PvmScope scope = execution.getActivity();
@@ -100,20 +102,6 @@ public class ErrorPropagation {
     return null;
   }
 
-  private static void executeCatchInSuperProcess(String errorCode, ActivityExecution superExecution, ActivityExecution execution) {
-    String errorHandlerId = findLocalErrorEventHandler(superExecution, errorCode);
-    if (errorHandlerId != null) {
-      executeCatch(errorHandlerId, superExecution, execution);
-    } else { // no matching catch found, going one level up in process hierarchy
-      ActivityExecution superSuperExecution = getSuperExecution(superExecution);
-      if (superSuperExecution != null) {
-        executeCatchInSuperProcess(errorCode, superSuperExecution, superExecution);
-      } else {
-        throw new BpmnError(errorCode, "No catching boundary event found for error with errorCode '" 
-                + errorCode + "', neither in same process nor in parent process");
-      }
-    }
-  }
   
   private static ActivityExecution getSuperExecution(ActivityExecution execution) {
     ExecutionEntity executionEntity = (ExecutionEntity) execution;
@@ -124,7 +112,7 @@ public class ErrorPropagation {
     return superExecution;
   }
   
-  private static void executeCatch(String errorHandlerId, ActivityExecution execution, ActivityExecution preventExecution) {
+  private static void executeCatch(String errorHandlerId, ActivityExecution execution, String errorCode, ActivityExecution originalExecution) {
     ProcessDefinitionImpl processDefinition = ((ExecutionEntity) execution).getProcessDefinition();
     ActivityImpl errorHandler = processDefinition.findActivity(errorHandlerId);
     if (errorHandler == null) {
@@ -146,19 +134,19 @@ public class ErrorPropagation {
       if (catchingScopeActivity.getActivityBehavior() instanceof CallActivityBehavior){
         CallActivityBehavior callActivityBehavior = (CallActivityBehavior) catchingScopeActivity.getActivityBehavior();
         try {
-        	callActivityBehavior.completing(execution, preventExecution);
+        	callActivityBehavior.completing(execution, originalExecution);
         } catch (RuntimeException e) {
-        	LOG.log(Level.SEVERE, "Error while completing sub process of execution " + execution, e);
+        	LOG.error("Error while completing sub process of execution " + execution, e);
             throw e;    	  
         } catch (Exception e) {
-        	LOG.log(Level.SEVERE, "Error while completing sub process of execution " + execution, e);
+        	LOG.error("Error while completing sub process of execution " + execution, e);
             throw new ActivitiException("Error while completing sub process of execution " + execution, e);
         }
       }
     }
     
     if(catchingScope instanceof PvmProcessDefinition) {
-      executeEventHandler(errorHandler, ((ExecutionEntity)execution).getProcessInstance());
+      executeEventHandler(errorHandler, ((ExecutionEntity)execution).getProcessInstance(), errorCode);
       
     } else {      
       if (currentActivity.getId().equals(catchingScope.getId())) {
@@ -189,7 +177,7 @@ public class ErrorPropagation {
       }
       
       if (matchingParentFound && leavingExecution != null) {
-        executeEventHandler(errorHandler, leavingExecution);
+        executeEventHandler(errorHandler, leavingExecution, errorCode);
       } else {
         throw new ActivitiException("No matching parent execution for activity " + errorHandlerId + " found");
       }
@@ -197,7 +185,12 @@ public class ErrorPropagation {
         
   }
 
-  private static void executeEventHandler(ActivityImpl borderEventActivity, ActivityExecution leavingExecution) {  
+  private static void executeEventHandler(ActivityImpl borderEventActivity, ActivityExecution leavingExecution, String errorCode) {  
+  	if(Context.getProcessEngineConfiguration() != null && Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
+  		Context.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(
+  				ActivitiEventBuilder.createErrorEvent(ActivitiEventType.ACTIVITY_ERROR_RECEIVED, borderEventActivity.getId(), errorCode, leavingExecution.getId(), leavingExecution.getProcessInstanceId(), leavingExecution.getProcessDefinitionId()));
+  	}
+  	
     if(borderEventActivity.getActivityBehavior() instanceof EventSubProcessStartEventActivityBehavior) {
       InterpretableExecution execution = (InterpretableExecution) leavingExecution;
       execution.setActivity(borderEventActivity.getParentActivity());

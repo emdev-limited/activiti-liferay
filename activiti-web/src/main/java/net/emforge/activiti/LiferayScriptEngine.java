@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.scripting.ScriptingUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.UserLocalServiceUtil;
@@ -65,7 +66,8 @@ public class LiferayScriptEngine implements ScriptEngine {
 //					}
 //				}
 				
-				ScriptingUtil.exec(null, inputObjects, liferayScriptName, script);
+				//ScriptingUtil.exec(null, inputObjects, liferayScriptName, script);
+				ScriptingUtil.exec(null, inputObjects, liferayScriptName, script, StringPool.EMPTY_ARRAY);
 			}
 		} catch (Exception ex) {
 			_log.error("Cannot execute Script", ex);

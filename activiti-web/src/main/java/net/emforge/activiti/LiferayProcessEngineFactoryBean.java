@@ -56,10 +56,13 @@ public class LiferayProcessEngineFactoryBean extends ProcessEngineFactoryBean {
 	}
 	
 	@Override
-	protected void initializeExpressionManager() {
-	    if (applicationContext != null) {
-	        processEngineConfiguration.setExpressionManager(
-	          new SpringExpressionManager(new ApplicationContextWrapper(applicationContext), processEngineConfiguration.getBeans()));
-	      }
+	protected void configureExpressionManager() {
+		if (applicationContext != null) {
+			processEngineConfiguration
+					.setExpressionManager(new SpringExpressionManager(
+							new ApplicationContextWrapper(applicationContext), processEngineConfiguration
+									.getBeans()));
+		}
+		//super.configureExpressionManager();
 	}
 }

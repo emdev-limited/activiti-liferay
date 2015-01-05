@@ -15,6 +15,8 @@
 	>
 	
 	<context:component-scan base-package="net.emforge.activiti" />
+	<context:component-scan base-package="net.emforge.activiti.workflow" />
+	<context:component-scan base-package="net.emforge.activiti.query" />
 	<context:component-scan base-package="net.emforge.activiti.service.impl" />
 	<context:component-scan base-package="org.activiti.rest.api" />
 	
@@ -46,35 +48,37 @@
 			</list>
 		</property>
 		<property name="bpmnParseFactory" ref="customBpmnParseFactory" />
-		<property name="implicitUserTaskListeners">
-		    <map>
-                <entry key="create">
-                    <list>
-                        <bean class="net.emforge.activiti.task.SendNotificationMessageCreateTaskListener">
-                        </bean>
-                    </list>
-                </entry>
-		        <entry key="assignment">
-		            <list>
-		                <bean class="net.emforge.activiti.task.SaveInitialRoleListener">                 
-		                </bean>
-                        <bean class="net.emforge.activiti.task.SendNotificationMessageAssignmentTaskListener">
-                        </bean>
-		            </list>
-		        </entry>		        
-		        <entry key="complete">
-		            <list>
-		                <bean class="net.emforge.activiti.task.SaveAssigneeListener">                 
-		                </bean>
-		                <bean class="net.emforge.activiti.task.SaveTransitionListener">                 
-		                </bean>
-                        <bean class="net.emforge.activiti.task.SendNotificationMessageCompleteTaskListener">
-                        </bean>
-		            </list>
-		        </entry>
-		    </map>
-		</property>		
+	    <property name="typedEventListeners">
+          <map>
+            <entry key="ENGINE_CREATED,ENGINE_CLOSED" >
+              <list>
+                <bean class="net.emforge.activiti.engine.event.EngineEventListener" />
+              </list>
+            </entry>
+            <entry key="TASK_CREATED,TASK_ASSIGNED,TASK_COMPLETED,ENTITY_DELETED" >
+              <list>
+                <bean class="net.emforge.activiti.engine.event.TaskEventListener" />
+              </list>
+            </entry>
+            <entry key="ACTIVITY_STARTED,ACTIVITY_COMPLETED,ACTIVITY_SIGNALED,ACTIVITY_COMPENSATE,ACTIVITY_MESSAGE_RECEIVED,ACTIVITY_ERROR_RECEIVED,ACTIVITY_CANCELLED" >
+              <list>
+                <bean class="net.emforge.activiti.engine.event.ActivityEventListener" />
+              </list>
+            </entry>
+            <entry key="TIMER_FIRED,UNCAUGHT_BPMN_ERROR,PROCESS_COMPLETED" >
+              <list>
+                <bean class="net.emforge.activiti.engine.event.CommonEventListener" />
+              </list>
+            </entry>
+          </map>
+        </property>
 	</bean>
+	
+	<!-- old-style emdev's listeners -->
+	<bean id="saveAssigneeListener" class="net.emforge.activiti.task.SaveAssigneeListener" />
+	<bean id="saveTransitionListener" class="net.emforge.activiti.task.SaveTransitionListener" />
+	<bean id="saveInitialRoleListener" class="net.emforge.activiti.task.SaveInitialRoleListener" />
+	
 	
 	<bean id="customServiceTaskParseHandler" class="org.activiti.engine.impl.bpmn.parser.handler.CustomServiceTaskParseHandler">
 	</bean>
@@ -110,12 +114,12 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
-				<value>classpath:portal-ext.properties</value>
+				<value>classpath:portal.properties</value>
 			</list>
 		</property>
 	</bean> 
 	
-	<bean id="restActivitiUtil" init-method="init" class="org.activiti.rest.api.ActivitiUtil"/>
+	<!-- <bean id="restActivitiUtil" init-method="init" class="org.activiti.rest.api.ActivitiUtil"/> -->
 	
 	<bean id="customModelManagerWrapper" class="org.activiti.engine.impl.persistence.GenericManagerFactory">
 		<constructor-arg type="java.lang.Class" value="org.activiti.engine.impl.persistence.entity.CustomModelManager" />

@@ -25,7 +25,7 @@ import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.CommentEntity;
-import org.activiti.engine.impl.util.ClockUtil;
+import org.activiti.engine.runtime.Clock;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -51,7 +51,8 @@ public class AddWorkflowLogEntryCmd implements Command<Object> {
 	}
 
 	public Object execute(CommandContext commandContext) {
-	  
+		Clock clock = commandContext.getProcessEngineConfiguration().getClock();
+		
 		String action = WorkflowLogTypeMapperUtil.mapToActivitiType(workflowLogEntry.getType());
 		String message = workflowLogEntry.getComment();
 		
@@ -71,18 +72,20 @@ public class AddWorkflowLogEntryCmd implements Command<Object> {
 		CommentEntity comment = new CommentEntity();
 		comment.setUserId(userId);
 		comment.setType(CommentEntity.TYPE_EVENT);
-		comment.setTime(ClockUtil.getCurrentTime());
+		comment.setTime(clock.getCurrentTime());
 		comment.setTaskId(taskId);
 		comment.setProcessInstanceId(processInstanceId);
 		comment.setAction(action);
-		
-		String eventMessage = message.replaceAll("\\s+", " ");
-		
-		if (eventMessage.length()>163) {
-			eventMessage = eventMessage.substring(0, 160)+"...";
+
+		if (message != null) {
+			String eventMessage = message.replaceAll("\\s+", " ");
+
+			if (eventMessage.length()>163) {
+				eventMessage = eventMessage.substring(0, 160)+"...";
+			}
+			comment.setMessage(eventMessage);
 		}
-		comment.setMessage(eventMessage);
-		    
+		
 		comment.setFullMessage(fullMessage);
 		    
 		commandContext.getCommentEntityManager().insert(comment);

@@ -5,12 +5,8 @@
 	
 	<!-- Aviable log levels: OFF; FATAL; ERROR; WARN; INFO; DEBUG; ALL -->	
 	
-	<category name="org.asteriskjava">
+	<!-- <category name="net.emforge.activiti.engine.event">
 		<priority value="ALL" />
-	</category>
-	
-	<category name="com.fsphere.asterisk">
-		<priority value="ALL" />
-	</category>
+	</category> -->
 	
 </log4j:configuration>

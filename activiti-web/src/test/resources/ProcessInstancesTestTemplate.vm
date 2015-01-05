@@ -1,0 +1,27 @@
+#set ( $workflowDefinitionManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil') )
+#set ( $workflowTaskManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil') )
+#set ( $workflowInstanceManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil') )
+
+#set ( $obcFactoryUtil = $portal.getClass().forName('com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil') )
+
+#set( $companyId = $company.companyId )
+
+<h3>all instances</h3>
+#set( $workflowInstanceCount = $workflowInstanceManagerUtil.getWorkflowInstanceCount($companyId, $null, $null, $null, $null) )
+#set( $workflowInstances = $workflowInstanceManagerUtil.getWorkflowInstances($companyId, $null, $null, $null, $null, 0, 5, $null) )
+count: $workflowInstanceCount<br />
+<ul>
+#foreach($workflowInstance in $workflowInstances)
+    <li>$workflowInstance</li>
+#end
+</ul>
+
+<h3>active instances</h3>
+#set( $workflowInstanceCount = $workflowInstanceManagerUtil.getWorkflowInstanceCount($companyId, $null, $null, $null, false) )
+#set( $workflowInstances = $workflowInstanceManagerUtil.getWorkflowInstances($companyId, $null, $null, $null, false, 0, 5, $null) )
+count: $workflowInstanceCount<br />
+<ul>
+#foreach($workflowInstance in $workflowInstances)
+    <li>$workflowInstance</li>
+#end
+</ul>

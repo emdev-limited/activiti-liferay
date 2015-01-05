@@ -5,9 +5,9 @@ import java.util.List;
 import net.emforge.activiti.query.ResourceByCompanyQuery;
 import net.emforge.activiti.query.ResourceByCompanyQueryImpl;
 
-import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.context.Context;
+import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.repository.Model;
-import org.activiti.rest.api.ActivitiUtil;
 
 public class CustomModelManager extends ModelEntityManager {
 
@@ -17,8 +17,10 @@ public class CustomModelManager extends ModelEntityManager {
 	
 	public void deleteModel(String companyId, String modelId) {
 		super.deleteModel(modelId);
-		RepositoryServiceImpl serviceImpl = (RepositoryServiceImpl) ActivitiUtil.getRepositoryService();
-		ResourceByCompanyQuery rbc = new ResourceByCompanyQueryImpl(serviceImpl.getCommandExecutor());
+		CommandExecutor commandExecutor = Context
+		        .getProcessEngineConfiguration()
+		        .getCommandExecutor();
+		ResourceByCompanyQuery rbc = new ResourceByCompanyQueryImpl(commandExecutor);
 		rbc.companyAndNameLike(companyId, "model:" + modelId + ":company");
 		ResourceEntity res = (ResourceEntity) getDbSqlSession().selectOne("selectResourceByNameAndCompany", rbc);
 		String resourceId = res.getId();

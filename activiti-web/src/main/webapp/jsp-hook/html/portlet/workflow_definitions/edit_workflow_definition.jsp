@@ -74,8 +74,9 @@ portletURL.setParameter("struts_action", "/workflow_definitions/view");
 			
 		}		
 	%>
-	<img src='<%=imgURL%>' />
-	
+	<c:if test="<%= workflowDefinition != null %>">
+		<img src='<%=imgURL%>' />
+	</c:if>
 	
 </aui:form>
 

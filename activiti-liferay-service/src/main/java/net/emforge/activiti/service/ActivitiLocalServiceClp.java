@@ -30,12 +30,6 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes10;
     private String _methodName11;
     private String[] _methodParameterTypes11;
-    private String _methodName12;
-    private String[] _methodParameterTypes12;
-    private String _methodName13;
-    private String[] _methodParameterTypes13;
-    private String _methodName14;
-    private String[] _methodParameterTypes14;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -76,34 +70,18 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
                 "java.lang.String", "java.lang.String", "java.lang.String"
             };
 
-        _methodName9 = "findTopLevelProcess";
+        _methodName9 = "suspendWorkflowInstance";
 
-        _methodParameterTypes9 = new String[] { "java.lang.String" };
+        _methodParameterTypes9 = new String[] { "long", "long" };
 
-        _methodName10 = "suspendWorkflowInstance";
+        _methodName10 = "resumeWorkflowInstance";
 
         _methodParameterTypes10 = new String[] { "long", "long" };
 
-        _methodName11 = "resumeWorkflowInstance";
+        _methodName11 = "stopWorkflowInstance";
 
-        _methodParameterTypes11 = new String[] { "long", "long" };
-
-        _methodName12 = "stopWorkflowInstance";
-
-        _methodParameterTypes12 = new String[] {
+        _methodParameterTypes11 = new String[] {
                 "long", "long", "long", "java.lang.String"
-            };
-
-        _methodName13 = "addWorkflowInstanceComment";
-
-        _methodParameterTypes13 = new String[] {
-                "long", "long", "long", "long", "int", "java.lang.String"
-            };
-
-        _methodName14 = "findHistoricActivityByName";
-
-        _methodParameterTypes14 = new String[] {
-                "java.lang.String", "java.lang.String"
             };
     }
 
@@ -342,19 +320,20 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     }
 
     @Override
-    public java.lang.String findTopLevelProcess(java.lang.String taskId)
-        throws com.liferay.portal.kernel.exception.SystemException {
+    public boolean suspendWorkflowInstance(long companyId,
+        long workflowInstanceId)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
         Object returnObj = null;
 
         try {
             returnObj = _invokableLocalService.invokeMethod(_methodName9,
                     _methodParameterTypes9,
-                    new Object[] { ClpSerializer.translateInput(taskId) });
+                    new Object[] { companyId, workflowInstanceId });
         } catch (Throwable t) {
             t = ClpSerializer.translateThrowable(t);
 
-            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
-                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            if (t instanceof com.liferay.portal.kernel.workflow.WorkflowException) {
+                throw (com.liferay.portal.kernel.workflow.WorkflowException) t;
             }
 
             if (t instanceof RuntimeException) {
@@ -365,11 +344,11 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
             }
         }
 
-        return (java.lang.String) ClpSerializer.translateOutput(returnObj);
+        return ((Boolean) returnObj).booleanValue();
     }
 
     @Override
-    public boolean suspendWorkflowInstance(long companyId,
+    public boolean resumeWorkflowInstance(long companyId,
         long workflowInstanceId)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
         Object returnObj = null;
@@ -397,42 +376,14 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     }
 
     @Override
-    public boolean resumeWorkflowInstance(long companyId,
-        long workflowInstanceId)
-        throws com.liferay.portal.kernel.workflow.WorkflowException {
-        Object returnObj = null;
-
-        try {
-            returnObj = _invokableLocalService.invokeMethod(_methodName11,
-                    _methodParameterTypes11,
-                    new Object[] { companyId, workflowInstanceId });
-        } catch (Throwable t) {
-            t = ClpSerializer.translateThrowable(t);
-
-            if (t instanceof com.liferay.portal.kernel.workflow.WorkflowException) {
-                throw (com.liferay.portal.kernel.workflow.WorkflowException) t;
-            }
-
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            } else {
-                throw new RuntimeException(t.getClass().getName() +
-                    " is not a valid exception");
-            }
-        }
-
-        return ((Boolean) returnObj).booleanValue();
-    }
-
-    @Override
     public boolean stopWorkflowInstance(long companyId, long userId,
         long workflowInstanceId, java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException {
         Object returnObj = null;
 
         try {
-            returnObj = _invokableLocalService.invokeMethod(_methodName12,
-                    _methodParameterTypes12,
+            returnObj = _invokableLocalService.invokeMethod(_methodName11,
+                    _methodParameterTypes11,
                     new Object[] {
                         companyId,
                         
@@ -458,74 +409,5 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return ((Boolean) returnObj).booleanValue();
-    }
-
-    @Override
-    public void addWorkflowInstanceComment(long companyId, long userId,
-        long workflowInstanceId, long workflowTaskId, int logType,
-        java.lang.String comment)
-        throws com.liferay.portal.kernel.workflow.WorkflowException {
-        try {
-            _invokableLocalService.invokeMethod(_methodName13,
-                _methodParameterTypes13,
-                new Object[] {
-                    companyId,
-                    
-                userId,
-                    
-                workflowInstanceId,
-                    
-                workflowTaskId,
-                    
-                logType,
-                    
-                ClpSerializer.translateInput(comment)
-                });
-        } catch (Throwable t) {
-            t = ClpSerializer.translateThrowable(t);
-
-            if (t instanceof com.liferay.portal.kernel.workflow.WorkflowException) {
-                throw (com.liferay.portal.kernel.workflow.WorkflowException) t;
-            }
-
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            } else {
-                throw new RuntimeException(t.getClass().getName() +
-                    " is not a valid exception");
-            }
-        }
-    }
-
-    @Override
-    public java.util.List<java.lang.String> findHistoricActivityByName(
-        java.lang.String topProcessInstanceId, java.lang.String activityName)
-        throws com.liferay.portal.kernel.exception.SystemException {
-        Object returnObj = null;
-
-        try {
-            returnObj = _invokableLocalService.invokeMethod(_methodName14,
-                    _methodParameterTypes14,
-                    new Object[] {
-                        ClpSerializer.translateInput(topProcessInstanceId),
-                        
-                    ClpSerializer.translateInput(activityName)
-                    });
-        } catch (Throwable t) {
-            t = ClpSerializer.translateThrowable(t);
-
-            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
-                throw (com.liferay.portal.kernel.exception.SystemException) t;
-            }
-
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            } else {
-                throw new RuntimeException(t.getClass().getName() +
-                    " is not a valid exception");
-            }
-        }
-
-        return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
     }
 }

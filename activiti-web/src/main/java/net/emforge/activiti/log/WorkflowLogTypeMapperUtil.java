@@ -18,12 +18,6 @@ public class WorkflowLogTypeMapperUtil {
 		if (type.equals(WorkflowLogEntry.INSTANCE_STOP)) {
 			return WorkflowLogConstants.INSTANCE_STOP;
 		}
-		if (type.equals(WorkflowLogEntry.SERVICE)) {
-			return WorkflowLogConstants.SERVICE;
-		}
-		if (type.equals(WorkflowLogEntry.COMMENT)) {
-			return WorkflowLogConstants.COMMENT;
-		}
 		return -1;
 	}
 	
@@ -40,12 +34,6 @@ public class WorkflowLogTypeMapperUtil {
 		}
 		if (type == WorkflowLogConstants.INSTANCE_STOP) {
 			return WorkflowLogEntry.INSTANCE_STOP;
-		}
-		if (type == WorkflowLogConstants.SERVICE) {
-			return WorkflowLogEntry.SERVICE;
-		}
-		if (type == WorkflowLogConstants.COMMENT) {
-			return WorkflowLogEntry.COMMENT;
 		}
 		return "";
 	}

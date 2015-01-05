@@ -1,131 +1,164 @@
 <?xml version="1.0" encoding="UTF-8" ?> 
 
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
-  
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="org.activiti.engine.impl.persistence.entity.TaskEntity">
-  <!--  Task Search -->
-  <select id="customSearchTasks" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
-    ${limitBefore}
-    select distinct RES.* ${limitBetween}
-    <include refid="customSearchTasksSql"/>
-    <if test="orderBy != null">
-      ${orderBy}
-    </if>
-    ${limitAfter}
-  </select>
 
-  <select id="customSearchTasksCount" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl" resultType="long">
-    select count(distinct RES.ID_)
-    <include refid="customSearchTasksSql"/>
-  </select>
-
-	<sql id="customSearchTasksSql">
-		from ACT_RU_TASK RES
-	    <if test="candidateUser != null || candidateGroups != null">
-	      inner join ACT_RU_IDENTITYLINK I on I.TASK_ID_ = RES.ID_
-	    </if>
-    	<!-- <if test="entryClassName != null">
-    	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName'
-	    </if>
-	    <if test="entryClassNames != null &amp;&amp; entryClassNames.size() &gt; 0">
-    	  inner join ACT_RU_VARIABLE V1 on (T.ID_ = V1.TASK_ID_ or V1.PROC_INST_ID_ = T.PROC_INST_ID_) and V1.NAME_= 'entryClassName' and
-			<foreach item="entryClassNamesItem" index="index" collection="entryClassNames" 
-	                     open="(" separator="or" close=")">
-	              V1.TEXT_ = #{entryClassNamesItem}
-			</foreach>
-	         
-	    </if> -->
-	    
-	    <if test="groupId != null">
-	    	inner join ACT_RU_VARIABLE V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V1.NAME_= 'groupId' and V1.TEXT_ = #{groupId})
-	     </if>
-	    
-	    <if test="companyId != null">
-    	   inner join ACT_RU_VARIABLE V2 on (V2.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V2.NAME_= 'companyId' and V2.TEXT_ = #{companyId})
-	    </if>
-	    
-	    <if test="entryClassPKs != null">
-    	   inner join ACT_RU_VARIABLE V3 on (V3.PROC_INST_ID_ = RES.PROC_INST_ID_) and V3.NAME_= 'entryClassPK' and V3.TEXT_ in 
-    	   <foreach item="entryClassPKItem" index="index" collection="entryClassPKs" 
-	                     open="(" separator="," close=")">
-	             #{entryClassPKItem}
-			</foreach>
-	    </if>
-	    
-	    <if test="entryClassName != null">
-    	   inner join ACT_RU_VARIABLE V4 on (V4.PROC_INST_ID_ = RES.PROC_INST_ID_) and (V4.NAME_= 'entryClassName' and V4.TEXT_ = #{entryClassName})
-	    </if>
-	    
-    	<where>
-	      <if test="nameLike != null">
-	        and lower(RES.NAME_) like #{nameLike}
-	      </if>
-	      <if test="assignee != null">
-	        and RES.ASSIGNEE_ = #{assignee}
-	      </if>
-
-	      <if test="candidateUser != null || candidateGroups != null">
-	        and RES.ASSIGNEE_ is null
-	        and I.TYPE_ = 'candidate'
-	        and 
-	        ( 
-	          <if test="candidateUser != null">
-	            I.USER_ID_ = #{candidateUser}          
-	          </if>
-
-	          <if test="candidateUser != null &amp;&amp; candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
-	            or
-	          </if>
-	          <if test="candidateGroups != null &amp;&amp; candidateGroups.size() &gt; 0">
-	            I.GROUP_ID_ IN
-	            <foreach item="group" index="index" collection="candidateGroups" 
-	                     open="(" separator="," close=")">
-	              #{group}
-	            </foreach>
-	          </if>
-	        )
-	      </if>
-	    </where>
-	</sql>
-
-	<select id="selectTaskByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtTaskQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
+	<!-- Task Search -->
+	<select id="customSelectTaskByQueryCriteria" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl"
+		resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskResultMap">
 		${limitBefore}
-		select distinct RES.* ${limitBetween}
-		<include refid="selectTaskByExtQueryCriteriaSql"/>
-		<if test="orderBy != null">
-			${orderBy}
-		</if>
+		select
+		distinct RES.* ${limitBetween}
+		<include refid="customSelectTaskByQueryCriteriaSql" />
+		${orderBy}
 		${limitAfter}
 	</select>
 
-	<select id="selectTaskCountByExtQueryCriteria" parameterType="net.emforge.activiti.query.ExtTaskQueryImpl" resultType="long">
-		select count(distinct RES.ID_)
-		<include refid="selectTaskByExtQueryCriteriaSql"/>
+	<select id="customSelectTaskCountByQueryCriteria" parameterType="net.emforge.activiti.query.CustomTaskQueryImpl"
+		resultType="long">
+		select
+		count(distinct RES.ID_)
+		<include refid="customSelectTaskByQueryCriteriaSql" />
 	</select>
+
+	<select id="customSelectTaskWithVariablesByQueryCriteria"
+		parameterType="net.emforge.activiti.query.CustomTaskQueryImpl"
+		resultMap="org.activiti.engine.impl.persistence.entity.TaskEntity.taskAndVariablesResultMap">
+		${limitBefore}
+		select RES.*,
+		VAR.ID_ as VAR_ID_, VAR.NAME_ as VAR_NAME_,
+		VAR.TYPE_ as VAR_TYPE_, VAR.REV_
+		as VAR_REV_,
+		VAR.PROC_INST_ID_ as
+		VAR_PROC_INST_ID_, VAR.EXECUTION_ID_ as VAR_EXECUTION_ID_,
+		VAR.TASK_ID_ as VAR_TASK_ID_,
+		VAR.BYTEARRAY_ID_ as VAR_BYTEARRAY_ID_,
+		VAR.DOUBLE_ as VAR_DOUBLE_,
+		VAR.TEXT_ as VAR_TEXT_, VAR.TEXT2_ as
+		VAR_TEXT2_, VAR.LONG_ as VAR_LONG_
+		${limitBetween}
+		<include refid="customSelectTaskWithVariablesByQueryCriteriaSql" />
+		${orderBy}
+		${limitAfter}
+	</select>
+
+	<sql id="customSelectTaskWithVariablesByQueryCriteriaSql">
+		from
+		${prefix}ACT_RU_TASK RES
+		<include refid="org.activiti.engine.impl.persistence.entity.TaskEntity.selectTaskWithVariablesByQueryCriteriaSqlJoin" />
+		<include refid="org.activiti.engine.impl.persistence.entity.TaskEntity.commonSelectTaskByQueryCriteriaSqlJoin" />
+		<include refid="customCommonSelectTaskByQueryCriteriaSql" />
+	</sql>
+
+	<sql id="customSelectTaskByQueryCriteriaSql">
+		from
+		${prefix}ACT_RU_TASK RES
+		<include refid="org.activiti.engine.impl.persistence.entity.TaskEntity.commonSelectTaskByQueryCriteriaSqlJoin" />
+		<include refid="customCommonSelectTaskByQueryCriteriaSql" />
+	</sql>
+
+	<!--  -->
 	
-	<sql id="selectTaskByExtQueryCriteriaSql">
-		from (
-			select RES.*
-			<include refid="org.activiti.engine.impl.persistence.entity.TaskEntity.selectTaskByQueryCriteriaSql"/>
-		) RES
-		<if test="variableInName != null">
-			inner join ACT_RU_VARIABLE B on RES.PROC_INST_ID_ = B.PROC_INST_ID_ 
+	<sql id="customCommonSelectTaskByQueryCriteriaSql">
+		<include refid="customCommonSelectTaskByQueryCriteriaSqlJoin" />
+		<trim prefix="WHERE" prefixOverrides="WHERE |AND |OR |WHERE\n|AND\n|OR\n|WHERE\r|AND\r|OR\r|WHERE\t|AND\t|OR\t">
+			<include
+				refid="org.activiti.engine.impl.persistence.entity.TaskEntity.commonSelectTaskByQueryCriteriaSqlWhere" />
+			<include refid="customCommonSelectTaskByQueryCriteriaSqlWhere" />
+		</trim>
+	</sql>
+
+	<sql id="customCommonSelectTaskByQueryCriteriaSqlJoin">
+		<!-- <if test="candidateUser != null || candidateGroups != null">
+			inner join ACT_RU_IDENTITYLINK I on I.TASK_ID_ = RES.ID_
+		</if> -->
+
+		<if test="groupId != null">
+			inner join ${prefix}ACT_RU_VARIABLE V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_)
+			and (V1.NAME_= 'groupId' and V1.LONG_ = #{groupId})
 		</if>
-		<where>
-			<if test="dueDateIsNull">
-				and RES.DUE_DATE_ is null
+
+		<if test="entryClassPK != null || entryClassPKs != null">
+			inner join ACT_RU_VARIABLE V3 on (V3.PROC_INST_ID_ = RES.PROC_INST_ID_) 
+				and V3.NAME_= 'entryClassPK' 
+				<choose>
+					<when test="entryClassPK != null">
+						and V3.LONG_ =  #{entryClassPK}
+					</when>
+					<otherwise>
+						and V3.LONG_ in
+						<foreach item="entryClassPKItem" index="index" collection="entryClassPKs"
+							open="(" separator="," close=")">
+							#{entryClassPKItem}
+						</foreach>
+					</otherwise>
+				</choose>
+		</if>
+
+		<if test="entryClassName != null || entryClassNames != null">
+			inner join ACT_RU_VARIABLE V4 on (V4.PROC_INST_ID_ = RES.PROC_INST_ID_)
+			and (
+				V4.NAME_= 'entryClassName' 
+				<choose>
+					<when test="entryClassName != null">
+						and V4.TEXT_ = #{entryClassName}
+					</when>
+					<otherwise>
+						and V4.TEXT_ in
+						<foreach item="entryClassNameItem" index="index" collection="entryClassNames"
+							open="(" separator="," close=")">
+							#{entryClassNameItem}
+						</foreach>
+					</otherwise>
+				</choose>
+			)
+		</if>
+
+		<foreach item="var" collection="queryVariableValuesIn" index="index">
+			<if test="var.type != null &amp;&amp; (var.type == 'long' || var.type == 'integer' || var.type == 'string')">
+				inner join ACT_RU_VARIABLE F${index} on (F${index}.PROC_INST_ID_ =
+				RES.PROC_INST_ID_)
 			</if>
-			<if test="dueDateIsNotNull">
-				and RES.DUE_DATE_ is not null
+		</foreach>
+
+	</sql>
+
+	<sql id="customCommonSelectTaskByQueryCriteriaSqlWhere">
+		<foreach item="var" collection="queryVariableValuesIn" index="index">
+			<if test="var.type != null &amp;&amp; (var.type == 'long' || var.type == 'integer' || var.type == 'string')">
+				and F${index}.NAME_= #{var.name} 
+				and 
+				<choose>
+					<when test="var.type == 'string'">
+						F${index}.TEXT_
+					</when>
+					<when test="var.type == 'long' || var.type == 'integer'">
+						F${index}.LONG_ 
+					</when>
+					<when test="var.type == 'double'">
+						F${index}.DOUBLE_
+					</when>
+				</choose>
+				
+				IN
+				<foreach item="varItem" collection="var.list" index="index" open="("
+					separator="," close=")">
+					<if test="varItem.textValue != null &amp;&amp; varItem.longValue == null &amp;&amp; varItem.doubleValue == null">
+						#{varItem.textValue}
+					</if>
+					<if test="varItem.longValue != null">
+						#{varItem.longValue}
+					</if>
+					<if test="varItem.doubleValue != null">
+						#{varItem.doubleValue}
+					</if>
+					<if test="varItem.textValue2 != null">
+						#{varItem.textValue2}
+					</if>
+				</foreach>
 			</if>
-			<if test="variableInName != null">
-				and B.NAME_= #{variableInName}
-				and B.TEXT_ IN
-				<foreach item="var" index="index" collection="variableInValues" 
-						 open="(" separator="," close=")">
-					#{var}
-				</foreach> 
-			</if>
-		</where>
-	</sql>	
+		</foreach>
+	</sql>
+
 </mapper>

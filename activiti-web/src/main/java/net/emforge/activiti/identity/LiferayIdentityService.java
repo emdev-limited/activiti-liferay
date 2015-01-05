@@ -36,18 +36,10 @@ public class LiferayIdentityService {
 			// get regular roles
 			List<Role> roles = RoleLocalServiceUtil.getUserRoles(idMappingService.getUserId(userName));
 
-			// conert from site roles to the groups
 			List<Group> groups = new ArrayList<Group>();
-			for (Role role : roles) {
-				try {
-					GroupImpl groupImpl = new GroupImpl(role);
-					groups.add(groupImpl);
-				} catch (Exception e) {
-					_log.warn("Cannot make group for role: " + role.getRoleId() + " and user " + userName + " : " + e.getMessage());
-					_log.debug("Cannot make group for role: " + role.getRoleId() + " and user " + userName, e);
-					// ignore error
-				}
-			}
+			
+			// convert site roles to the groups			
+			groups.addAll(findGroupsByRoles(roles));
 			
 			// get group roles for specified user
 			List<UserGroupRole> groupRoles = UserGroupRoleLocalServiceUtil.getUserGroupRoles(idMappingService.getUserId(userName));
@@ -68,6 +60,26 @@ public class LiferayIdentityService {
 			_log.error("Cannot get list of roles for user: " + userName, e);
 			return new ArrayList<Group>();
 		}
+	}
+	
+	/**
+	 *  Convert site roles to the groups
+	 * @param roles
+	 * @return Activiti's groups
+	 */
+	public List<Group> findGroupsByRoles(List<Role> roles) {
+		List<Group> groups = new ArrayList<Group>();
+		for (Role role : roles) {
+			try {
+				GroupImpl groupImpl = new GroupImpl(role);
+				groups.add(groupImpl);
+			} catch (Exception e) {
+				_log.warn("Cannot make group for role: " + role.getRoleId() + " : " + e.getMessage());
+				_log.debug("Cannot make group for role: " + role.getRoleId(), e);
+				// ignore error
+			}
+		}
+		return groups;
 	}
 
 	public List<User> findUsersByGroup(long companyId, String groupName) {

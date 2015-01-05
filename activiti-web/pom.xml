@@ -4,29 +4,22 @@
 	<parent>
 		<groupId>net.emforge</groupId>
 		<artifactId>activiti-liferay</artifactId>
-		<version>6.2.0.14</version>
+		<version>6.2.1.17.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.emforge</groupId>
 	<artifactId>activiti-web</artifactId>
-	<version>6.2.0.14</version>
+	<!-- <version>6.2.0.14</version> -->
 	<packaging>war</packaging>
 
 	<properties>
-		<spring.version>3.1.2.RELEASE</spring.version>
+		<spring.version>4.0.6.RELEASE</spring.version>
 		<webXmlPath>src/main/webapp/WEB-INF/web.xml</webXmlPath>
 	</properties>
 
 	<profiles>
-		<profile>
-			<id>6.1.0</id>
-			<properties>
-				<liferay.version>6.1.0</liferay.version>
-				<webXmlPath>profiles/6.1.0/WEB-INF/web.xml</webXmlPath>
-			</properties>
-		</profile>
 
 		<profile>
 			<id>jta</id>
@@ -125,6 +118,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- <dependency>
+			<groupId>org.activiti</groupId>
+			<artifactId>spring-boot-starter-basic</artifactId>
+			<version>${activiti.version}</version>
+		</dependency> -->
 		<dependency>
 			<groupId>org.activiti</groupId>
 			<artifactId>activiti-bpmn-converter</artifactId>
@@ -156,7 +154,7 @@
 		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis</artifactId>
-			<version>3.2.2</version>
+			<version>3.2.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -208,12 +206,12 @@
 			<version>1.4</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.4</version>
 			<scope>provided</scope>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-email</artifactId>
@@ -286,6 +284,12 @@
 			<version>${pom.version}</version>
 		</dependency>
 		
+		<!--  dependency>
+			<groupId>com.tieto</groupId>
+			<artifactId>activiti-drs</artifactId>
+			<version>${pom.version}</version>
+		</dependency -->
+		
 		<dependency>
 			<groupId>org.apache.velocity</groupId>
 			<artifactId>velocity</artifactId>
@@ -293,6 +297,17 @@
 			<scope>provided</scope>
 		</dependency>
 		
+		<dependency> 
+		  <groupId>org.slf4j</groupId>
+		  <artifactId>slf4j-log4j12</artifactId>
+		  <version>1.7.7</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.jodd</groupId>
+			<artifactId>jodd</artifactId>
+			<version>3.3.8</version>
+		</dependency>
 	</dependencies>
 
 </project>

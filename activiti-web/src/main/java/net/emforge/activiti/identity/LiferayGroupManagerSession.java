@@ -36,7 +36,7 @@ public class LiferayGroupManagerSession extends GroupEntityManager {
 	}
 	
 	@Override
-	public void updateGroup(GroupEntity updatedGroup) {
+	public void updateGroup(Group updatedGroup) {
 		_log.error("Method is not implemented"); // TODO
 		
 	}

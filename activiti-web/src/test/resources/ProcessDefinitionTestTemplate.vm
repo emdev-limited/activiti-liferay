@@ -1,0 +1,84 @@
+#set ( $workflowDefinitionManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil') )
+#set ( $workflowTaskManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil') )
+#set ( $workflowInstanceManagerUtil = $portal.getClass().forName('com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil') )
+#set ( $obcFactoryUtil = $portal.getClass().forName('com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil') )
+
+#set( $companyId = $company.companyId )
+
+
+<h3>all definitions</h3>
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount(0) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions(0, 0, 5, $null) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>
+
+
+<h3>definitions for company $companyId</h3>
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount($companyId) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions($companyId, 0, 5, $null) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>
+
+
+#*
+#set( $obcClass = $portal.getClass().forName("com.liferay.portlet.journal.util.comparator.ArticleD­isplayDateComparator") )
+#set( $booleanType = $portal.getClass().forName('java.lang.Boolean') )
+#set( $obcConstructor = $obcClass.getConstructor($booleanType.getField('TYPE').staticValue) )
+#set( $obc = $obcConstructor.newInstance(true) )
+*#
+
+<h3>definitions for company $companyId ordered by ProcessDefinitionKey, ascending</h3>
+#set( $unifiedComparator = $obcFactoryUtil.create($null, "ProcessDefinitionKey", true) )
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount($companyId) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions($companyId, 0, 5, $unifiedComparator) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>
+
+
+<h3>definitions for company $companyId ordered by ProcessDefinitionKey, descending</h3>
+#set( $unifiedComparator = $obcFactoryUtil.create($null, "ProcessDefinitionKey", false) )
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount($companyId) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions($companyId, 0, 5, $unifiedComparator) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>
+
+#set( $name = $workflowDefinitions.get(0).name )
+<h3>definitions for company $companyId by name "$name"</h3>
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount($companyId, $name) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions($companyId, $name, 0, 100, $null) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>
+
+
+#set( $key = $workflowDefinitions.get(0).optionalAttributes.key )
+#set( $parameters = {"key": $key, "latest": true} )
+#set( $jsonParameters = $jsonFactoryUtil.serialize($parameters) )
+<h3>latest definitions for company $companyId by key "$key"</h3>
+#set( $workflowDefinitionsCount = $workflowDefinitionManagerUtil.getWorkflowDefinitionCount($companyId, $jsonParameters) )
+#set( $workflowDefinitions = $workflowDefinitionManagerUtil.getWorkflowDefinitions($companyId, $jsonParameters, 0, 100, $null) )
+count: $workflowDefinitionsCount<br />
+<ul>
+#foreach($workflowDefinition in $workflowDefinitions)
+    <li>$workflowDefinition</li>
+#end
+</ul>

@@ -34,7 +34,7 @@ public class LiferayUserManagerSession extends UserEntityManager {
 	}
 
 	@Override
-	public void updateUser(UserEntity updatedUser) {
+	public void updateUser(User updatedUser) {
 		_log.error("Method is not implemented"); // TODO
 	}
 	

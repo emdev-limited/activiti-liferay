@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.emforge.activiti.engine.LiferayTaskService;
+import net.emforge.activiti.engine.impl.cmd.AddWorkflowLogEntryCmd;
 import net.emforge.activiti.log.WorkflowLogConstants;
 import net.emforge.activiti.log.WorkflowLogEntry;
 import net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl;
@@ -13,13 +13,13 @@ import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
 import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
 import net.emforge.activiti.spring.ApplicationContextProvider;
 
-import org.activiti.engine.HistoryService;
+import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.impl.ProcessEngineImpl;
 import org.activiti.engine.impl.identity.Authentication;
+import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
-import org.activiti.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -33,13 +33,9 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     private static Log _log = LogFactoryUtil.getLog(ActivitiLocalServiceImpl.class.getName());
 
     @Autowired
+    ProcessEngine processEngine;    
+    @Autowired
     RuntimeService runtimeService;    
-	@Autowired
-	LiferayTaskService liferayTaskService;
-	@Autowired
-	TaskService taskService;
-	@Autowired
-	HistoryService historyService;
 
     @Override
     public String createNewModel(String modelName, String modelDescription)
@@ -194,32 +190,6 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
 
         return lstInstances;
     }
-    
-    @Override
-    public String findTopLevelProcess(String taskId) throws SystemException  {
-    	List<Object[]> lstExec = ActivitiFinderUtil.findExecByTask(taskId);
-        if (lstExec.size() == 0)
-            return null;
-        
-        ArrayList<String> lstInstances = new ArrayList<String>(
-                lstExec.size() * 2);
-        extractColumn(lstExec, 1, lstInstances);
-
-        ArrayList<String> lstSuperExec = new ArrayList<String>(
-                lstInstances.size());
-        extractColumn(lstExec, 2, lstSuperExec);
-        extractColumn(lstExec, 3, lstSuperExec);
-        
-        while (lstSuperExec.size() > 0) {
-            lstExec = ActivitiFinderUtil.findSuperExecutions(lstSuperExec);
-            extractColumn(lstExec, 1, lstInstances);
-
-            lstSuperExec.clear();
-            extractColumn(lstExec, 2, lstSuperExec);
-        }
-
-        return lstInstances.get(0);        
-    }
 
     private void extractColumn(List<Object[]> source, int ncol, List dest) {
         for (Object[] row : source) {
@@ -234,7 +204,7 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
             try {
                 ApplicationContext context = ApplicationContextProvider.getApplicationContext();
                 runtimeService = context.getBean(RuntimeService.class);  
-                liferayTaskService = context.getBean(LiferayTaskService.class);
+                processEngine = context.getBean(ProcessEngine.class);  
             } catch (Exception e) {
                 _log.error(e, e);
                 throw new RuntimeException(e.getMessage());
@@ -313,57 +283,13 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     		workflowLogEntry.setAssigneeUserId(userId);
     		workflowLogEntry.setState(null);
     		
-    		liferayTaskService.addWorkflowLogEntry(null, procInstanceId, workflowLogEntry);
+    		CommandExecutor commandExecutor = ((ProcessEngineImpl) processEngine)
+    				.getProcessEngineConfiguration().getCommandExecutor();
+
+    		commandExecutor.execute(new AddWorkflowLogEntryCmd(null, procInstanceId, workflowLogEntry));
         	
             runtimeService.deleteProcessInstance(procInstanceId, comment);
             return true;
         }
-    }
-    
-    @Override
-    public void addWorkflowInstanceComment(long companyId, long userId, long workflowInstanceId, 
-    		long workflowTaskId, int logType, String comment) throws WorkflowException {
-    	_log.info("User " + userId + " adds comment to workflow instance " + 
-    		workflowInstanceId + " and workflow task id = " + workflowTaskId + ": " + comment);
-        
-        checkServices();
-        
-        Authentication.setAuthenticatedUserId(String.valueOf(userId));
-        
-        String procInstanceId = String.valueOf(workflowInstanceId);
-        String procTaskId = null;
-        if (workflowTaskId > 0) {
-        	procTaskId = String.valueOf(workflowTaskId);
-        }
-        ProcessInstanceQuery qry = runtimeService.createProcessInstanceQuery().processInstanceId(procInstanceId);
-        ProcessInstance inst = qry.singleResult();
-        if (inst != null) {
-        	WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
-    		workflowLogEntry.setType(logType);
-    		workflowLogEntry.setComment(comment);
-    		workflowLogEntry.setAssigneeUserId(userId);
-    		workflowLogEntry.setState(null);
-    		
-    		liferayTaskService.addWorkflowLogEntry(procTaskId, procInstanceId, workflowLogEntry);
-        }
-        
-    }
-    
-    @Override
-    public List<String> findHistoricActivityByName(String topProcessInstanceId, String activityName) throws SystemException {
-    	List<String> instanceIds = new ArrayList<String>(1);
-    	instanceIds.add(topProcessInstanceId);
-    	
-        // find all executions, including sub-executions
-        List<String> topExecutions = ActivitiFinderUtil.findTopExecutions(instanceIds);
-        ArrayList<String> allExecutions = new ArrayList<String>(
-                topExecutions.size() * 2);
-        allExecutions.addAll(topExecutions);
-
-        allExecutions.addAll(getSubExecutions(topExecutions));
-    	        
-        List<String> actIds = ActivitiFinderUtil.findHiActivities(activityName, allExecutions);
-    	// TODO
-    	return actIds;
     }
 }

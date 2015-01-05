@@ -1,7 +1,6 @@
 package net.emforge.activiti;
 
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -11,12 +10,12 @@ import net.emforge.activiti.spring.ContextLoaderListener;
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.context.ContextLoader;
 
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil;
+import com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Role;
@@ -31,7 +30,7 @@ import com.liferay.portal.service.UserLocalServiceUtil;
  * 
  * @author akakunin
  * @author Oliver Teichmann, PRODYNA AG
- *
+ * @author Dmitry Farafonov
  */
 public class StartUpAction extends SimpleAction {
 	private static Log log = LogFactoryUtil.getLog(StartUpAction.class);
@@ -40,63 +39,6 @@ public class StartUpAction extends SimpleAction {
 	private static final String PROCDEF_TAG_BASED_CONTENT_APPROVER = "TagBasedContentApproval";
 	
 	private boolean independentFixesRun = false;
-	
-	private void removeProcessInstanceExtTable() {
-		try {
-			//Create tmp for PIE
-			DBFactoryUtil.getDB().runSQL("CREATE TABLE ACT_PIE_TMP LIKE ACT_PROCESSINSTANCEEXTENSION_LIFERAY");
-			DBFactoryUtil.getDB().runSQL("INSERT INTO ACT_PIE_TMP SELECT * FROM ACT_PROCESSINSTANCEEXTENSION_LIFERAY;");
-			//Create tmp for WorkflowInstanceLink
-			DBFactoryUtil.getDB().runSQL("CREATE TABLE WorkflowInstanceLink_TMP LIKE WorkflowInstanceLink");
-			DBFactoryUtil.getDB().runSQL("INSERT INTO WorkflowInstanceLink_TMP SELECT * FROM WorkflowInstanceLink;");
-			//update
-			DBFactoryUtil.getDB().runSQL("UPDATE WorkflowInstanceLink L INNER JOIN ACT_PROCESSINSTANCEEXTENSION_LIFERAY PIE " +
-					"ON PIE.process_instance_extension_id = L.workflowInstanceId SET L.workflowInstanceId = PIE.process_instance_id;");
-			//remove PIE
-			DBFactoryUtil.getDB().runSQL("DROP TABLE ACT_PROCESSINSTANCEEXTENSION_LIFERAY");
-		} catch (SQLException e) {
-			log.debug("Seems that PIE table already removed", e);
-		}  catch (Exception e) {
-			log.error("Failed to remove PIE table", e);
-		}
-	}
-	
-	private void removeProcessDefinitionExtTable() {
-		try {
-			//Create tmp for PDE
-			DBFactoryUtil.getDB().runSQL("CREATE TABLE ACT_PDE_TMP LIKE ACT_PROCESSDEFINITIONEXTENSION_LIFERAY");
-			DBFactoryUtil.getDB().runSQL("INSERT INTO ACT_PDE_TMP SELECT * FROM ACT_PROCESSDEFINITIONEXTENSION_LIFERAY;");
-
-			//update
-            DBFactoryUtil.getDB().runSQL("UPDATE ACT_RE_DEPLOYMENT D INNER JOIN ACT_RE_PROCDEF PDEF on D.ID_ = PDEF.DEPLOYMENT_ID_ " +
-                    "SET D.CATEGORY_ = (SELECT distinct(EXT.company_id) FROM ACT_PROCESSDEFINITIONEXTENSION_LIFERAY EXT " +
-                    "INNER JOIN ACT_RE_PROCDEF PD on EXT.process_definition_id = PD.ID_ where PD.DEPLOYMENT_ID_ = D.ID_)");
-			
-			DBFactoryUtil.getDB().runSQL("SET @curByteArrayId:=(SELECT max(ID_*1) FROM ACT_GE_BYTEARRAY);");
-			DBFactoryUtil.getDB().runSQL("INSERT INTO ACT_GE_BYTEARRAY (ID_, REV_, NAME_, DEPLOYMENT_ID_, BYTES_, GENERATED_) " +
-					"SELECT (@curByteArrayId := @curByteArrayId + 1), 1, concat(PD.ID_, ':', 'title'), PD.DEPLOYMENT_ID_, EXT.title, 0 FROM ACT_PROCESSDEFINITIONEXTENSION_LIFERAY EXT INNER JOIN ACT_RE_PROCDEF PD on EXT.process_definition_id = PD.ID_;");
-			//remove PDE
-			DBFactoryUtil.getDB().runSQL("DROP TABLE ACT_PROCESSDEFINITIONEXTENSION_LIFERAY");
-		} catch (SQLException e) {
-			log.debug("Seems that PDE table already removed", e);
-		}  catch (Exception e) {
-			log.error("Failed to remove PDE table", e);
-		}
-	}
-	
-	private void fixTitleAbsence() {
-		try {
-			log.info("Fixing process definitions titles...");
-			DBFactoryUtil.getDB().runSQL("SET @curByteArrayId:=(SELECT max(ID_*1) FROM ACT_GE_BYTEARRAY);");
-			DBFactoryUtil.getDB().runSQL("INSERT INTO ACT_GE_BYTEARRAY (ID_, REV_, NAME_, DEPLOYMENT_ID_, BYTES_, GENERATED_) " +
-					"SELECT (@curByteArrayId := @curByteArrayId + 1), 1, concat(PD.ID_,':title'), PD.DEPLOYMENT_ID_, PD.NAME_, 0 FROM ACT_RE_PROCDEF PD " +
-					"WHERE PD.ID_ NOT IN (SELECT distinct(arp.ID_) " +
-					"FROM ACT_RE_PROCDEF arp INNER JOIN ACT_GE_BYTEARRAY agb ON arp.DEPLOYMENT_ID_ = agb.DEPLOYMENT_ID_ " +
-					"WHERE agb.NAME_ = concat(arp.ID_,':title'));");
-		} catch (Exception e) {
-			log.info("Failed to fix titles for process definitions (may be ignored for new db):" + e.getMessage());
-		}
-	}
 	
 	@Override
 	public void run(String[] ids) throws ActionException 
@@ -107,15 +49,9 @@ public class StartUpAction extends SimpleAction {
 		try {
 			try {
 				if (!independentFixesRun) {
-					//we do not need it to be run against each portal instance..
-					if (DBFactoryUtil.getDB().getClass().getName().equals("com.liferay.portal.dao.db.MySQLDB")) {
-						DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=0;");
-						removeProcessInstanceExtTable();
-						removeProcessDefinitionExtTable();
-						fixTitleAbsence();
-						// DBFactoryUtil.getDB().runSQL("SET SQL_SAFE_UPDATES=1;");
-						independentFixesRun = true;
-					}
+					// we do not need it to be run against each portal instance..
+					ActivitiWebDBFixUtil.fix();
+					ActivitiWebDBFixUtil.tenantFix();
 				}
 			} catch (Exception e) {
 				log.warn("Cannot upgrade table to newer version of activiti-web. Please ignore on first deploy: " + e.getMessage());
@@ -125,7 +61,7 @@ public class StartUpAction extends SimpleAction {
 			log.error("Initialization failed", e);
 			throw new ActionException(e);
 		}
-
+		log.info("Activiti engine " + WorkflowEngineManagerUtil.getVersion() + " installed");
 	}
 	
 	/**

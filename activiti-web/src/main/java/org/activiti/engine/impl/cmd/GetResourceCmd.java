@@ -12,8 +12,6 @@
  */
 package org.activiti.engine.impl.cmd;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
 
 import org.activiti.engine.ActivitiException;

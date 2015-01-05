@@ -12,8 +12,6 @@
  */
 package org.activiti.engine.impl.cmd;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,14 +21,12 @@ import net.emforge.activiti.query.ResourceByCompanyQuery;
 import net.emforge.activiti.query.ResourceByCompanyQueryImpl;
 
 import org.activiti.engine.ActivitiException;
-import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.impl.persistence.entity.CustomModelManager;
-import org.activiti.engine.impl.persistence.entity.ModelEntity;
-import org.activiti.engine.impl.persistence.entity.ResourceEntity;
 import org.activiti.engine.repository.Model;
-import org.activiti.rest.api.ActivitiUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
@@ -57,13 +53,16 @@ public class GetModelsCmd implements Command<List<Model>>, Serializable {
   }
 
   public List<Model> execute(CommandContext commandContext) {
+	// FIXME: use  tenantId as companyId
 		if (StringUtils.isEmpty(companyId) || !NumberUtils.isDigits(companyId)
 				|| Long.valueOf(companyId) <= 0) {
 			throw new ActivitiException("companyId is null");
 		}
 
-		RepositoryServiceImpl serviceImpl = (RepositoryServiceImpl) ActivitiUtil.getRepositoryService();
-		ResourceByCompanyQuery rbc = new ResourceByCompanyQueryImpl(serviceImpl.getCommandExecutor());
+		CommandExecutor commandExecutor = Context
+		        .getProcessEngineConfiguration()
+		        .getCommandExecutor();
+		ResourceByCompanyQuery rbc = new ResourceByCompanyQueryImpl(commandExecutor);
 		rbc.companyAndNameLike(companyId, "model:%:company");
 		List<String> names = rbc.list();
 

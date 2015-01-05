@@ -3,7 +3,7 @@
 
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>/WEB-INF/classes/META-INF/activiti-spring.xml,/WEB-INF/classes/META-INF/messaging-spring.xml, /WEB-INF/classes/META-INF/activiti-infrastructure-spring.xml</param-value>
+		<param-value>/WEB-INF/classes/META-INF/activiti-spring.xml,/WEB-INF/classes/META-INF/messaging-spring.xml,/WEB-INF/classes/META-INF/activiti-infrastructure-spring.xml, /WEB-INF/classes/META-INF/activiti-drs.xml</param-value>
 	</context-param>
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>

@@ -1,40 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
-  
-<mapper namespace="org.activiti.engine.impl.persistence.entity.HistoricTaskInstance">
-  <!--  Historic Task Search -->
-  <select id="customSearchHistoricTaskInstance" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultMap="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity.historicTaskInstanceResultMap">
-    ${limitBefore}
-    select * ${limitBetween}
-    <include refid="customSearchHistoricTaskInstanceSql"/>
-    <if test="orderBy != null">
-      ${orderBy}
-    </if>
-    ${limitAfter}
-  </select>
-  
-  <select id="customSearchHistoricTaskInstanceCount" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl" resultType="long">
-    select count(*)
-    <include refid="customSearchHistoricTaskInstanceSql"/>
-  </select>
-  
-  <sql id="customSearchHistoricTaskInstanceSql">
-    from ACT_HI_TASKINST RES
- 	<if test="entryClassName != null">
-   	  inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on RES.PROC_INST_ID_ = APL.process_instance_id
-    </if>	
-    <where>
-      RES.END_TIME_ is not null
-      <if test="nameLike != null">
-        and RES.NAME_ like #{nameLike}
-      </if>
-      <if test="assignee != null">
-        and RES.ASSIGNEE_ = #{assignee}
-      </if>
-   	  <if test="entryClassName != null">
-   	    and APL.class_name = #{entryClassName}
-      </if>	
-    </where>
-  </sql>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity">
+
+	<!-- Historic Task Search -->
+	<select id="customSelectHistoricTaskInstancesByQueryCriteria" parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl"
+		resultMap="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity.historicTaskInstanceResultMap">
+		${limitBefore}
+		select 
+		distinct RES.* ${limitBetween}
+		<include refid="customSelectHistoricTaskInstancesByQueryCriteriaSql" />
+		${orderBy}
+		${limitAfter}
+	</select>
+
+	<select id="customSearchHistoricTaskInstanceCount"
+		parameterType="net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl"
+		resultType="long">
+		select count(RES.ID_)
+		<include refid="customSelectHistoricTaskInstancesByQueryCriteriaSql" />
+	</select>
+
+	<select id="customSelectHistoricTaskInstancesWithVariablesByQueryCriteria"
+		parameterType="org.activiti.engine.impl.HistoricTaskInstanceQueryImpl"
+		resultMap="historicTaskInstanceAndVariablesResultMap">
+		${limitBefore}
+		select distinct RES.*,
+		VAR.ID_ as VAR_ID_, VAR.NAME_ as VAR_NAME_, VAR.VAR_TYPE_ as VAR_TYPE_,
+		VAR.REV_ as VAR_REV_,
+		VAR.PROC_INST_ID_ as VAR_PROC_INST_ID_, VAR.EXECUTION_ID_ as VAR_EXECUTION_ID_,
+		VAR.TASK_ID_ as VAR_TASK_ID_,
+		VAR.BYTEARRAY_ID_ as VAR_BYTEARRAY_ID_, VAR.DOUBLE_ as VAR_DOUBLE_,
+		VAR.TEXT_ as VAR_TEXT_, VAR.TEXT2_ as VAR_TEXT2_, VAR.LAST_UPDATED_TIME_ as
+		VAR_LAST_UPDATED_TIME_, VAR.LONG_ as VAR_LONG_
+		${limitBetween}
+		<include refid="customSelectHistoricTaskInstancesWithVariablesByQueryCriteriaSql" />
+		${orderBy}
+		${limitAfter}
+	</select>
+
+	<sql id="customSelectHistoricTaskInstancesWithVariablesByQueryCriteriaSql">
+		from 
+		${prefix}ACT_HI_TASKINST RES
+		<include refid="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity.selectHistoricTaskInstancesWithVariablesByQueryCriteriaSqlJoin" />
+		<include refid="customCommonSelectHistoricTaskInstancesByQueryCriteriaSql" />
+	</sql>
+	
+	<sql id="customSelectHistoricTaskInstancesByQueryCriteriaSql">
+		from 
+		${prefix}ACT_HI_TASKINST RES
+		<include refid="customCommonSelectHistoricTaskInstancesByQueryCriteriaSql" />
+	</sql>
+	
+	<sql id="customCommonSelectHistoricTaskInstancesByQueryCriteriaSql">
+		<include refid="customCommonSelectHistoricTaskInstancesByQueryCriteriaSqlJoin" />
+		<include refid="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity.commonSelectHistoricTaskInstancesByQueryCriteriaSqlJoin" />
+				
+		<trim prefix="WHERE" prefixOverrides="WHERE |AND |OR |WHERE\n|AND\n|OR\n|WHERE\r|AND\r|OR\r|WHERE\t|AND\t|OR\t">
+			<include
+				refid="org.activiti.engine.impl.persistence.entity.HistoricTaskInstanceEntity.commonSelectHistoricTaskInstancesByQueryCriteriaSqlWhere" />
+			<include refid="customCommonSelectHistoricTaskInstancesByQueryCriteriaSqlWhere" />
+		</trim>
+	</sql>
+	
+	<sql id="customCommonSelectHistoricTaskInstancesByQueryCriteriaSqlJoin">
+		<if test="entryClassName != null">
+			inner join ACT_PROCESSINSTANCEEXTENSION_LIFERAY APL on RES.PROC_INST_ID_ =
+			APL.process_instance_id
+		</if>
+		
+		<if test="groupId != null">
+			inner join ${prefix}ACT_HI_VARINST V1 on (V1.PROC_INST_ID_ = RES.PROC_INST_ID_)
+			and (V1.NAME_= 'groupId' and V1.LONG_ = #{groupId})
+		</if>
+	</sql>
+	<sql id="customCommonSelectHistoricTaskInstancesByQueryCriteriaSqlWhere">
+		<where>
+			<if test="entryClassName != null">
+				and APL.class_name = #{entryClassName}
+			</if>
+		</where>
+	</sql>
 </mapper>

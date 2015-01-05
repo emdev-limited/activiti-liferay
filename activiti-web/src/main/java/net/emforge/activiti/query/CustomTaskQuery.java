@@ -1,23 +1,13 @@
 package net.emforge.activiti.query;
 
-import java.util.List;
+import org.activiti.engine.task.TaskQuery;
 
-import org.activiti.engine.query.Query;
-import org.activiti.engine.task.Task;
+/**
+ * Specific interface for CustomTaskQuery only
+ * 
+ * @author Dmitry Farafonov
+ *
+ */
+public interface CustomTaskQuery extends TaskQuery {
 
-public interface CustomTaskQuery extends Query<CustomTaskQuery, Task> {
-	CustomTaskQuery taskCandidateUser(String userId);
-	CustomTaskQuery taskAssignee(String userId);
-	
-	CustomTaskQuery taskNameLike(String taskName);
-	CustomTaskQuery taskEntryClassPK(String entryClassPK);
-	CustomTaskQuery taskEntryClassPKs(List<Long> entryClassPKs);
-	CustomTaskQuery taskEntryClassName(String entryClassName);
-	CustomTaskQuery taskEntryClassNames(List<String> entryClassNames);
-	
-	CustomTaskQuery taskGroupId(Long groupId);
-	CustomTaskQuery taskCompanyId(Long companyId);
-	
-	CustomTaskQuery orderByDueDate();
-	CustomTaskQuery orderByCreateDate();
 }

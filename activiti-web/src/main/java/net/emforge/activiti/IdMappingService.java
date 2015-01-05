@@ -57,6 +57,26 @@ public class IdMappingService {
 		return Long.valueOf(id.substring(id.lastIndexOf(StringPool.COLON) + 1));
 	}
 	
+	/** Get int id for workflow definition version for deleted definitions
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public int getLiferayWorkflowDefinitionVersion(String id) {
+		int pos1 = id.indexOf(StringPool.COLON);
+		int pos2 = id.indexOf(StringPool.COLON, pos1 + 1);
+		return Integer.valueOf(id.substring(pos1 + 1, pos2));
+	}
+	
+	/** Get workflow definition name for deleted definitions
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public String getLiferayWorkflowDefinitionName(String id) {
+		return id.substring(0, id.indexOf(StringPool.COLON));
+	}
+	
 	/** Get Long id for process instance id
 	 * Format of workflow instance id is 'workflowName.1'
 	 */ 
