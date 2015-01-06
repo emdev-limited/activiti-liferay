@@ -112,6 +112,9 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 		}
 		try {
 			taskInfoQueryWrapper.getTaskInfoQuery().taskCandidateGroup(candidateGroup);
+			if (taskInfoQueryWrapper.getTaskInfoQuery() instanceof CustomTaskQuery) {
+				((CustomTaskQuery)taskInfoQueryWrapper.getTaskInfoQuery()).taskUnassigned();
+			}
 		} catch (ActivitiIllegalArgumentException e) {
 			throw new WorkflowException("Cannot get tasks by Role " + roleId);
 		}
@@ -141,6 +144,9 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 			candidateGroups.add("");
 		}
 		taskInfoQueryWrapper.getTaskInfoQuery().taskCandidateGroupIn(candidateGroups);
+		if (taskInfoQueryWrapper.getTaskInfoQuery() instanceof CustomTaskQuery) {
+			((CustomTaskQuery)taskInfoQueryWrapper.getTaskInfoQuery()).taskUnassigned();
+		}
 		
 		return taskInfoQueryWrapper;
 	}
