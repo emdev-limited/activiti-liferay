@@ -11,4 +11,14 @@ public interface WorkflowLogConstants extends com.liferay.portal.kernel.workflow
 	 * 
 	 */
 	public static final int INSTANCE_STOP = 10;
+	
+	/**
+	 * Service
+	 */
+	public static final int SERVICE = 11;
+	
+	/**
+	 * Comment
+	 */
+	public static final int COMMENT = 12;
 }
