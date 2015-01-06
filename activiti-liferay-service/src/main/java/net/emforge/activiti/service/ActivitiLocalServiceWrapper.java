@@ -123,6 +123,12 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
             assigneeUser, candidateRole);
     }
 
+    @Override
+    public java.lang.String findTopLevelProcess(java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findTopLevelProcess(taskId);
+    }
+
     /**
     * Suspend workflow instance
     */
@@ -151,6 +157,23 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
         throws com.liferay.portal.kernel.workflow.WorkflowException {
         return _activitiLocalService.stopWorkflowInstance(companyId, userId,
             workflowInstanceId, comment);
+    }
+
+    @Override
+    public void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException {
+        _activitiLocalService.addWorkflowInstanceComment(companyId, userId,
+            workflowInstanceId, workflowTaskId, logType, comment);
+    }
+
+    @Override
+    public java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return _activitiLocalService.findHistoricActivityByName(topProcessInstanceId,
+            activityName);
     }
 
     /**

@@ -107,6 +107,9 @@ public interface ActivitiLocalService extends BaseLocalService,
         java.lang.String candidateRole)
         throws com.liferay.portal.kernel.exception.SystemException;
 
+    public java.lang.String findTopLevelProcess(java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException;
+
     /**
     * Suspend workflow instance
     */
@@ -124,4 +127,13 @@ public interface ActivitiLocalService extends BaseLocalService,
     public boolean stopWorkflowInstance(long companyId, long userId,
         long workflowInstanceId, java.lang.String comment)
         throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    public void addWorkflowInstanceComment(long companyId, long userId,
+        long workflowInstanceId, long workflowTaskId, int logType,
+        java.lang.String comment)
+        throws com.liferay.portal.kernel.workflow.WorkflowException;
+
+    public java.util.List<java.lang.String> findHistoricActivityByName(
+        java.lang.String topProcessInstanceId, java.lang.String activityName)
+        throws com.liferay.portal.kernel.exception.SystemException;
 }

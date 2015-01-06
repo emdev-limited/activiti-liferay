@@ -31,6 +31,12 @@ public class ActivitiFinderUtil {
         return getFinder().findUniqueUserTaskAssignees(execIds);
     }
 
+    public static java.util.List<java.lang.Object[]> findExecByTask(
+        java.lang.String taskId)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getFinder().findExecByTask(taskId);
+    }
+
     public static java.util.List<java.lang.Object[]> findUserTasks(
         java.lang.String taskName, java.lang.String assigneeUser,
         java.lang.String candidateRole)
@@ -42,6 +48,12 @@ public class ActivitiFinderUtil {
         java.util.List<java.lang.String> execIds)
         throws com.liferay.portal.kernel.exception.SystemException {
         return getFinder().findSuperExecutions(execIds);
+    }
+
+    public static java.util.List<java.lang.String> findHiActivities(
+        java.lang.String activityName, java.util.List<java.lang.String> execIds)
+        throws com.liferay.portal.kernel.exception.SystemException {
+        return getFinder().findHiActivities(activityName, execIds);
     }
 
     public static ActivitiFinder getFinder() {
