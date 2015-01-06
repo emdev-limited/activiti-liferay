@@ -388,33 +388,27 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 			return null;
 		}
 		
-		Method method = null;
+		WorkflowTask workflowTask = null;
 		try {
 			if (taskInfoQueryWrapper.getTaskInfoQuery() instanceof HistoricTaskInstanceQuery) {
-				method = getClass().getDeclaredMethod("getHistoryWorkflowTask", TaskInfo.class);
+				workflowTask = getHistoryWorkflowTask(taskInfo);
 			} else {
-				method = getClass().getDeclaredMethod("getWorkflowTask", TaskInfo.class);
+				workflowTask = getWorkflowTask(taskInfo);
 			}
-		} catch (NoSuchMethodException e) {
-		}
-		
-		try {
-			WorkflowTask workflowTask = (WorkflowTask) method.invoke(this, taskInfo);
-			return workflowTask;
 		} catch (Exception ex) {
 			_log.warn("Cannot convert Activiti task " + taskInfo.getId() + " into Liferay: " + ex);
 			_log.debug("Cannot convert Activiti task into Liferay", ex);
 		}
 		
-		return null;
+		return workflowTask;
 	}
 	
-	@SuppressWarnings("unused")
-	private WorkflowTask getHistoryWorkflowTask(TaskInfo taskInfo) throws WorkflowException {
+	
+	protected WorkflowTask getHistoryWorkflowTask(TaskInfo taskInfo) throws WorkflowException {
 		return getHistoryWorkflowTask((HistoricTaskInstance)taskInfo);
 	}
 
-	private WorkflowTask getHistoryWorkflowTask(HistoricTaskInstance task) throws WorkflowException {
+	protected WorkflowTask getHistoryWorkflowTask(HistoricTaskInstance task) throws WorkflowException {
 		WorkflowTaskImpl workflowTask = new WorkflowTaskImpl();
 
 		// TODO setAsynchronous(!task.isBlocking());
@@ -477,8 +471,8 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 		return workflowTask;
 	}
 
-	@SuppressWarnings("unused")
-	private WorkflowTask getWorkflowTask(TaskInfo taskInfo) throws WorkflowException {
+	
+	protected WorkflowTask getWorkflowTask(TaskInfo taskInfo) throws WorkflowException {
 		return getWorkflowTask((Task)taskInfo);
 	}
 
