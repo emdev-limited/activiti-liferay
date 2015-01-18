@@ -107,14 +107,11 @@
 	<bean id="identityService" factory-bean="processEngine" factory-method="getIdentityService" />
 
 
-	<!--  I was not able to access custom properties defined in portal.properties via PropUtils.get()
-		so, added them into spring
-	  -->
 	<bean
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
-				<value>classpath:portal.properties</value>
+				<value>classpath:portal-ext.properties</value>
 			</list>
 		</property>
 	</bean> 
