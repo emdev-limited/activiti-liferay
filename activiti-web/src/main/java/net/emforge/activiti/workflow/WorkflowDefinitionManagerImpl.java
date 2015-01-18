@@ -221,22 +221,28 @@ public class WorkflowDefinitionManagerImpl extends AbstractWorkflowDefinitionMan
 		// return workflowDefinition;
 
 		// temporary hook
-		ProcessDefinitionQuery query = createProcessDefinitionQuery(companyId, name, true);
-		List<ProcessDefinition> processDefinitions = query.orderByProcessDefinitionVersion().desc().list();
-		if (processDefinitions.size() == 0) {
-			return null;
-		}
-		ProcessDefinition latestProcessDefinition = processDefinitions.get(0);
+		ProcessDefinition processDefinition = getProcessDefinition(companyId, name);
 
-		WorkflowDefinition workflowDefinition = getWorkflowDefinition(latestProcessDefinition);
-
-		return workflowDefinition;
+		if (processDefinition == null) {
+    		return null;
+    	} else {
+    		return getWorkflowDefinition(processDefinition);
+    	}
 	}
 
 	@Override
 	public WorkflowDefinition getWorkflowDefinition(long companyId,
 			String name, int version) throws WorkflowException {
-		ProcessDefinition processDefinition = getProcessDefinition(companyId, name, version);
+		ProcessDefinition processDefinition = null;
+		
+		// check version
+		if (version > 0) {
+			processDefinition = getProcessDefinition(companyId, name, version);
+		} else {
+			// if 0 - return latest workflow definition
+			processDefinition = getProcessDefinition(companyId, name);
+		}
+		
 
 		if (processDefinition == null) {
     		return null;

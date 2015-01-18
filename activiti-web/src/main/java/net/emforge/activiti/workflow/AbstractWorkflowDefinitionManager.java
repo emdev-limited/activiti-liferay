@@ -126,6 +126,26 @@ public class AbstractWorkflowDefinitionManager {
 		return processDefinition;
 	}
 
+	
+	/** Return latest version of Workflow Definition
+	 * 
+	 * @param companyId
+	 * @param name
+	 * @return
+	 * @throws WorkflowException
+	 */
+	protected ProcessDefinition getProcessDefinition(long companyId, String name) throws WorkflowException {
+		ProcessDefinitionQuery query = createProcessDefinitionQuery(companyId, name, true);
+		List<ProcessDefinition> processDefinitions = query.orderByProcessDefinitionVersion().desc().list();
+		if (processDefinitions.size() == 0) {
+			return null;
+		}
+		
+		ProcessDefinition latestProcessDefinition = processDefinitions.get(0);
+		
+		return latestProcessDefinition;
+	}
+	
 	protected ProcessDefinitionQuery createProcessDefinitionQuery() throws WorkflowException {
 //		return CustomProcessDefinitionQueryImpl.create();
 		return repositoryService.createProcessDefinitionQuery();
