@@ -64,7 +64,7 @@
 
   <sql id="customCommonSelectExecutionsByQueryCriteriaSqlJoin">
   	<if test="userId != null || entryClassNameId != null || entryClassNameIds != null || entryClassPK != null">
-  		inner join WORKFLOWINSTANCELINK W on RES.ID_ = W.workflowInstanceId
+  		inner join WorkflowInstanceLink W on RES.ID_ = W.workflowInstanceId
   	</if>
   </sql>
 
