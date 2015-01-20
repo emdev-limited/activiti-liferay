@@ -85,9 +85,9 @@ public abstract class AbstractWorkflowInstanceManager implements WorkflowInstanc
 	protected Query<?, ?> createProcessInstanceQuery(long workflowInstanceId, boolean completed) throws WorkflowException {
 		String processInstanceId = String.valueOf(workflowInstanceId);
 		if (completed) {
-			return createProcessInstanceQuery().processInstanceId(processInstanceId);
-		} else {
 			return createHistoricProcessInstanceQuery().processInstanceId(processInstanceId);
+		} else {
+			return createProcessInstanceQuery().processInstanceId(processInstanceId);
 		}
 	}
 
