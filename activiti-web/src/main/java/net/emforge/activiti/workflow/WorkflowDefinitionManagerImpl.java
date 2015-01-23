@@ -1,6 +1,7 @@
 package net.emforge.activiti.workflow;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -15,6 +16,7 @@ import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -53,11 +55,12 @@ public class WorkflowDefinitionManagerImpl extends AbstractWorkflowDefinitionMan
 			
 			// try to read bytes as ZIP file
 			
-			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-			ZipInputStream zipInputStream = new ZipInputStream(bais);
-			ZipEntry zipEntry = zipInputStream.getNextEntry();
-			if (zipEntry != null) {
-				_log.info("Deploy bar " + zipEntry.getName());
+			List<String> entryNames = getBarEntryNames(bytes);
+			if (entryNames.size() != 0) {
+				ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+				ZipInputStream zipInputStream = new ZipInputStream(bais);
+				zipInputStream = new ZipInputStream(bais);
+				_log.info("Deploy bar: " + entryNames);
 				try {
 					deployment = repositoryService.createDeployment().name(strTitle + ".bar")
 							.addZipInputStream(zipInputStream)
@@ -66,6 +69,8 @@ public class WorkflowDefinitionManagerImpl extends AbstractWorkflowDefinitionMan
 							.tenantId(tenantId)
 							.deploy();
 					isBar = true;
+					// TODO: deploy drl-files to cache it
+					// TODO: remove old drl-resources for success deployed drls
 				} catch (ActivitiException ae) {
 					//save exception
 					activitiException = ae;
@@ -83,7 +88,7 @@ public class WorkflowDefinitionManagerImpl extends AbstractWorkflowDefinitionMan
 				// deploy
 				if (xmlBytes != null) {
 					try {
-						bais = new ByteArrayInputStream(xmlBytes);
+						ByteArrayInputStream bais = new ByteArrayInputStream(xmlBytes);
 						deployment = repositoryService.createDeployment().name(strTitle + ".bpmn20.xml")
 								.addInputStream(strTitle + ".bpmn20.xml", bais)
 								.disableSchemaValidation()
@@ -130,11 +135,11 @@ public class WorkflowDefinitionManagerImpl extends AbstractWorkflowDefinitionMan
 			if (processDefs.size() == 0) {
 				if (activitiException != null) {
 					_log.error("Unable to deploy worfklow definition", activitiException);
+					throw new WorkflowException("No process definitions found");
 				} else {
 					_log.error("No workflows found");
+					return null;
 				}
-
-				throw new WorkflowException("No process definitions found");
 			}
 
 			for (ProcessDefinition processDefinition : processDefs) {
