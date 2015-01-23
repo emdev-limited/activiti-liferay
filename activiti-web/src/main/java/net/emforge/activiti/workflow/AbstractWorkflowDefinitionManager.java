@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
@@ -20,11 +22,14 @@ import net.emforge.activiti.engine.impl.cmd.SaveDefinitionTitleCmd;
 
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.persistence.deploy.DefaultDeploymentCache;
 import org.activiti.engine.impl.persistence.deploy.DeploymentCache;
+import org.activiti.engine.impl.persistence.entity.ResourceEntity;
+import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.query.Query;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -321,5 +326,24 @@ public class AbstractWorkflowDefinitionManager {
 				throw new WorkflowException(sb.toString());
 			}
 		}
+	}
+
+	protected List<String> getBarEntryNames(byte[] bytes) {
+		List<String> names = new ArrayList<String>();
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		ZipInputStream zipInputStream = new ZipInputStream(bais);
+		try {
+	      ZipEntry entry = zipInputStream.getNextEntry();
+	      while (entry != null) {
+	        if (!entry.isDirectory()) {
+	          String entryName = entry.getName();
+	          names.add(entryName);
+	        }
+	        entry = zipInputStream.getNextEntry();
+	      }
+	    } catch (Exception e) {
+	      throw new ActivitiException("problem reading zip input stream", e);
+	    }
+		return names;
 	}
 }
