@@ -72,6 +72,8 @@ public class CustomBpmnParse extends BpmnParse {
 			List<SequenceFlow> outgoingFlows = userTask.getOutgoingFlows();
 			String defaultSequenceFlow = null;
 
+			List<String> outputTransitionNames = new ArrayList<String>();
+			
 			// Skip if user task has no outgoing flows
 			if (outgoingFlows.size() == 0) {
 				return;
@@ -79,8 +81,24 @@ public class CustomBpmnParse extends BpmnParse {
 				String targetRef = outgoingFlows.get(0).getTargetRef();
 				ActivityImpl outgoingActivity = getCurrentScope().findActivity(targetRef);
 				if (!(outgoingActivity.getActivityBehavior() instanceof ExclusiveGatewayActivityBehavior)) {
+					// we have only one outgoing flow from the user task and it is not finished by Exlusive Gateway.
+					// Lets use name of this flow as output name
+					SequenceFlow sequenceFlow = outgoingFlows.get(0);
+
+					if (StringUtils.isNotEmpty(sequenceFlow.getName())) {
+						outputTransitionNames.add(sequenceFlow.getName());
+					} else {
+						outputTransitionNames.add(DEFAULT_OUTPUT_TRANSITION_NAME);
+					}
+					LOGGER.debug("* id: {}, name: {}", sequenceFlow.getId(), sequenceFlow.getName());
+					
+					addOutputTransitionToTaskForm(userTask, outputTransitionNames);
+
+					// finish to process task without next exclusive gateway
 					return;
 				}
+				
+				
 				FlowElement outgoingFlowElement = findFlowElement(flowElements, targetRef);
 
 				outgoingFlows = ((ExclusiveGateway)outgoingFlowElement).getOutgoingFlows();
@@ -91,7 +109,7 @@ public class CustomBpmnParse extends BpmnParse {
 				defaultSequenceFlow = (String) outgoingActivity.getProperty("default");
 			}
 
-			List<String> outputTransitionNames = new ArrayList<String>();
+			
 
 			for (SequenceFlow sequenceFlow : outgoingFlows) {
 				boolean isDefaultFlow = defaultSequenceFlow != null && sequenceFlow.getId() != null && sequenceFlow.getId().equals(defaultSequenceFlow);
