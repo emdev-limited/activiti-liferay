@@ -278,17 +278,7 @@
 			<artifactId>commons-fileupload</artifactId>
 			<version>1.2.2</version>
 		</dependency>
-		<dependency>
-			<groupId>net.emforge</groupId>
-			<artifactId>activiti-rest-stubs</artifactId>
-			<version>${pom.version}</version>
-		</dependency>
-		
-		<!--  dependency>
-			<groupId>com.tieto</groupId>
-			<artifactId>activiti-drs</artifactId>
-			<version>${pom.version}</version>
-		</dependency -->
+
 		
 		<dependency>
 			<groupId>org.apache.velocity</groupId>
