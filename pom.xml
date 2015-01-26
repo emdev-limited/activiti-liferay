@@ -49,7 +49,6 @@
 	<modules>
 		<module>activiti-web</module>
 		<module>activiti-liferay-service</module>
-		<module>activiti-rest-stubs</module>
 	</modules>
 	
 	<repositories>

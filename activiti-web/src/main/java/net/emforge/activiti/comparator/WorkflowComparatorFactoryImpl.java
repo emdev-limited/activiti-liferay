@@ -78,7 +78,7 @@ public class WorkflowComparatorFactoryImpl implements WorkflowComparatorFactory 
 
 	@Override
 	public OrderByComparator getTaskCreateDateComparator(boolean ascending) {
-		String fieldName = "CreateDate";
+		String fieldName = "TaskCreateTime";
 		String orderByAsc = fieldName  + _ORDER_BY_ASC;
 		String orderByDesc = fieldName + _ORDER_BY_DESC;
 		String[] orderByFields = {fieldName};
