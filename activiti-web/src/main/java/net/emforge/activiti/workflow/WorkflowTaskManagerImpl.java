@@ -308,9 +308,7 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 	@Override
 	public int getWorkflowTaskCount(long companyId, Boolean completed)
 			throws WorkflowException {
-		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(completed);
-
-		taskInfoQueryWrapper.getTaskInfoQuery().processVariableValueEquals(WorkflowConstants.CONTEXT_COMPANY_ID, companyId);
+		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(companyId, completed);
 
 		Long cnt = taskInfoQueryWrapper.getTaskInfoQuery().count();
 		return cnt.intValue();
@@ -370,9 +368,7 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 	public List<WorkflowTask> getWorkflowTasks(long companyId,
 			Boolean completed, int start, int end,
 			OrderByComparator orderByComparator) throws WorkflowException {
-		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(completed);
-
-		taskInfoQueryWrapper.getTaskInfoQuery().processVariableValueEquals(WorkflowConstants.CONTEXT_COMPANY_ID, companyId);
+		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(companyId, completed);
 
 		List<WorkflowTask> workflowTasks = getWorkflowTasks(taskInfoQueryWrapper, start, end, orderByComparator);
 
