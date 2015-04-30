@@ -44,6 +44,13 @@ public class ExtEditWorkflowDefinitionAction extends CommonStrutsPortletAction {
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
 
+		String action = ParamUtil.getString(actionRequest, "struts_action");
+		if ("/workflow_definitions/edit_workflow_definition_link".equals(action)) {
+			// forward to original struts action
+			originalStrutsPortletAction.processAction(portletConfig, actionRequest, actionResponse);
+			return;
+		}
+		
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
 		try {
