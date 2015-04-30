@@ -7,6 +7,21 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"
 >
+
+	<!-- Destinations -->
+
+	<!-- bean id="destination.kaleo_graph_walker" class="com.liferay.portal.kernel.messaging.ParallelDestination">
+		<property name="name" value="liferay/kaleo_graph_walker" />
+	</bean -->
+	<bean id="destination.workflow_definition_link" class="com.liferay.portal.kernel.messaging.SynchronousDestination">
+		<property name="name" value="liferay/workflow_definition_link" />
+	</bean>
+	
+	
+	<!-- bean id="destination.workflow_timer" class="com.liferay.portal.kernel.messaging.ParallelDestination">
+		<property name="name" value="liferay/workflow_timer" />
+	</bean -->
+	
 	<!-- Listeners -->
 
 	<bean id="messageListener.workflow_definition" class="net.emforge.activiti.messaging.MessageListener">
@@ -25,9 +40,20 @@
 		<property name="manager" ref="workflowTaskManager"/>
 	</bean>
 
+	<bean id="messageListener.workflow_definition_link" class="net.emforge.activiti.messaging.ActivitiAssetDeploymentMessageListener"/>
+	
+	
+	
+	
 	<!-- Configurator -->
 
 	<bean id="messagingConfigurator" class="com.liferay.portal.kernel.messaging.config.PluginMessagingConfigurator">
+		<property name="destinations">
+			<list>
+				<ref bean="destination.workflow_definition_link" />
+			</list>
+		</property>
+		
 		<property name="messageListeners">
 			<map key-type="java.lang.String" value-type="java.util.List">
 				<entry key="liferay/workflow_definition">
@@ -53,6 +79,28 @@
 				<entry key="liferay/workflow_task">
 					<list value-type="com.liferay.portal.kernel.messaging.MessageListener">
 						<ref bean="messageListener.workflow_task" />
+					</list>
+				</entry>
+				<entry key="liferay/workflow_definition_link">
+					<list value-type="com.liferay.portal.kernel.messaging.MessageListener">
+						<ref bean="messageListener.workflow_definition_link" />
+					</list>
+				</entry>
+			</map>
+		</property>
+		
+		<property name="specificDestinationEventListener">
+			<map key-type="java.lang.String" value-type="java.util.List">
+				<entry key="liferay/workflow_engine">
+					<list value-type="com.liferay.portal.kernel.messaging.DestinationEventListener">
+						<bean class="com.liferay.portal.kernel.workflow.messaging.DefaultWorkflowDestinationEventListener">
+							<property name="workflowDefinitionManagerListener" ref="messageListener.workflow_definition" />
+							<property name="workflowEngineManagerListener" ref="messageListener.workflow_engine" />
+							<property name="workflowEngineName" value="Liferay Activiti Workflow Engine" />
+							<property name="workflowInstanceManagerListener" ref="messageListener.workflow_instance" />
+							<property name="workflowLogManagerListener" ref="messageListener.workflow_log" />
+							<property name="workflowTaskManagerListener" ref="messageListener.workflow_task" />
+						</bean>
 					</list>
 				</entry>
 			</map>
