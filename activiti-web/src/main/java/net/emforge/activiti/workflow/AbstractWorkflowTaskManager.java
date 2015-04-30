@@ -229,8 +229,10 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 		if (completed != null && completed == false) {
 			taskInfoQueryWrapper = new TaskInfoQueryWrapper(createCustomTaskQuery());
 		} else {
-			taskInfoQueryWrapper = new TaskInfoQueryWrapper(createCustomHistoricTaskInstanceQuery().finished());
-
+			taskInfoQueryWrapper = new TaskInfoQueryWrapper(createCustomHistoricTaskInstanceQuery());
+			if (completed != null) {
+				((CustomHistoricTaskInstanceQuery)taskInfoQueryWrapper.getTaskInfoQuery()).finished();
+			}
 		}
 
 		if (companyId > 0) {
