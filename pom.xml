@@ -2,15 +2,15 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.emforge</groupId>
   <artifactId>activiti-liferay</artifactId>
-  <version>6.2.1.17</version>
+  <version>6.2.2.17</version>
   <packaging>pom</packaging>
   
   <properties>
   	<activiti.version>5.17.0</activiti.version>
 	<!-- <liferay.version>6.2.0-RC5</liferay.version>
 	<liferay.plugin.version>6.2.0-RC5</liferay.plugin.version> -->
-	<liferay.version>6.2.1</liferay.version>
-	<liferay.plugin.version>6.2.1</liferay.plugin.version>
+	<liferay.version>6.2.2</liferay.version>
+	<liferay.plugin.version>6.2.2</liferay.plugin.version>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   
