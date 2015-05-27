@@ -109,7 +109,8 @@ public class SerializableType extends ByteArrayType {
 
       return deserializedObject;
     } catch (Exception e) {
-      throw new ActivitiException("Couldn't deserialize object in variable '"+valueFields.getName()+"'", e);
+      // throw new ActivitiException("Couldn't deserialize object in variable '"+valueFields.getName()+"'", e);
+      return null;
     } finally {
       IoUtil.closeSilently(bais);
     }

@@ -73,12 +73,19 @@ public class WorkflowTaskImpl extends DefaultWorkflowTask implements WorkflowTas
 			HistoricTaskInstance hiTask = historyService.createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
 			if (hiTask != null) {
 				//try to do it in history
-				List<HistoricVariableInstance> hiVars = historyService.createHistoricVariableInstanceQuery().processInstanceId(hiTask.getProcessInstanceId()).list();
+				
 				Map<String, Serializable> resMp = new HashMap<String, Serializable>();
-				if (hiVars != null) {
-					for (HistoricVariableInstance hiVar : hiVars) {
-						resMp.put(hiVar.getVariableName(), (Serializable) hiVar.getValue());
+				
+				try {
+					List<HistoricVariableInstance> hiVars = historyService.createHistoricVariableInstanceQuery().processInstanceId(hiTask.getProcessInstanceId()).list();
+					if (hiVars != null) {
+						for (HistoricVariableInstance hiVar : hiVars) {
+							resMp.put(hiVar.getVariableName(), (Serializable) hiVar.getValue());
+						}
 					}
+				} catch (Exception ex) {
+					_log.warn("Cannot get historical variables: " + ex.getMessage());
+					_log.debug("Cannot get historical variables", ex);
 				}
 				return resMp;
 			}
