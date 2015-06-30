@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngines;
-import org.activiti.engine.identity.Group;
 import org.activiti.engine.impl.Page;
 import org.activiti.engine.impl.TaskQueryImpl;
 import org.activiti.engine.impl.TaskServiceImpl;
@@ -139,27 +138,6 @@ public class CustomTaskQueryImpl extends TaskQueryImpl implements CustomTaskQuer
 		for (QueryVariableValueIn queryVariableValue : queryVariableValuesIn) {
 			queryVariableValue.initialize(types);
 		}
-	}
-
-	//getters ////////////////////////////////////////////////////////////////
-
-	public List<String> getCandidateGroups() {
-		if (candidateUser != null) {
-			return getGroupsForCandidateUser(candidateUser);
-		} else {
-			return null;
-		}
-	}
-
-	protected List<String> getGroupsForCandidateUser(String candidateUser) {
-		List<Group> groups = Context.getCommandContext().getGroupIdentityManager().findGroupsByUser(candidateUser);
-		List<String> groupIds = new ArrayList<String>();
-
-		for (Group group : groups) {
-			groupIds.add(group.getId());
-		}
-
-		return groupIds;
 	}
 
 	public String getEntryClassPK() {
