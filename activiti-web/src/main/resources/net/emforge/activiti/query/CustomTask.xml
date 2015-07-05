@@ -84,10 +84,10 @@
 				and V3.NAME_= 'entryClassPK' 
 				<choose>
 					<when test="entryClassPK != null">
-						and V3.LONG_ =  #{entryClassPK}
+						and V3.TEXT_ =  #{entryClassPK}
 					</when>
 					<otherwise>
-						and V3.LONG_ in
+						and V3.TEXT_ in
 						<foreach item="entryClassPKItem" index="index" collection="entryClassPKs"
 							open="(" separator="," close=")">
 							#{entryClassPKItem}
