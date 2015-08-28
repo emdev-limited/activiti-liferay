@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
  * 
  * @author Dmitry Farafonov
  */
-public class CustomHistoricProcessInstanceQueryImpl extends HistoricProcessInstanceQueryImpl implements CustomHistoricProcessInstanceQuery, CustomCommonProcessInstanceQuery<HistoricProcessInstanceQuery>{
+public class CustomHistoricProcessInstanceQueryImpl extends HistoricProcessInstanceQueryImpl implements CustomHistoricProcessInstanceQuery, CustomCommonProcessInstanceQuery<HistoricProcessInstanceQuery> {
 	private static final long serialVersionUID = 1L;
 
 	static Logger logger = LoggerFactory.getLogger(CustomHistoricProcessInstanceQueryImpl.class);
@@ -89,13 +89,13 @@ public class CustomHistoricProcessInstanceQueryImpl extends HistoricProcessInsta
 
 	@Override
 	public HistoricProcessInstanceQuery or() {
-		if (orQueryObject != null) {
-			// only one OR statement is allowed
-			throw new ActivitiException("Only one OR statement is allowed");
-		} else {
-			inOrStatement = true;
-			orQueryObject = new CustomHistoricProcessInstanceQueryImpl();
+		if (inOrStatement) {
+			throw new ActivitiException("the query is already in an or statement");
 		}
+
+		inOrStatement = true;
+		currentOrQueryObject = new CustomHistoricProcessInstanceQueryImpl();
+		orQueryObjects.add(currentOrQueryObject);
 		return this;
 	}
 

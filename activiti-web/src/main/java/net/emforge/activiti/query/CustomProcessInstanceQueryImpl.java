@@ -60,7 +60,7 @@ public class CustomProcessInstanceQueryImpl extends ProcessInstanceQueryImpl imp
 		}
 
 		if (inOrStatement) {
-			((CustomProcessInstanceQueryImpl)this.orQueryObject).processDefinitionVersion = processDefinitionVersion;
+			throw new ActivitiIllegalArgumentException("This method is not supported in an OR statement");
 		} else {
 			this.processDefinitionVersion = processDefinitionVersion;
 		}
@@ -109,15 +109,14 @@ public class CustomProcessInstanceQueryImpl extends ProcessInstanceQueryImpl imp
 		return this;
 	}
 
-	@Override
 	public ProcessInstanceQuery or() {
-		if (orQueryObject != null) {
-			// only one OR statement is allowed
-			throw new ActivitiException("Only one OR statement is allowed");
-		} else {
-			inOrStatement = true;
-			orQueryObject = new CustomProcessInstanceQueryImpl();
+		if (inOrStatement) {
+			throw new ActivitiException("the query is already in an or statement");
 		}
+
+		inOrStatement = true;
+		currentOrQueryObject = new CustomProcessInstanceQueryImpl();
+		orQueryObjects.add(currentOrQueryObject);
 		return this;
 	}
 

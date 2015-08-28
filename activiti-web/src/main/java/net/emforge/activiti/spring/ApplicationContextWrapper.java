@@ -67,7 +67,6 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	
 	
 	
-	
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory()
 			throws IllegalStateException {
@@ -248,5 +247,12 @@ public class ApplicationContextWrapper implements ApplicationContext, Applicatio
 	public String getApplicationName() {
 		return applicationContext.getApplicationName();
 	}
+
+	@Override
+	public <T> T getBean(Class<T> arg0, Object... arg1) throws BeansException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 }

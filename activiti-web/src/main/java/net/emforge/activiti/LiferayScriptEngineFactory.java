@@ -74,9 +74,22 @@ public class LiferayScriptEngineFactory implements ScriptEngineFactory {
 	}
 
 	@Override
-	public Object getParameter(String arg0) {
-		_log.error("Method is not implemented"); // TODO
-		return null;
+	public Object getParameter(String key) {
+		if (key.equals(ScriptEngine.NAME)) {
+			return getLanguageName();
+		} else if (key.equals(ScriptEngine.ENGINE)) {
+			return getEngineName();
+		} else if (key.equals(ScriptEngine.ENGINE_VERSION)) {
+			return getEngineVersion();
+		} else if (key.equals(ScriptEngine.LANGUAGE)) {
+			return getLanguageName();
+		} else if (key.equals(ScriptEngine.LANGUAGE_VERSION)) {
+			return getLanguageVersion();
+		} else if (key.equals("THREADING")) {
+			return "MULTITHREADED";
+		} else {
+			return null;
+		}
 	}
 
 	@Override
