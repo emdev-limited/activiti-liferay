@@ -19,6 +19,8 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricProcessInstance;
+import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmTransition;
@@ -101,18 +103,26 @@ public class ImageServlet extends HttpServlet {
 		// get beans
 		TaskService taskService = (TaskService)applicationContext.getBean(TaskService.class);
 		RepositoryService repositoryService = (RepositoryService)applicationContext.getBean(RepositoryService.class);
+		
+		HistoryService historyService = (HistoryService)applicationContext.getBean(HistoryService.class);
 		_log.debug("Get app context and beans");
 
 		
 		String taskId = String.valueOf(workflowTaskId);
 		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-
 		List<String> taskIds = new ArrayList<String>();
-		taskIds.add(task.getTaskDefinitionKey());
+		String defId = null;
 		
-		String defId = task.getProcessDefinitionId();
+		if (task != null) {
+			taskIds.add(task.getTaskDefinitionKey());
+			defId = task.getProcessDefinitionId();
+		} else {
+			HistoricTaskInstance hTask = historyService.createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
+			taskIds.add(hTask.getTaskDefinitionKey());
+			defId = hTask.getProcessDefinitionId();
+		}
 		
-		// it is important to use this way to get ProcessDEfinition - since in this case readed all required for image generation data
+		// it is important to use this way to get ProcessDefinition - since in this case readed all required for image generation data
 		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(defId);
 		
 		BpmnModel bpmnModel = getProcessEngine()
@@ -149,16 +159,28 @@ public class ImageServlet extends HttpServlet {
 		String procId = String.valueOf(processInstanceId);
 
 		ProcessInstance inst = runtimeService.createProcessInstanceQuery().processInstanceId(procId).singleResult();
-
-		if (inst == null){
-			_log.error("Process instance " + procId + " not found");
-			return null;
+		ProcessDefinitionEntity processDefinition = null;
+		String defId = null;
+		String instId = null;
+		List<String> highLightedActivities = null;
+		
+		if (inst != null) {
+			instId = inst.getProcessInstanceId();
+			defId = inst.getProcessDefinitionId();
+			highLightedActivities = runtimeService.getActiveActivityIds(instId);
+		} else {
+			HistoricProcessInstance hInst = historyService.createHistoricProcessInstanceQuery().processInstanceId(procId).singleResult();
+			instId = procId;
+			defId = hInst.getProcessDefinitionId();
+			highLightedActivities = new ArrayList<String>();
+			for (HistoricActivityInstance hAct : historyService.createHistoricActivityInstanceQuery().activityInstanceId(procId).list()) {
+				highLightedActivities.add(hAct.getActivityId());
+			}
 		}
-	    ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(inst.getProcessDefinitionId());
+		
+		processDefinition = (ProcessDefinitionEntity) ((RepositoryServiceImpl) repositoryService).getDeployedProcessDefinition(defId);
 
 	    if (processDefinition != null && processDefinition.isGraphicalNotationDefined()) {
-	    	List<String> highLightedActivities = runtimeService.getActiveActivityIds(inst.getId());
-	    	
 	    	List<String> highLightedFlows = new ArrayList<String>();
 	    	
 	    	if (showHistory) {
