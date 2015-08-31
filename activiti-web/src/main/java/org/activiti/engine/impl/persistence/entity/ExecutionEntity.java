@@ -253,19 +253,18 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
   protected boolean forcedUpdate;
   
   protected List<VariableInstanceEntity> queryVariables;
-
+  
   // EMDEV - swimlanes support
   protected String laneName = null;
   
   protected String laneSetName = null;
   // end of swimlanes support
   
-  
-  public ExecutionEntity() {
-  }
-  
   public ExecutionEntity(ActivityImpl activityImpl) {
     this.startingExecution = new StartingExecution(activityImpl);
+  }
+
+  public ExecutionEntity() {
   }
 
   /** creates a new execution. properties processDefinition, processInstance and activity will be initialized. */  
@@ -358,10 +357,12 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
     if (timerDeclarations!=null) {
       for (TimerDeclarationImpl timerDeclaration : timerDeclarations) {
         TimerEntity timer = timerDeclaration.prepareTimerEntity(this);
-        Context
-          .getCommandContext()
-          .getJobEntityManager()
-          .schedule(timer);        
+        if (timer!=null) {
+          Context
+            .getCommandContext()
+            .getJobEntityManager()
+            .schedule(timer);
+        }
       }
     }
     
@@ -378,22 +379,6 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
         }        
       }
     }
-    
-    // lane and laneSet
-    List<LaneSet> laneSets = processDefinition.getLaneSets();
-    if (laneSets != null) {
-      for (LaneSet laneSet : laneSets) {
-        List<Lane> lanes = laneSet.getLanes();
-        for (Lane lane : lanes) {
-          List<String> flowNodeIds = lane.getFlowNodeIds();
-          if (flowNodeIds.indexOf(activityId) >= 0 && lane.getName() != null) {
-        	laneSetName = laneSet.getName();
-            laneName = lane.getName();
-            break;
-          }
-        }
-      }
-    }    
   }
   
   public void start() {
@@ -1343,7 +1328,6 @@ public class ExecutionEntity extends VariableScopeImpl implements ActivityExecut
 
   protected void ensureEventSubscriptionsInitialized() {
     if (eventSubscriptions == null) {
-
       eventSubscriptions = Context.getCommandContext()
         .getEventSubscriptionEntityManager()
         .findEventSubscriptionsByExecution(id);

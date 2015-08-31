@@ -76,7 +76,7 @@ public class StartProcessInstanceCmd<T> implements Command<ProcessInstance>, Ser
         throw new ActivitiObjectNotFoundException("No process definition found for id = '" + processDefinitionId + "'", ProcessDefinition.class);
       }
     } else if (processDefinitionKey != null && (tenantId == null || ProcessEngineConfiguration.NO_TENANT_ID.equals(tenantId))){
-      /* Original state
+      /* EMDEV Changes - Original state
       processDefinition = deploymentCache.findDeployedLatestProcessDefinitionByKey(processDefinitionKey);
       if (processDefinition == null) {
         throw new ActivitiObjectNotFoundException("No process definition found for key '" + processDefinitionKey +"'", ProcessDefinition.class);
@@ -102,17 +102,22 @@ public class StartProcessInstanceCmd<T> implements Command<ProcessInstance>, Ser
     ExecutionEntity processInstance = processDefinition.createProcessInstance(businessKey);
 
     // now set the variables passed into the start command
-    if (variables != null) {
-      processInstance.setVariables(variables);
-    }
-    
+    initializeVariables(processInstance);
+
     // now set processInstance name
     if (processInstanceName != null) {
       processInstance.setName(processInstanceName);
+      commandContext.getHistoryManager().recordProcessInstanceNameChange(processInstance.getId(), processInstanceName);
     }
     
     processInstance.start();
     
     return processInstance;
+  }
+
+  protected void initializeVariables(ExecutionEntity processInstance) {
+    if (variables != null) {
+      processInstance.setVariables(variables);
+    }
   }
 }

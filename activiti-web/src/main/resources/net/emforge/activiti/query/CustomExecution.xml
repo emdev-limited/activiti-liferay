@@ -62,10 +62,12 @@
       </trim>
   </sql>
 
+  <!-- Problem with cast - MySQL support only signed and unsigned as type for casting numbers, others not supporting them.
+  		It is why we should  cast to char even it is not so good in performance case  -->
   <sql id="customCommonSelectExecutionsByQueryCriteriaSqlJoin">
   	<if test="userId != null || entryClassNameId != null || entryClassNameIds != null || entryClassPK != null">
-  		inner join WorkflowInstanceLink W on cast(RES.ID_ as integer)  = W.workflowInstanceId
-  	</if>
+  		inner join WorkflowInstanceLink W on RES.ID_ = cast(W.workflowInstanceId as char(256))
+    </if>
   </sql>
 
   <sql id="customCommonSelectExecutionsByQueryCriteriaSqlWhere">

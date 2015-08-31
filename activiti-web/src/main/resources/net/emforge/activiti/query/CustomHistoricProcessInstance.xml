@@ -62,7 +62,7 @@
 
   <sql id="customCommonSelectHistoricProcessInstancesByQueryCriteriaSqlJoin">
   	<if test="userId != null || entryClassNameId != null || entryClassNameIds != null || entryClassPK != null">
-  		inner join WorkflowInstanceLink W on cast(RES.ID_ as integer) = W.workflowInstanceId
+  		inner join WorkflowInstanceLink W on RES.ID_ = cast(W.workflowInstanceId as char(256))
   	</if>
   </sql>
 
