@@ -127,9 +127,8 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 		
 		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(companyId, completed);
 		
-		// TODO: why candidateUser?
-		// Use candidate group.
-		// taskInfoQueryWrapper.getTaskInfoQuery().taskCandidateUser(userName);
+		// Need for task option "candidateUsers"
+		taskInfoQueryWrapper.getTaskInfoQuery().taskCandidateUser(userName);
 		
 		// Get candidate groups by user
 		

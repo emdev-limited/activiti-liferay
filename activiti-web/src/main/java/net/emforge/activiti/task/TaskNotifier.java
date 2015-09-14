@@ -10,6 +10,7 @@ import javax.mail.internet.InternetAddress;
 
 import net.emforge.activiti.WorkflowConstants;
 import net.emforge.activiti.WorkflowUtil;
+import net.emforge.activiti.identity.UserImpl;
 
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.history.HistoricTaskInstance;
@@ -35,6 +36,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
+import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.service.UserNotificationEventLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
@@ -141,7 +143,17 @@ public class TaskNotifier {
 		List<User> users = new ArrayList<User>();
 		for (IdentityLink identityLink : candidates) {
 			String groupName = identityLink.getGroupId();
-			users.addAll(WorkflowUtil.findUsersByGroup(companyId, groupName));
+			String userId = identityLink.getUserId();
+			if (groupName != null) {
+				users.addAll(WorkflowUtil.findUsersByGroup(companyId, groupName));
+			} else if (userId != null){
+				try {
+					com.liferay.portal.model.User user = UserLocalServiceUtil.getUser(Long.valueOf(userId));
+					users.add(new UserImpl(user));
+				} catch (Exception e) {
+					LOGGER.warn("No user found with id=" + userId);
+				} 
+			}
 		}
 		return users;		
 	}
