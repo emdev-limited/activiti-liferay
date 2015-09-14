@@ -266,6 +266,8 @@ request.setAttribute(WebKeys.WORKFLOW_ASSET_PREVIEW, Boolean.TRUE);
 				logTypes.add(WorkflowLog.TASK_COMPLETION);
 				logTypes.add(WorkflowLog.TASK_UPDATE);
 				logTypes.add(WorkflowLog.TRANSITION);
+				Integer COMMENT = 12;
+				logTypes.add(COMMENT);
 
 				List<WorkflowLog> workflowLogs = WorkflowLogManagerUtil.getWorkflowLogsByWorkflowInstance(company.getCompanyId(), workflowTask.getWorkflowInstanceId(), logTypes, QueryUtil.ALL_POS, QueryUtil.ALL_POS, WorkflowComparatorFactoryUtil.getLogCreateDateComparator(true));
 				%>
