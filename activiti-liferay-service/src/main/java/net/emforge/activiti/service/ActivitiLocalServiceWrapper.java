@@ -169,6 +169,17 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     }
 
     @Override
+    public void addWorkflowInstanceComment(long companyId, long groupId,
+        long userId, java.lang.String entryClassName, long entryClassPK,
+        long workflowTaskId, int logType, java.lang.String comment)
+        throws com.liferay.portal.kernel.exception.PortalException,
+            com.liferay.portal.kernel.exception.SystemException {
+        _activitiLocalService.addWorkflowInstanceComment(companyId, groupId,
+            userId, entryClassName, entryClassPK, workflowTaskId, logType,
+            comment);
+    }
+
+    @Override
     public java.util.List<java.lang.String> findHistoricActivityByName(
         java.lang.String topProcessInstanceId, java.lang.String activityName)
         throws com.liferay.portal.kernel.exception.SystemException {

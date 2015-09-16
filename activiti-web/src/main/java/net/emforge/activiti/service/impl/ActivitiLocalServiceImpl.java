@@ -8,6 +8,7 @@ import java.util.Set;
 import net.emforge.activiti.engine.impl.cmd.AddWorkflowLogEntryCmd;
 import net.emforge.activiti.log.WorkflowLogConstants;
 import net.emforge.activiti.log.WorkflowLogEntry;
+import net.emforge.activiti.service.ActivitiLocalServiceUtil;
 import net.emforge.activiti.service.base.ActivitiLocalServiceBaseImpl;
 import net.emforge.activiti.service.persistence.ActivitiFinderUtil;
 import net.emforge.activiti.service.transaction.ActivitiTransactionHelperIF;
@@ -28,6 +29,8 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowException;
+import com.liferay.portal.model.WorkflowInstanceLink;
+import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
 
 public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     private static Log _log = LogFactoryUtil.getLog(ActivitiLocalServiceImpl.class.getName());
@@ -347,6 +350,17 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     		commandExecutor.execute(new AddWorkflowLogEntryCmd(procTaskId, procInstanceId, workflowLogEntry));
         }
         
+    }
+    
+    @Override
+    public void addWorkflowInstanceComment(long companyId, long groupId, long userId, String entryClassName, long entryClassPK, long workflowTaskId, int logType, String comment) throws PortalException, SystemException { 
+    	
+    	WorkflowInstanceLink workflowInstanceLink = WorkflowInstanceLinkLocalServiceUtil
+            .getWorkflowInstanceLink(companyId, groupId, entryClassName, entryClassPK);
+	    long workflowInstanceId = workflowInstanceLink.getWorkflowInstanceId();
+	    
+		ActivitiLocalServiceUtil.addWorkflowInstanceComment(companyId, userId, workflowInstanceId, workflowTaskId, logType, comment);
+	
     }
     
     @Override

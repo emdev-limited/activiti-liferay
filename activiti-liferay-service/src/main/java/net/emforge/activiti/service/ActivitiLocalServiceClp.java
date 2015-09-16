@@ -36,6 +36,8 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes13;
     private String _methodName14;
     private String[] _methodParameterTypes14;
+    private String _methodName15;
+    private String[] _methodParameterTypes15;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -100,9 +102,16 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
                 "long", "long", "long", "long", "int", "java.lang.String"
             };
 
-        _methodName14 = "findHistoricActivityByName";
+        _methodName14 = "addWorkflowInstanceComment";
 
         _methodParameterTypes14 = new String[] {
+                "long", "long", "long", "java.lang.String", "long", "long",
+                "int", "java.lang.String"
+            };
+
+        _methodName15 = "findHistoricActivityByName";
+
+        _methodParameterTypes15 = new String[] {
                 "java.lang.String", "java.lang.String"
             };
     }
@@ -498,14 +507,60 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     }
 
     @Override
+    public void addWorkflowInstanceComment(long companyId, long groupId,
+        long userId, java.lang.String entryClassName, long entryClassPK,
+        long workflowTaskId, int logType, java.lang.String comment)
+        throws com.liferay.portal.kernel.exception.PortalException,
+            com.liferay.portal.kernel.exception.SystemException {
+        try {
+            _invokableLocalService.invokeMethod(_methodName14,
+                _methodParameterTypes14,
+                new Object[] {
+                    companyId,
+                    
+                groupId,
+                    
+                userId,
+                    
+                ClpSerializer.translateInput(entryClassName),
+                    
+                entryClassPK,
+                    
+                workflowTaskId,
+                    
+                logType,
+                    
+                ClpSerializer.translateInput(comment)
+                });
+        } catch (Throwable t) {
+            t = ClpSerializer.translateThrowable(t);
+
+            if (t instanceof com.liferay.portal.kernel.exception.PortalException) {
+                throw (com.liferay.portal.kernel.exception.PortalException) t;
+            }
+
+            if (t instanceof com.liferay.portal.kernel.exception.SystemException) {
+                throw (com.liferay.portal.kernel.exception.SystemException) t;
+            }
+
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new RuntimeException(t.getClass().getName() +
+                    " is not a valid exception");
+            }
+        }
+    }
+
+    @Override
     public java.util.List<java.lang.String> findHistoricActivityByName(
         java.lang.String topProcessInstanceId, java.lang.String activityName)
         throws com.liferay.portal.kernel.exception.SystemException {
         Object returnObj = null;
 
         try {
-            returnObj = _invokableLocalService.invokeMethod(_methodName14,
-                    _methodParameterTypes14,
+            returnObj = _invokableLocalService.invokeMethod(_methodName15,
+                    _methodParameterTypes15,
                     new Object[] {
                         ClpSerializer.translateInput(topProcessInstanceId),
                         
