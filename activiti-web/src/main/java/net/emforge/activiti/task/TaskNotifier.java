@@ -3,6 +3,7 @@ package net.emforge.activiti.task;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,20 +27,27 @@ import com.liferay.mail.service.MailServiceUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.mail.MailMessage;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.notifications.NotificationEvent;
 import com.liferay.portal.kernel.notifications.NotificationEventFactoryUtil;
+import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
+import com.liferay.portal.model.Company;
+import com.liferay.portal.model.UserNotificationDeliveryConstants;
+import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.service.UserNotificationEventLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
+import com.liferay.portlet.announcements.model.AnnouncementsDelivery;
+import com.liferay.portlet.announcements.service.AnnouncementsDeliveryLocalServiceUtil;
 
 /**
  * @author Dmitry Farafonov
@@ -169,13 +177,13 @@ public class TaskNotifier {
 		// long companyId = GetterUtil.getLong(topWorkflowContext.get("companyId"));
 
 		// FIXME localize notifications
-		String title = StringPool.BLANK;
+		String titlePattern = StringPool.BLANK;
 		if (isGroup) {
-			title = "New workflow task \"" + task.getName() + "\" has been assigned to your role";
+			titlePattern = "workflow.notification.website.assigned-to-role";
 		} else {
-			title = "New workflow task \"" + task.getName() + "\" has been assigned to you";
+			titlePattern = "workflow.notification.website.assigned-to-you";
 		}
-		notificationEventJSONObject.put("notificationMessage", title);
+		
 		notificationEventJSONObject.put("workflowTaskId", task.getId());
 
 		for (Long receiverUserId : receiverUserIds) {
@@ -188,7 +196,11 @@ public class TaskNotifier {
 
 				LOGGER.debug("Before sending notification receiverUserId = " + receiverUserId);
 
-
+				com.liferay.portal.model.User receiverUser = UserLocalServiceUtil.getUser(receiverUserId);
+				Locale locale = receiverUser.getLocale();
+				
+				String title = LanguageUtil.format(locale, titlePattern, task.getName());
+				notificationEventJSONObject.put("notificationMessage", title);
 				// send notification to the user
 				NotificationEvent notificationEvent =
 						NotificationEventFactoryUtil.createNotificationEvent(
@@ -202,26 +214,20 @@ public class TaskNotifier {
 
 				LOGGER.debug("Notification for receiverUserId = " + receiverUserId + " sent");
 
-				/*
+				
 				// check email notification
-				if (UserNotificationManagerUtil.isDeliver(
-						receiverUserId, NOTIFICATIONS_PORTLET_ID, 0,
-						0,
-						UserNotificationDeliveryConstants.TYPE_EMAIL)) {
-				 */	
-				// TODO - Make it better
-				/*
-					com.liferay.portal.model.User receiverUser = UserLocalServiceUtil.getUser(receiverUserId);
-					String body = "New Task is assigned to you. You can access task by using followed link: ";
+				boolean isEmailDelivery = AnnouncementsDeliveryLocalServiceUtil.getUserDelivery(receiverUserId, "workflow").isEmail();
+				if (isEmailDelivery) {
 
 					// get link to the task
-					Company company = CompanyLocalServiceUtil.getCompany(companyId);
+					Company company = CompanyLocalServiceUtil.getCompany(receiverUser.getCompanyId());
 					String taskUrl = "http://" + company.getVirtualHostname() + "/group/control_panel/manage/-/my_workflow_tasks/view/" + task.getId() + "?_153_struts_action=%2Fmy_workflow_tasks%2Fedit_workflow_task";
-					body += taskUrl;
+					
+					String body = LanguageUtil.format(locale, "workflow.notification.email.assigned-to-you", new String[] {task.getName(),taskUrl});
 
 					sendEmail(null, new InternetAddress(receiverUser.getEmailAddress(), receiverUser.getFullName()), title, body, false);
-				 */
-				//}
+				 
+				}
 
 			} catch (Exception ex) {
 				LOGGER.warn("Cannot send notifications to the user " + receiverUserId + ":" + ex.getMessage());

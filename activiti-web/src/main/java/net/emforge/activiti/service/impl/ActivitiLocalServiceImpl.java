@@ -23,6 +23,7 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
@@ -32,6 +33,7 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
 
+@Service("activitiLocalService")
 public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     private static Log _log = LogFactoryUtil.getLog(ActivitiLocalServiceImpl.class.getName());
 

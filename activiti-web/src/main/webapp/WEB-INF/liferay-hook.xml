@@ -3,6 +3,10 @@
 
 <hook>
 	<portal-properties>portal-ext.properties</portal-properties>
+	
+	<language-properties>content/hook/Language_en.properties</language-properties>
+	<language-properties>content/hook/Language_ru.properties</language-properties>
+	
 	<custom-jsp-dir>/jsp-hook</custom-jsp-dir>
 	
 	<struts-action>
