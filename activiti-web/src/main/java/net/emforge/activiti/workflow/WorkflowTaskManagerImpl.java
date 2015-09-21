@@ -263,11 +263,13 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 		Set<Long> userIds = new HashSet<Long>();
 
 		for (IdentityLink participation : participations) {
-			if (StringUtils.isNotEmpty(participation.getGroupId())) {
+			if(participation.getGroupId() != null) {
 				List<org.activiti.engine.identity.User> users = liferayIdentityService.findUsersByGroup(companyId, participation.getGroupId());
 				for (org.activiti.engine.identity.User user : users) {
 					userIds.add(Long.valueOf(user.getId()));
 				}
+			} else if(participation.getUserId() != null){
+				userIds.add(Long.valueOf(participation.getUserId()));
 			}
 		}
 
