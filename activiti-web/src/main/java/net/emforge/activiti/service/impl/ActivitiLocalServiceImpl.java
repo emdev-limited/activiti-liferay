@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
@@ -382,5 +383,14 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
         List<String> actIds = ActivitiFinderUtil.findHiActivities(activityName, allExecutions);
     	// TODO
     	return actIds;
+    }
+    
+    /** Returns value of Liferay Property (for example specified in portal-ext.properties
+     * 
+     * @param name
+     * @return
+     */
+    public String getLiferayProperty(String name) {
+    	return PropsUtil.get(name);
     }
 }

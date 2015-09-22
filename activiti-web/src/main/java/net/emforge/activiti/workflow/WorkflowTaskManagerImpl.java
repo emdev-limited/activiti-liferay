@@ -268,8 +268,12 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 				for (org.activiti.engine.identity.User user : users) {
 					userIds.add(Long.valueOf(user.getId()));
 				}
-			} else if(participation.getUserId() != null){
-				userIds.add(Long.valueOf(participation.getUserId()));
+			} else if(participation.getUserId() != null) {
+				try {
+					userIds.add(Long.valueOf(participation.getUserId()));
+				} catch (Exception ex) {
+					_log.warn("Cannot get user id for " + participation.getUserId(), ex );
+				}
 			}
 		}
 

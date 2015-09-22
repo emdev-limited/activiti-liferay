@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.UserNotificationDeliveryConstants;
@@ -154,7 +155,7 @@ public class TaskNotifier {
 			String userId = identityLink.getUserId();
 			if (groupName != null) {
 				users.addAll(WorkflowUtil.findUsersByGroup(companyId, groupName));
-			} else if (userId != null){
+			} else if (userId != null) {
 				try {
 					com.liferay.portal.model.User user = UserLocalServiceUtil.getUser(Long.valueOf(userId));
 					users.add(new UserImpl(user));
