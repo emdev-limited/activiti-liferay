@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
@@ -269,4 +270,13 @@ public class LiferayService {
 		}
 		return false;
 	}
+	
+    /** Returns value of Liferay Property (for example specified in portal-ext.properties
+     * 
+     * @param name
+     * @return
+     */
+    public String getProperty(String name) {
+    	return PropsUtil.get(name);
+    }
 }

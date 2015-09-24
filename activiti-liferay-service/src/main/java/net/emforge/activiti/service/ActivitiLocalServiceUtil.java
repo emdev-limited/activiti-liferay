@@ -182,16 +182,6 @@ public class ActivitiLocalServiceUtil {
             activityName);
     }
 
-    /**
-    * Returns value of Liferay Property (for example specified in portal-ext.properties
-    *
-    * @param name
-    * @return
-    */
-    public static java.lang.String getLiferayProperty(java.lang.String name) {
-        return getService().getLiferayProperty(name);
-    }
-
     public static void clearService() {
         _service = null;
     }

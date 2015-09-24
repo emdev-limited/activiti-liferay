@@ -3,7 +3,6 @@ package net.emforge.activiti.service;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.transaction.Isolation;
-import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.service.BaseLocalService;
 import com.liferay.portal.service.InvokableLocalService;
@@ -143,13 +142,4 @@ public interface ActivitiLocalService extends BaseLocalService,
     public java.util.List<java.lang.String> findHistoricActivityByName(
         java.lang.String topProcessInstanceId, java.lang.String activityName)
         throws com.liferay.portal.kernel.exception.SystemException;
-
-    /**
-    * Returns value of Liferay Property (for example specified in portal-ext.properties
-    *
-    * @param name
-    * @return
-    */
-    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-    public java.lang.String getLiferayProperty(java.lang.String name);
 }

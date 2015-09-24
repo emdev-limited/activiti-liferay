@@ -384,13 +384,4 @@ public class ActivitiLocalServiceImpl extends ActivitiLocalServiceBaseImpl {
     	// TODO
     	return actIds;
     }
-    
-    /** Returns value of Liferay Property (for example specified in portal-ext.properties
-     * 
-     * @param name
-     * @return
-     */
-    public String getLiferayProperty(String name) {
-    	return PropsUtil.get(name);
-    }
 }

@@ -39,8 +39,6 @@ public class ActivitiLocalServiceClpInvoker {
     private String[] _methodParameterTypes34;
     private String _methodName35;
     private String[] _methodParameterTypes35;
-    private String _methodName36;
-    private String[] _methodParameterTypes36;
 
     public ActivitiLocalServiceClpInvoker() {
         _methodName16 = "getBeanIdentifier";
@@ -115,10 +113,6 @@ public class ActivitiLocalServiceClpInvoker {
         _methodParameterTypes35 = new String[] {
                 "java.lang.String", "java.lang.String"
             };
-
-        _methodName36 = "getLiferayProperty";
-
-        _methodParameterTypes36 = new String[] { "java.lang.String" };
     }
 
     public Object invokeMethod(String name, String[] parameterTypes,
@@ -222,11 +216,6 @@ public class ActivitiLocalServiceClpInvoker {
                 Arrays.deepEquals(_methodParameterTypes35, parameterTypes)) {
             return ActivitiLocalServiceUtil.findHistoricActivityByName((java.lang.String) arguments[0],
                 (java.lang.String) arguments[1]);
-        }
-
-        if (_methodName36.equals(name) &&
-                Arrays.deepEquals(_methodParameterTypes36, parameterTypes)) {
-            return ActivitiLocalServiceUtil.getLiferayProperty((java.lang.String) arguments[0]);
         }
 
         throw new UnsupportedOperationException();

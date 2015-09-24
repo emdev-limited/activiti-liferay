@@ -188,17 +188,6 @@ public class ActivitiLocalServiceWrapper implements ActivitiLocalService,
     }
 
     /**
-    * Returns value of Liferay Property (for example specified in portal-ext.properties
-    *
-    * @param name
-    * @return
-    */
-    @Override
-    public java.lang.String getLiferayProperty(java.lang.String name) {
-        return _activitiLocalService.getLiferayProperty(name);
-    }
-
-    /**
      * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
      */
     public ActivitiLocalService getWrappedActivitiLocalService() {

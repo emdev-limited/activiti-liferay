@@ -38,8 +38,6 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
     private String[] _methodParameterTypes14;
     private String _methodName15;
     private String[] _methodParameterTypes15;
-    private String _methodName16;
-    private String[] _methodParameterTypes16;
 
     public ActivitiLocalServiceClp(InvokableLocalService invokableLocalService) {
         _invokableLocalService = invokableLocalService;
@@ -116,10 +114,6 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         _methodParameterTypes15 = new String[] {
                 "java.lang.String", "java.lang.String"
             };
-
-        _methodName16 = "getLiferayProperty";
-
-        _methodParameterTypes16 = new String[] { "java.lang.String" };
     }
 
     @Override
@@ -588,27 +582,5 @@ public class ActivitiLocalServiceClp implements ActivitiLocalService {
         }
 
         return (java.util.List<java.lang.String>) ClpSerializer.translateOutput(returnObj);
-    }
-
-    @Override
-    public java.lang.String getLiferayProperty(java.lang.String name) {
-        Object returnObj = null;
-
-        try {
-            returnObj = _invokableLocalService.invokeMethod(_methodName16,
-                    _methodParameterTypes16,
-                    new Object[] { ClpSerializer.translateInput(name) });
-        } catch (Throwable t) {
-            t = ClpSerializer.translateThrowable(t);
-
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            } else {
-                throw new RuntimeException(t.getClass().getName() +
-                    " is not a valid exception");
-            }
-        }
-
-        return (java.lang.String) ClpSerializer.translateOutput(returnObj);
     }
 }
