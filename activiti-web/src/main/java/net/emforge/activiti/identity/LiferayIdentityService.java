@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
@@ -43,7 +44,8 @@ public class LiferayIdentityService {
 
 			List<Role> roles = new ArrayList<Role>(allRoles.size());
 			for (Role role : allRoles) {
-				if (RoleLocalServiceUtil.hasUserRole(user.getUserId(), user.getCompanyId(), role.getName(), true)) {
+				if (role.getType() == RoleConstants.TYPE_REGULAR &&
+						RoleLocalServiceUtil.hasUserRole(user.getUserId(), user.getCompanyId(), role.getName(), true)) {
 					roles.add(role);
 				}
 			}
