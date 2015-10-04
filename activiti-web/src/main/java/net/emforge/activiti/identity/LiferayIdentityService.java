@@ -34,8 +34,20 @@ public class LiferayIdentityService {
 	public List<Group> findGroupsByUser(String userName) {
 		try {
 			// get regular roles
-			List<Role> roles = RoleLocalServiceUtil.getUserRoles(idMappingService.getUserId(userName));
+			// This method is not work - since it is not returning inherited roles.
+			// RoleLocalServiceUtil.getUserRoles(idMappingService.getUserId(userName));
+			// There are no easy way to get inherited roles - so, for now we simple review all roles and check does user included into it
+			// This way may have problems in case we will have many roles.
+			com.liferay.portal.model.User user = UserLocalServiceUtil.getUser(idMappingService.getUserId(userName));
+			List<Role> allRoles = RoleLocalServiceUtil.getRoles(user.getCompanyId());
 
+			List<Role> roles = new ArrayList<Role>(allRoles.size());
+			for (Role role : allRoles) {
+				if (RoleLocalServiceUtil.hasUserRole(user.getUserId(), user.getCompanyId(), role.getName(), true)) {
+					roles.add(role);
+				}
+			}
+			
 			List<Group> groups = new ArrayList<Group>();
 			
 			// convert site roles to the groups			
