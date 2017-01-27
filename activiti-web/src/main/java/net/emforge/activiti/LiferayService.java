@@ -22,10 +22,12 @@ import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portlet.asset.model.AssetCategory;
@@ -77,49 +79,55 @@ public class LiferayService {
 	 * @return
 	 */
 	public String getRoleEmails(Long companyId, Long groupId, String roleName) {
-		_log.debug("Get Role Emails for role: " + roleName);
+		_log.debug("Get Role Emails for role/usergroup: " + roleName);
 		
+		List<User> users = new ArrayList<User>();
 		try {
-			Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
-			List<User> users = new ArrayList<User>();
-			
-			if (role.getType() == RoleConstants.TYPE_REGULAR) {
-				// regular (system wide role)
-				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
-			} else {
-				// group specific role
-				if (roleName.equals(RESERVED_ORG_USER_ROLE) || roleName.equals(RESERVED_SITE_MEMBER_ROLE)) {
-					//add all users of a unit
-					Group group = GroupLocalServiceUtil.getGroup(groupId);
-					if (roleName.equals(RESERVED_ORG_USER_ROLE)) {
-						//get org users
-						users = UserLocalServiceUtil.getOrganizationUsers(group.getClassPK());
-					} else {
-						//get site users
-						users = UserLocalServiceUtil.getGroupUsers(groupId);
-					}
-				} else {
-					for (UserGroupRole userGroupRole : 
-						UserGroupRoleLocalServiceUtil.getUserGroupRolesByGroupAndRole(groupId, role.getRoleId())) {
-					users.add(userGroupRole.getUser());
-				}
-				}
-			}
-			
-			Set<String> emails = new HashSet<String>();
-			for (User user : users) {
-				emails.add(user.getEmailAddress());
-			}
-			
-			String result = StringUtils.join(emails, ",");
-			
-			_log.debug("Group Emails: " + result);
-			return result;
+			UserGroup userGroup = UserGroupLocalServiceUtil.getUserGroup(companyId, roleName);
+			users = UserLocalServiceUtil.getUserGroupUsers(userGroup.getUserGroupId());
 		} catch (Exception ex) {
-			_log.warn("Cannot get Group Email", ex);
+			try {
+				// user group not found - use role
+				Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
+				
+				if (role.getType() == RoleConstants.TYPE_REGULAR) {
+					// regular (system wide role)
+					users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
+				} else {
+					// group specific role
+					if (roleName.equals(RESERVED_ORG_USER_ROLE) || roleName.equals(RESERVED_SITE_MEMBER_ROLE)) {
+						//add all users of a unit
+						Group group = GroupLocalServiceUtil.getGroup(groupId);
+						if (roleName.equals(RESERVED_ORG_USER_ROLE)) {
+							//get org users
+							users = UserLocalServiceUtil.getOrganizationUsers(group.getClassPK());
+						} else {
+							//get site users
+							users = UserLocalServiceUtil.getGroupUsers(groupId);
+						}
+					} else {
+						for (UserGroupRole userGroupRole : 
+							UserGroupRoleLocalServiceUtil.getUserGroupRolesByGroupAndRole(groupId, role.getRoleId())) {
+							users.add(userGroupRole.getUser());
+						}
+					}
+				}
+			} catch (Exception e) {
+				_log.warn("Cannot get role users" + e.getMessage());
+			}
 		}
 		
-		return null;
+		
+		Set<String> emails = new HashSet<String>();
+		for (User user : users) {
+			emails.add(user.getEmailAddress());
+		}
+		
+		String result = StringUtils.join(emails, ",");
+		
+		_log.debug("Group Emails: " + result);
+		return result;
+		
 	}
 	
 	/**
@@ -132,16 +140,25 @@ public class LiferayService {
 	 */
 	public boolean isUserInRole(long companyId, long userId, long groupId, String roleName) {
 		try {
-			Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
-			if (role != null) {
-				List<Role> roles = getUserUnitRoles(userId, groupId);
-				roles.addAll(getUserGlobalRoles(userId));
-				if (roles.contains(role)) {
-					return true;
-				}
+			UserGroup userGroup = UserGroupLocalServiceUtil.getUserGroup(companyId, roleName);
+			List<UserGroup> userGroups = UserGroupLocalServiceUtil.getUserUserGroups(userId);
+			if (userGroups.contains(userGroup)) {
+				return true;
 			}
-		} catch (Exception e) {
-			_log.error(String.format("Failed to retrieve user roles for user id = [%s]", userId),e);
+		} catch (Exception ex) {
+			// not found in user groups -= try roles
+			try {
+				Role role = RoleLocalServiceUtil.getRole(companyId, roleName);
+				if (role != null) {
+					List<Role> roles = getUserUnitRoles(userId, groupId);
+					roles.addAll(getUserGlobalRoles(userId));
+					if (roles.contains(role)) {
+						return true;
+					}
+				}
+			} catch (Exception e) {
+				_log.error(String.format("Failed to retrieve user roles for user id = [%s]", userId),e);
+			}
 		}
 		return false;
 	}

@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.emforge.activiti.identity.UserImpl;
-
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
@@ -33,13 +31,17 @@ import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
+
+import net.emforge.activiti.identity.UserImpl;
 
 public class WorkflowUtil {
 	private static Log _log = LogFactoryUtil.getLog(WorkflowUtil.class);
@@ -228,12 +230,22 @@ public class WorkflowUtil {
 						groupName = StringUtils.join(ArrayUtils.subarray(parsedName, 1, parsedName.length), "/");
 					}
 				}
-				// regular group
-				Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
-				users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
-				
-				for (com.liferay.portal.model.User user : users) {
-					result.add(new UserImpl(user));
+				// try to get user group
+				try {
+					UserGroup userGroup = UserGroupLocalServiceUtil.getUserGroup(companyId, groupName);
+					users = UserLocalServiceUtil.getUserGroupUsers(userGroup.getUserGroupId());
+					
+					for (com.liferay.portal.model.User user : users) {
+						result.add(new UserImpl(user));
+					}
+				} catch (Exception ex) {
+					// user group not found - use regular group
+					Role role = RoleLocalServiceUtil.getRole(companyId, groupName);
+					users = UserLocalServiceUtil.getRoleUsers(role.getRoleId());
+					
+					for (com.liferay.portal.model.User user : users) {
+						result.add(new UserImpl(user));
+					}
 				}
 			} else {
 				long groupId = Long.valueOf(parsedName[0]);

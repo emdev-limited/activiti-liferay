@@ -5,17 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import net.emforge.activiti.IdMappingService;
-import net.emforge.activiti.comparator.WorkflowComparatorUtil;
-import net.emforge.activiti.engine.impl.cmd.AddWorkflowLogEntryCmd;
-import net.emforge.activiti.identity.LiferayIdentityService;
-import net.emforge.activiti.log.WorkflowLogEntry;
-import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
-import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
-import net.emforge.activiti.query.CustomTaskInfoQuery;
-import net.emforge.activiti.query.CustomTaskQuery;
-import net.emforge.activiti.query.CustomTaskQueryImpl;
-
 import org.activiti.engine.ActivitiIllegalArgumentException;
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
@@ -52,8 +41,21 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskAssignee;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
+
+import net.emforge.activiti.IdMappingService;
+import net.emforge.activiti.comparator.WorkflowComparatorUtil;
+import net.emforge.activiti.engine.impl.cmd.AddWorkflowLogEntryCmd;
+import net.emforge.activiti.identity.LiferayIdentityService;
+import net.emforge.activiti.log.WorkflowLogEntry;
+import net.emforge.activiti.query.CustomHistoricTaskInstanceQuery;
+import net.emforge.activiti.query.CustomHistoricTaskInstanceQueryImpl;
+import net.emforge.activiti.query.CustomTaskInfoQuery;
+import net.emforge.activiti.query.CustomTaskQuery;
+import net.emforge.activiti.query.CustomTaskQueryImpl;
 
 public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager {
 	private static Log _log = LogFactoryUtil.getLog(AbstractWorkflowTaskManager.class);
@@ -96,15 +98,22 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 			long roleId, Boolean completed) throws WorkflowException {
 		TaskInfoQueryWrapper taskInfoQueryWrapper = createQueryWrapper(companyId, completed);
 
-		// Get candidate groups by role
-
-		List<Role> roles = new ArrayList<Role>();
+		List<Group> groups = null;
 		try {
-			roles.add(RoleLocalServiceUtil.getRole(roleId));
+			// try to get user group
+			List<UserGroup> userGroups = new  ArrayList<UserGroup>();
+			userGroups.add(UserGroupLocalServiceUtil.getUserGroup(roleId));
+			groups = liferayIdentityService.findGroupsByUserGroups(userGroups);
 		} catch (Exception e) {
+			try {
+				// no user group found - get by role
+				List<Role> roles = new ArrayList<Role>();
+				roles.add(RoleLocalServiceUtil.getRole(roleId));
+				groups = liferayIdentityService.findGroupsByRoles(roles);
+			} catch (Exception ex) {
+				_log.warn("Cannot get user group or role by id " + roleId);
+			}
 		}
-		
-		List<Group> groups = liferayIdentityService.findGroupsByRoles(roles);
 		
 		String candidateGroup = null;
 		if (CollectionUtils.isNotEmpty(groups)) {
@@ -567,10 +576,19 @@ public abstract class AbstractWorkflowTaskManager implements WorkflowTaskManager
 			_log.debug("participations size " + participations.size());
 			for (IdentityLink participation : participations) {
 				if (StringUtils.isNotEmpty(participation.getGroupId())) {
-					Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
-					WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
-							Role.class.getName(), role.getRoleId());
-					workflowTaskAssignees.add(workflowTaskAssignee);
+					UserGroup userGroup = liferayIdentityService.findUserGroup(companyId, participation.getGroupId());
+					if (userGroup != null) {
+						// user group with specified name found - use it
+						WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+								UserGroup.class.getName(), userGroup.getUserGroupId());
+						workflowTaskAssignees.add(workflowTaskAssignee);
+					} else {
+						// user group not found - convert to role
+						Role role = liferayIdentityService.findRole(companyId, participation.getGroupId());
+						WorkflowTaskAssignee workflowTaskAssignee = new WorkflowTaskAssignee(
+								Role.class.getName(), role.getRoleId());
+						workflowTaskAssignees.add(workflowTaskAssignee);
+					}
 				}
 			}
 			_log.debug("participations end ");

@@ -5,6 +5,7 @@ import org.activiti.engine.impl.persistence.entity.GroupEntity;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.model.UserGroupRole;
 
 /** jBPM Group Implementation based on Liferay Role and UserGroupRole objects
@@ -16,7 +17,17 @@ public class GroupImpl extends GroupEntity {
 	private static final long serialVersionUID = -4941419640548944436L;
 	private static Log _log = LogFactoryUtil.getLog(GroupImpl.class);
 
-	/** Initialize from Liferay Site Role
+	/** Initialize from Liferay User Group
+	 * 
+	 * @param role
+	 */
+	public GroupImpl(UserGroup userGroup) {
+		id = userGroup.getCompanyId() + "/" +  userGroup.getName();
+		name = userGroup.getName();
+		type = "regular";
+	}
+	
+	/** Initialize from Liferay Portal Role
 	 * 
 	 * @param role
 	 */
@@ -26,6 +37,10 @@ public class GroupImpl extends GroupEntity {
 		type = "regular";
 	}
 	
+	/** Initialize from Liferay site Role
+	 * 
+	 * @param role
+	 */
 	public GroupImpl(UserGroupRole groupRole) {
 		try {
 			id = String.valueOf(groupRole.getGroupId()) + "/" + groupRole.getRole().getName();

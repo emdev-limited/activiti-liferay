@@ -1,16 +1,14 @@
 package net.emforge.activiti.identity;
 
-import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.ORGANIZATION_CONTENT_REVIEWER;
 import static net.emforge.activiti.constants.RoleConstants.PORTAL_CONTENT_REVIEWER;
+import static net.emforge.activiti.constants.RoleConstants.SITE_CONTENT_REVIEWER;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import net.emforge.activiti.WorkflowUtil;
 
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
@@ -25,8 +23,12 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupLocalServiceUtil;
+
+import net.emforge.activiti.WorkflowUtil;
 
 /** This class is responsible for converting group roles into groups with format groupId/roleName
  * 
@@ -78,17 +80,27 @@ public class LiferayGroupsUtil {
 			try {
 				group = group.trim();
 				if (StringUtils.isNotBlank(group)) {
-					Role role = RoleLocalServiceUtil.getRole(companyId, group);
-					
-					if (RoleConstants.TYPE_REGULAR == role.getType()) {
+					try {
+						UserGroup userGroup = UserGroupLocalServiceUtil.getUserGroup(companyId, group);
+						// group exists
 						group = String.valueOf(companyId) + "/" +  group;
-					} else {
-						// use groupId as prefix
-						group = String.valueOf(groupId) + "/" + group;
+						
+						resultGroupList.add(group);
+						_log.debug("Task assigned to user group " + group);
+					} catch (Exception ex) {
+						// user group does not exist - try to get role 
+						Role role = RoleLocalServiceUtil.getRole(companyId, group);
+						
+						if (RoleConstants.TYPE_REGULAR == role.getType()) {
+							group = String.valueOf(companyId) + "/" +  group;
+						} else {
+							// use groupId as prefix
+							group = String.valueOf(groupId) + "/" + group;
+						}
+						
+						resultGroupList.add(group);
+						_log.debug("Task assigned to role " + group);
 					}
-					
-					resultGroupList.add(group);
-					_log.debug("Task assigned to role " + group);
 				}
 			} catch (Exception ex) {
 				_log.warn("Cannot assign task to role " + group, ex);

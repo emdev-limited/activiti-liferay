@@ -30,7 +30,9 @@ import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.UserGroupLocalServiceUtil;
 
 @Service("workflowTaskManager")
 public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
@@ -43,7 +45,16 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 			Map<String, Serializable> workflowContext) throws WorkflowException {
 		try {
 			identityService.setAuthenticatedUserId(idMappingService.getUserName(userId));
-			Role arole = RoleLocalServiceUtil.getRole(roleId);
+			String roleName = null;
+			try {
+				UserGroup userGroup = UserGroupLocalServiceUtil.getUserGroup(roleId);
+				roleName = userGroup.getName();
+			} catch (Exception ex) {
+				// user group not found - use role
+				Role arole = RoleLocalServiceUtil.getRole(roleId);
+				roleName = arole.getName();
+			}
+			
 
 			String taskId = String.valueOf(workflowTaskId);
 			Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -64,7 +75,7 @@ public class WorkflowTaskManagerImpl extends AbstractWorkflowTaskManager {
 			// assign task
 			taskService.setAssignee(taskId, null);
 			WorkflowUtil.clearCandidateGroups(taskService, taskId);
-			taskService.addCandidateGroup(taskId, String.valueOf(companyId) + "/" + arole.getName());
+			taskService.addCandidateGroup(taskId, String.valueOf(companyId) + "/" + roleName);
 
 			// save log
 			WorkflowLogEntry workflowLogEntry = new WorkflowLogEntry();
