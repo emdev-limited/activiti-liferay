@@ -211,7 +211,7 @@ public class SignavioFixer {
             Element element = (Element)node;
             
             String candidateGroups = element.getAttribute("activiti:candidateGroups");
-            if (!StringUtils.isEmpty(candidateGroups) && !candidateGroups.startsWith("#{liferayGroups.getGroups(")) {
+            if (!StringUtils.isEmpty(candidateGroups) && !candidateGroups.startsWith("#{")) {
             	element.removeAttribute("activiti:candidateGroups");
             	_log.debug("Got userTask candidate groups to handle: " + candidateGroups);
             	String attrValue = String.format("#{liferayGroups.getGroups(execution, \" %s \")}", candidateGroups);
